@@ -24,7 +24,8 @@ marked **Confirmed** once the project owner has approved it.
 | D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
 | D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
 | D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
-| D-016 | Previous Coming Soon project | Confirmed (status) | Never deployed; no subscribers to migrate; its D1 database stays untouched until the owner approves deleting it. Content confirmation pending |
+| D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
+| D-017 | Dashboard timing for the Coming Soon page | Proposed | Build the dashboard foundation with the Coming Soon page — awaiting owner's answer |
 
 Upcoming decisions (asked one at a time, in roughly this order): previous
 Coming Soon project (status and which content is confirmed), roles and
@@ -317,7 +318,7 @@ permission matrix.
 
 ## D-016 — Previous Coming Soon project
 
-- **Status:** Status confirmed — 2026-10-20; content confirmation pending
+- **Status:** Confirmed — 2026-10-20
 - **Owner's answer:** the earlier project was **never deployed**; there are
   no real subscribers.
 - **Consequences:** no data migration; the new Coming Soon page is built on
@@ -325,3 +326,7 @@ permission matrix.
   untouched and may be deleted later only with the owner's explicit approval;
   its features and content are treated as ideas (see
   `docs/previous-coming-soon-review.md`).
+- **Content (owner's answer):** launch date, tagline, milestones, progress,
+  collections and finishes **will be set from the dashboard** — none of it
+  is hard-coded. Until the owner enters it, the page shows only the brand and
+  a neutral "coming soon" message (no dates, specifications or claims).

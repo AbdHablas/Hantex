@@ -66,6 +66,8 @@ is an open content question.
 
 1. ~~Is the previous Worker deployed anywhere?~~ **Answered: never
    deployed, no real subscribers** (D-016).
-2. Which of the content items above are confirmed and may be used?
+2. ~~Which of the content items above are confirmed and may be used?~~
+   **Answered: none are hard-coded; the owner sets them from the dashboard**
+   (D-016).
 
 The existing D1 database is left untouched until the owner decides.
