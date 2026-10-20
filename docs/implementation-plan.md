@@ -9,16 +9,18 @@ approved by the project owner.
 
 - [x] Repository created and push access confirmed
 - [x] Development tooling configured (D-001, D-002)
-- [ ] Frontend and backend stack (D-003 — owner's proposal, adjustments awaiting confirmation)
-- [ ] Public website framework (D-004)
-- [ ] Rendering strategy
-- [ ] Database and data access layer
-- [ ] Authentication, sessions and MFA
+- [x] Frontend and backend stack (D-003)
+- [x] Public website framework — Astro (D-004)
+- [x] Cost principle — lowest cost (D-005)
+- [ ] Rendering strategy (D-006 — proposed)
+- [x] Database and data access layer — Neon PostgreSQL via Hyperdrive, Drizzle (D-003)
+- [ ] Authentication details, MFA and Workers plan (Better Auth chosen in D-003)
 - [ ] Cloudflare plan and available services
 - [ ] File storage, email, monitoring, backups, testing tools
 - [ ] Brand reference analysed (waiting for the reference page)
 - [ ] Initial roles and permission matrix approved
-- [ ] `docs/architecture.md`, `docs/security.md`, `docs/deployment.md` written from confirmed decisions
+- [x] `docs/architecture.md` started from confirmed decisions
+- [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
 ## Phase 2 — Coming Soon page
 

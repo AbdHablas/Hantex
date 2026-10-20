@@ -11,13 +11,15 @@ marked **Confirmed** once the project owner has approved it.
 |----|-------|--------|--------|
 | D-001 | Development tooling | Confirmed | Context7 and 21st.dev Magic as project MCP servers; Graphify and Strix installed per machine |
 | D-002 | Agent skills location | Confirmed | Not stored in the repository; installed per session or per machine |
-| D-003 | Frontend and backend stack | Proposed | Owner's stack: React + Vite admin, Workers + Hono, Neon + Hyperdrive, Drizzle, Better Auth, Tailwind + shadcn/ui + Lucide, Vitest + Playwright — with recommended adjustments, awaiting confirmation |
-| D-004 | Public website framework | Pending | Options: Astro (recommended), React Router framework mode, Next.js |
+| D-003 | Frontend and backend stack | Confirmed | React + Vite admin, Workers + Hono, Neon + Hyperdrive, Drizzle, Better Auth, Tailwind + shadcn/ui + Lucide, Vitest + Playwright, with the recommended adjustments |
+| D-004 | Public website framework | Confirmed | Astro |
+| D-005 | Cost principle | Confirmed | Lowest cost: start on free tiers; every paid service needs owner approval |
+| D-006 | Public site rendering | Proposed | Static pages rebuilt on publish, plus small server endpoints for forms — awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order): rendering
-strategy, database and data access layer, authentication and MFA, Cloudflare
-plan and services, file storage, email delivery, monitoring and backups,
-testing tools, brand reference, roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order):
+authentication and MFA (including the Workers plan), Cloudflare plan and
+services, email delivery, monitoring and backups, brand reference, roles and
+permission matrix.
 
 ---
 
@@ -44,7 +46,7 @@ testing tools, brand reference, roles and permission matrix.
 
 ## D-003 — Frontend and backend stack
 
-- **Status:** Proposed — owner's proposal, awaiting confirmation of the adjustments below
+- **Status:** Confirmed — 2026-10-20 (owner's stack with the adjustments below)
 - **Owner's proposal (2026-10-20):**
   - Admin dashboard: React + Vite + TypeScript (single-page app)
   - Public website: separate, SEO-friendly (framework: see D-004)
@@ -62,8 +64,12 @@ testing tools, brand reference, roles and permission matrix.
   versions, scheduling, media library, page blocks, localization, previews,
   roles UI, audit log) is built in-house, which makes Phase 3 the largest phase.
 - **Recommended adjustments (verified 2026-10-20 where noted):**
-  1. Cloudflare Workers Paid plan: password hashing (scrypt) is deliberately
-     CPU-heavy and exceeds the free plan's per-request CPU limit.
+  1. Cloudflare Workers plan: password hashing (scrypt) is deliberately
+     CPU-heavy and exceeds the Workers Free plan's per-request CPU limit.
+     Under D-005 (lowest cost) this is re-decided with authentication:
+     staying on the free plan requires passwordless staff sign-in
+     (passkeys and emailed one-time codes); keeping passwords requires
+     Workers Paid (about US$5/month).
   2. Better Auth handles authentication only (sign-in, sessions, password reset,
      two-factor, invitations). Roles and permissions live in our own tables,
      enforced by Hono middleware, because Better Auth's built-in roles are
@@ -94,12 +100,55 @@ testing tools, brand reference, roles and permission matrix.
      dashboard; TanStack Router and Query in the dashboard; R2 for files; Cron
      Triggers for scheduled publishing; Postgres full-text search for products;
      rich text stored as structured JSON rather than raw HTML.
-- **Owner's choice:** —
-- **Date confirmed:** —
+- **Owner's choice:** confirmed as proposed, with the adjustments
+- **Date confirmed:** 2026-10-20
 
 ## D-004 — Public website framework
 
-- **Status:** Pending
-- **Options:** Astro (recommended) · React Router framework mode · Next.js
-  (via the OpenNext adapter)
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** Astro · React Router framework mode · Next.js (via
+  the OpenNext adapter)
+- **Recommended:** Astro
+- **Owner's choice:** Astro
+- **Why:** ships little or no JavaScript by default (best page speed for an
+  animation-rich marketing and catalogue site), official Cloudflare adapter,
+  can reuse React components and the shared Tailwind design tokens where a
+  page needs interactivity.
+- **Consequences:** two front-end apps (Astro public site, React dashboard)
+  sharing design tokens and validation schemas in one repository.
+
+## D-005 — Cost principle
+
+- **Status:** Confirmed — 2026-10-20
+- **Owner's choice:** lowest cost.
+- **Consequences:** start on free tiers (Cloudflare Free, Workers Free, R2,
+  Turnstile, Cloudflare Access, Neon Free) wherever they meet the
+  requirements; prefer designs that keep usage inside free tiers (for
+  example static pages over per-request rendering); every paid plan or
+  service is proposed with its cost and needs the owner's approval; security
+  requirements are never relaxed to save cost — where they conflict, the
+  owner decides with both options costed.
+
+## D-006 — Public site rendering
+
+- **Status:** Proposed — awaiting the owner's answer
+- **Options:**
+  - **A. Static pages rebuilt on publish, plus small server endpoints**
+    (recommended). Pages are generated ahead of time and served as static
+    files; publishing in the dashboard triggers an automatic rebuild and
+    deploy. Forms (contact, inquiries, launch sign-up) use small server
+    endpoints with Turnstile and rate limits.
+  - **B. Server-rendered on each request, with edge caching.** Content
+    changes appear immediately; uncached page views run code and may query
+    the database.
+- **Recommended:** A.
+- **Advantages of A:** no cost per page view (static files are served without
+  running code); fastest pages; the public site never touches the database
+  on page views, which shrinks the attack surface and lets the database
+  sleep within Neon's free tier; any single page can still be switched to
+  server rendering later.
+- **Disadvantages of A:** published changes appear after a rebuild (usually
+  a few minutes) rather than instantly; draft previews are served from the
+  protected dashboard side, not the public site; the rebuild needs a
+  narrowly scoped deploy credential.
 - **Owner's choice:** —
