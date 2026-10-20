@@ -11,7 +11,8 @@ marked **Confirmed** once the project owner has approved it.
 |----|-------|--------|--------|
 | D-001 | Development tooling | Confirmed | Context7 and 21st.dev Magic as project MCP servers; Graphify and Strix installed per machine |
 | D-002 | Agent skills location | Confirmed | Not stored in the repository; installed per session or per machine |
-| D-003 | Frontend and backend stack | Proposed | Awaiting owner's choice — recommended: Next.js + Payload CMS on Cloudflare Workers |
+| D-003 | Frontend and backend stack | Proposed | Owner's stack: React + Vite admin, Workers + Hono, Neon + Hyperdrive, Drizzle, Better Auth, Tailwind + shadcn/ui + Lucide, Vitest + Playwright — with recommended adjustments, awaiting confirmation |
+| D-004 | Public website framework | Pending | Options: Astro (recommended), React Router framework mode, Next.js |
 
 Upcoming decisions (asked one at a time, in roughly this order): rendering
 strategy, database and data access layer, authentication and MFA, Cloudflare
@@ -43,37 +44,62 @@ testing tools, brand reference, roles and permission matrix.
 
 ## D-003 — Frontend and backend stack
 
-- **Status:** Proposed — awaiting the owner's choice
-- **Options considered:**
-  - **A. Next.js + Payload CMS (TypeScript), on Cloudflare Workers.** One
-    application: public site, admin dashboard and API. Payload supplies the
-    CMS foundation (content models, admin UI, drafts and versions, scheduled
-    publishing, localization, media library, server-side access control).
-  - **B. Custom Cloudflare-native modular monolith (TypeScript).** Next.js or
-    Astro for the public site, a Hono API on Workers, a React + Vite admin
-    dashboard, Drizzle ORM and Better Auth. Every CMS feature is built in-house.
-  - **Ruled out:** a React + Vite single-page app for the public site (renders
-    in the browser, weaker SEO); Laravel + Filament (not Cloudflare-native,
-    second language for the animated frontend).
-- **Recommended:** A.
-- **Advantages of A:** least custom security-critical code; mature, tested CMS
-  features; server rendering for SEO; one typed codebase; official Cloudflare
-  template maintained by Payload (D1 + R2).
-- **Disadvantages and limits of A (verified 2026-10-20, Payload 3.91):**
-  requires the Workers Paid plan because of the bundle size; image crop,
-  focal point and server-side resizing are unavailable on Workers (no `sharp`),
-  so resizing would use Cloudflare image transformations; GraphQL is not
-  guaranteed on Workers (we would use REST and Payload's server-side API);
-  no built-in multifactor authentication (must be added); permissions are
-  defined in code, so dashboard-managed roles need a custom permission layer.
-- **Advantages of B:** full control; smallest runtime footprint; Better Auth
-  includes two-factor authentication, an admin/access-control plugin and
-  Turnstile support.
-- **Disadvantages of B:** the whole CMS — editing UI, drafts, versions,
-  scheduling, media library, page-block builder, localization, previews —
-  is built and secured from scratch: several times the effort and more code
-  to maintain.
-- **Cost notes:** Cloudflare Workers Paid starts at about US$5/month; both
-  options avoid licence fees.
+- **Status:** Proposed — owner's proposal, awaiting confirmation of the adjustments below
+- **Owner's proposal (2026-10-20):**
+  - Admin dashboard: React + Vite + TypeScript (single-page app)
+  - Public website: separate, SEO-friendly (framework: see D-004)
+  - Backend: Cloudflare Workers + Hono
+  - Database: PostgreSQL on Neon via Cloudflare Hyperdrive
+  - ORM: Drizzle
+  - Authentication: Better Auth
+  - UI: Tailwind CSS + shadcn/ui + Lucide
+  - Testing: Vitest + Playwright
+- **Previously considered:** A. Next.js + Payload CMS (integrated CMS) — not
+  chosen by the owner. The owner's stack corresponds to option B (custom
+  Cloudflare-native build).
+- **Assessment:** sound, coherent and Cloudflare-native. Trade-off accepted
+  with this choice: the content management system (editing UI, drafts,
+  versions, scheduling, media library, page blocks, localization, previews,
+  roles UI, audit log) is built in-house, which makes Phase 3 the largest phase.
+- **Recommended adjustments (verified 2026-10-20 where noted):**
+  1. Cloudflare Workers Paid plan: password hashing (scrypt) is deliberately
+     CPU-heavy and exceeds the free plan's per-request CPU limit.
+  2. Better Auth handles authentication only (sign-in, sessions, password reset,
+     two-factor, invitations). Roles and permissions live in our own tables,
+     enforced by Hono middleware, because Better Auth's built-in roles are
+     fixed in code. Audit logging is our own table, because Better Auth's audit
+     log is part of its paid hosted service.
+  3. Better Auth settings: no public sign-up (invite only); two-factor required
+     for staff; rate-limit storage in the database (in-memory storage does not
+     work across Workers instances — per Better Auth docs); Drizzle adapter
+     with `transaction: true`; breached-password check; Turnstile on sign-in;
+     `nodejs_compat` flag on the Worker.
+  4. Hyperdrive with the standard Postgres driver (Neon's HTTP driver would
+     bypass Hyperdrive). Two connections: cached and read-only for the public
+     site, uncached for the dashboard and sign-in. The public site's database
+     user can only read.
+  5. Dashboard on its own subdomain, with the app and its API on the same
+     origin (simple secure cookies, no CORS), and Cloudflare Access in front of
+     it as a second lock.
+  6. Neon branches for development, preview and production; production plan
+     and restore window decided in the backups step.
+  7. Vitest 4.x: Cloudflare's Workers test pool (`@cloudflare/vitest-pool-workers`
+     0.23) supports Vitest ^4.1, not Vitest 5. Add axe accessibility checks,
+     Lighthouse performance checks, dependency scanning, and role-matrix tests
+     for every API endpoint.
+  8. shadcn/ui for the dashboard; the public site shares the Tailwind design
+     tokens but gets custom-designed components so it doesn't look like a
+     template. Lucide for interface icons; custom SVG icons for product symbols.
+  9. Minor choices (owner may override): Zod schemas shared by API and
+     dashboard; TanStack Router and Query in the dashboard; R2 for files; Cron
+     Triggers for scheduled publishing; Postgres full-text search for products;
+     rich text stored as structured JSON rather than raw HTML.
 - **Owner's choice:** —
 - **Date confirmed:** —
+
+## D-004 — Public website framework
+
+- **Status:** Pending
+- **Options:** Astro (recommended) · React Router framework mode · Next.js
+  (via the OpenNext adapter)
+- **Owner's choice:** —

@@ -9,7 +9,8 @@ approved by the project owner.
 
 - [x] Repository created and push access confirmed
 - [x] Development tooling configured (D-001, D-002)
-- [ ] Frontend and backend stack (D-003 — proposed, awaiting choice)
+- [ ] Frontend and backend stack (D-003 — owner's proposal, adjustments awaiting confirmation)
+- [ ] Public website framework (D-004)
 - [ ] Rendering strategy
 - [ ] Database and data access layer
 - [ ] Authentication, sessions and MFA
