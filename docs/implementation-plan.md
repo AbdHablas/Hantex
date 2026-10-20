@@ -23,7 +23,8 @@ approved by the project owner.
 - [x] Monitoring — Cloudflare logs plus email alerts (D-011)
 - [x] Brand reference analysed — `docs/brand-guidelines.md`, icon mark SVGs in `brand/logo/` (D-012)
 - [x] Brand typeface — Poppins (D-013)
-- [ ] Website languages and Arabic typeface
+- [x] Website languages — Arabic (default, RTL) + English (D-014)
+- [ ] Arabic typeface (D-015 — proposed)
 - [ ] Previous Coming Soon project: status and confirmed content
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions

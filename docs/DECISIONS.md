@@ -22,10 +22,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-011 | Monitoring and error tracking | Confirmed | Cloudflare Workers logs (no personal data) plus scheduled health and backup checks that alert by email |
 | D-012 | Brand reference | Confirmed | Brand guidelines and trademark sheet (2026) are the sources; icon mark SVGs extracted from the original artwork |
 | D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
+| D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
+| D-015 | Arabic typeface | Proposed | Awaiting owner's choice from rendered samples |
 
-Upcoming decisions (asked one at a time, in roughly this order): website
-languages, Arabic typeface, previous Coming Soon project (status and which
-content is confirmed), roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): Arabic
+typeface, previous Coming Soon project (status and which content is
+confirmed), roles and permission matrix.
 
 ---
 
@@ -284,3 +286,17 @@ content is confirmed), roles and permission matrix.
   error for the owner to correct; fonts are self-hosted (no requests to
   Google); the lockup lettering is converted to outlines from the Poppins
   glyphs embedded in the guidelines artwork.
+
+## D-014 — Website languages
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** Arabic main + English · Arabic only · English main
+  + Arabic · English only
+- **Recommended and chosen:** Arabic as the default language, designed
+  right-to-left first, with a full English version.
+- **Consequences:** every content type in the CMS is translatable from the
+  start; layouts use direction-neutral (logical) CSS; each page carries
+  `lang`, `dir` and `hreflang` alternates; an Arabic typeface is needed
+  (Poppins has no Arabic letters); the Latin wordmark stays in Latin.
+- **Default URL scheme (minor, may change):** Arabic at `/`, English under
+  `/en/`.
