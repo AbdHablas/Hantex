@@ -21,7 +21,10 @@ approved by the project owner.
 - [x] Testing tools — Vitest 4.x, Playwright, axe, Lighthouse (D-003)
 - [x] Database backups — Neon restore plus nightly encrypted exports to R2 (D-010)
 - [x] Monitoring — Cloudflare logs plus email alerts (D-011)
-- [ ] Brand reference analysed (D-012 — waiting for the reference page and logo files)
+- [x] Brand reference analysed — `docs/brand-guidelines.md`, icon mark SVGs in `brand/logo/` (D-012)
+- [ ] Brand typeface (D-013 — proposed)
+- [ ] Website languages and Arabic typeface
+- [ ] Previous Coming Soon project: status and confirmed content
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions
 - [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions

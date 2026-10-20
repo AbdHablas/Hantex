@@ -20,10 +20,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-009 | Email sending service | Confirmed | Resend (free tier) |
 | D-010 | Database backups | Confirmed | Neon's built-in restore plus nightly encrypted exports to R2 (30 daily, 12 monthly), restore-tested regularly |
 | D-011 | Monitoring and error tracking | Confirmed | Cloudflare Workers logs (no personal data) plus scheduled health and backup checks that alert by email |
-| D-012 | Brand reference | Pending | Waiting for the owner's reference page and original logo files |
+| D-012 | Brand reference | Confirmed | Brand guidelines and trademark sheet (2026) are the sources; icon mark SVGs extracted from the original artwork |
+| D-013 | Brand typeface | Proposed | Poppins (used in all artwork) vs Sora + Inter (trademark sheet text) — awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order): brand
-reference, roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): website
+languages, Arabic typeface, previous Coming Soon project (status and which
+content is confirmed), roles and permission matrix.
 
 ---
 
@@ -254,9 +256,27 @@ reference, roles and permission matrix.
 
 ## D-012 — Brand reference
 
-- **Status:** Pending — waiting for the owner
-- **Needed:** the reference webpage, and the original logo file if available
-  (SVG preferred; AI, EPS, PDF or a high-resolution PNG also help).
-- **Rule from the brief:** no replacement identity is invented and the
-  existing logo is not redrawn inaccurately; the original file is used when
-  available.
+- **Status:** Confirmed — 2026-10-20
+- **Sources (supplied by the owner):** Brand Guidelines v1 (2026), Trademark
+  Reference Sheet v1 (2026), and an earlier Coming Soon project (zip).
+- **Outcome:** brand analysed in `docs/brand-guidelines.md`; icon mark SVGs
+  (on dark, on light, mono light, mono dark) extracted from the guidelines'
+  vector artwork into `brand/logo/` and verified pixel by pixel against the
+  PDF; previous project reviewed in `docs/previous-coming-soon-review.md`.
+- **Not stored in the repository:** the PDFs and the zip (the repository is
+  public; the trademark sheet is prepared for legal review).
+- **Discrepancies found:** listed in `docs/brand-guidelines.md` — notably the
+  trademark sheet's colour description contradicts its own specimens, and
+  the typeface differs between documents (D-013).
+
+## D-013 — Brand typeface
+
+- **Status:** Proposed — awaiting the owner's answer
+- **Options:**
+  - **A. Poppins** for the wordmark, headings and body (recommended).
+  - **B. Sora** for the wordmark and headings, **Inter** for body and
+    interface text, as written in the trademark sheet.
+- **Recommended:** A — every page of both PDFs, including the trademark
+  sheet's own wordmark sample, is set in Poppins; one family means fewer
+  font files and faster pages.
+- **Owner's choice:** —

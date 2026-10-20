@@ -91,4 +91,5 @@ docs/           Project documentation
 
 ## Pending
 
-Brand and design system (D-012), roles and permission matrix.
+Brand typeface (D-013), website languages, design system, roles and
+permission matrix.
