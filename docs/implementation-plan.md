@@ -20,8 +20,8 @@ approved by the project owner.
 - [x] Email sending — Resend (D-009)
 - [x] Testing tools — Vitest 4.x, Playwright, axe, Lighthouse (D-003)
 - [x] Database backups — Neon restore plus nightly encrypted exports to R2 (D-010)
-- [ ] Monitoring and error tracking (D-011 — proposed)
-- [ ] Brand reference analysed (waiting for the reference page)
+- [x] Monitoring — Cloudflare logs plus email alerts (D-011)
+- [ ] Brand reference analysed (D-012 — waiting for the reference page and logo files)
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions
 - [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions

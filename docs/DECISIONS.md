@@ -19,7 +19,8 @@ marked **Confirmed** once the project owner has approved it.
 | D-008 | Cloudflare account, plan and domain | Confirmed | Cloudflare Free; hantexultra.com active on Cloudflare DNS; no existing website or email; canonical host www |
 | D-009 | Email sending service | Confirmed | Resend (free tier) |
 | D-010 | Database backups | Confirmed | Neon's built-in restore plus nightly encrypted exports to R2 (30 daily, 12 monthly), restore-tested regularly |
-| D-011 | Monitoring and error tracking | Proposed | Cloudflare's built-in logs plus free uptime and backup alerts by email — awaiting owner's answer |
+| D-011 | Monitoring and error tracking | Confirmed | Cloudflare Workers logs (no personal data) plus scheduled health and backup checks that alert by email |
+| D-012 | Brand reference | Pending | Waiting for the owner's reference page and original logo files |
 
 Upcoming decisions (asked one at a time, in roughly this order): brand
 reference, roles and permission matrix.
@@ -235,3 +236,27 @@ reference, roles and permission matrix.
   is also stored as a CI secret for the backup job.
 - **Consequences:** documented restore procedure in `docs/` before launch;
   a failed backup triggers an email alert (see D-011).
+
+## D-011 — Monitoring and error tracking
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** Cloudflare logs plus email alerts · the same plus
+  Sentry free tier · basic logs only
+- **Recommended and chosen:** Cloudflare logs plus email alerts.
+- **Design:** structured logs in Cloudflare Workers Logs with no passwords,
+  tokens, codes or unnecessary personal data; a scheduled check of the public
+  site, the dashboard and the nightly backup that emails the owner through
+  Resend on failure.
+- **Cost:** US$0.
+- **Consequences:** log history is short on the free plan (a few days);
+  error tracking with a third party (for example Sentry) can be added later
+  as a separate decision.
+
+## D-012 — Brand reference
+
+- **Status:** Pending — waiting for the owner
+- **Needed:** the reference webpage, and the original logo file if available
+  (SVG preferred; AI, EPS, PDF or a high-resolution PNG also help).
+- **Rule from the brief:** no replacement identity is invented and the
+  existing logo is not redrawn inaccurately; the original file is used when
+  available.
