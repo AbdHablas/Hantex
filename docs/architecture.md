@@ -48,6 +48,7 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 | Data access | Drizzle ORM with versioned migrations |
 | Validation | Zod schemas shared by API and dashboard |
 | Files | Cloudflare R2 |
+| Email sending | Resend (free tier) |
 | Testing | Vitest 4.x (with Cloudflare's Workers test pool), Playwright, axe accessibility checks, Lighthouse |
 
 ## Security boundaries (confirmed)
@@ -88,5 +89,5 @@ docs/           Project documentation
 
 ## Pending
 
-Email delivery (D-009), monitoring and backups,
+Database backups (D-010), monitoring and backups,
 brand and design system, roles and permission matrix.

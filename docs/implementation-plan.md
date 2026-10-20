@@ -16,7 +16,11 @@ approved by the project owner.
 - [x] Database and data access layer — Neon PostgreSQL via Hyperdrive, Drizzle (D-003)
 - [x] Staff sign-in method — passkeys, Workers Free (D-007)
 - [x] Cloudflare account, plan and domain — Free plan, domain active on Cloudflare (D-008)
-- [ ] File storage, email, monitoring, backups, testing tools
+- [x] File storage — Cloudflare R2 (D-003)
+- [x] Email sending — Resend (D-009)
+- [x] Testing tools — Vitest 4.x, Playwright, axe, Lighthouse (D-003)
+- [ ] Database backups (D-010 — proposed)
+- [ ] Monitoring and error tracking
 - [ ] Brand reference analysed (waiting for the reference page)
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions

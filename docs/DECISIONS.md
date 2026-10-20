@@ -17,10 +17,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-006 | Public site rendering | Confirmed | Static pages rebuilt on publish (a few minutes' delay), plus small server endpoints for forms |
 | D-007 | Staff sign-in method and Workers plan | Confirmed | Passwordless: passkeys, emailed codes plus recovery codes for new devices and recovery; Workers Free |
 | D-008 | Cloudflare account, plan and domain | Confirmed | Cloudflare Free; hantexultra.com active on Cloudflare DNS; no existing website or email; canonical host www |
-| D-009 | Email sending service | Proposed | Resend free tier — awaiting owner's answer |
+| D-009 | Email sending service | Confirmed | Resend (free tier) |
+| D-010 | Database backups | Proposed | Neon's built-in restore plus nightly encrypted exports to R2 — awaiting owner's answer |
 
 Upcoming decisions (asked one at a time, in roughly this order): monitoring
-and backups, brand reference, roles and permission matrix.
+and error tracking, brand reference, roles and permission matrix.
 
 ---
 
@@ -201,3 +202,18 @@ and backups, brand reference, roles and permission matrix.
   bare domain redirects to it. Sending email from the domain needs SPF, DKIM
   and DMARC records, added only with the owner's approval. Any DNS change
   is proposed first and applied only after explicit approval.
+
+## D-009 — Email sending service
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** Resend · Brevo · Amazon SES
+- **Recommended:** Resend
+- **Owner's choice:** Resend, starting on the free tier (about 3,000
+  emails/month, 100/day at last check — to be confirmed on Resend's pricing
+  page before sign-up).
+- **Uses:** staff invitations, sign-in and recovery codes, contact and
+  inquiry notifications.
+- **Consequences:** sending domain records (SPF, DKIM, DMARC) are added to
+  Cloudflare DNS only with the owner's approval; the Resend API key is stored
+  as a Worker secret, never in the repository; a newsletter or mailing list,
+  if wanted later, is a separate decision.
