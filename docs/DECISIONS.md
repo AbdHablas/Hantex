@@ -23,11 +23,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-012 | Brand reference | Confirmed | Brand guidelines and trademark sheet (2026) are the sources; icon mark SVGs extracted from the original artwork |
 | D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
 | D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
-| D-015 | Arabic typeface | Proposed | Awaiting owner's choice from rendered samples |
+| D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
+| D-016 | Previous Coming Soon project | Pending | Deployment status, existing subscribers and confirmed content |
 
-Upcoming decisions (asked one at a time, in roughly this order): Arabic
-typeface, previous Coming Soon project (status and which content is
-confirmed), roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): previous
+Coming Soon project (status and which content is confirmed), roles and
+permission matrix.
 
 ---
 
@@ -300,3 +301,16 @@ confirmed), roles and permission matrix.
   (Poppins has no Arabic letters); the Latin wordmark stays in Latin.
 - **Default URL scheme (minor, may change):** Arabic at `/`, English under
   `/en/`.
+
+## D-015 — Arabic typeface
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered (rendered samples shown to the owner):** Readex Pro ·
+  Tajawal · IBM Plex Sans Arabic · Noto Kufi Arabic
+- **Recommended and chosen:** Readex Pro.
+- **Why:** geometric like Poppins, bold weight harmonises with the wordmark,
+  clear body text, small files (about 10 KB per weight).
+- **Consequences:** Arabic text uses Readex Pro; Latin text (including inside
+  Arabic pages) uses Poppins. Both are licensed under the SIL Open Font
+  Licence 1.1 and self-hosted (no requests to Google); only the weights
+  actually used are shipped.

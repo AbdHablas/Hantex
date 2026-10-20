@@ -97,7 +97,11 @@ logo itself is exempt from contrast requirements.
   trademark sheet's own "Hantex ULTRA" sample, embeds only Poppins.
 
 **Confirmed (D-013): Poppins** for the wordmark, headings and body, self-hosted.
-Arabic typography is not covered by either document (open question).
+
+**Arabic (D-015): Readex Pro**, paired with Poppins — Arabic text in Readex
+Pro, Latin text (including "Hantex Ultra" inside Arabic sentences) in
+Poppins. Neither brand document covers Arabic; this pairing was chosen by the
+owner from rendered samples. Both fonts are SIL Open Font Licence 1.1.
 
 ## Discrepancies
 
