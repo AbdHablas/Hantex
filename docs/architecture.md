@@ -49,6 +49,7 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 | Validation | Zod schemas shared by API and dashboard |
 | Files | Cloudflare R2 |
 | Email sending | Resend (free tier) |
+| Backups | Neon built-in restore, plus nightly encrypted exports to a private R2 bucket (30 daily, 12 monthly) |
 | Testing | Vitest 4.x (with Cloudflare's Workers test pool), Playwright, axe accessibility checks, Lighthouse |
 
 ## Security boundaries (confirmed)
@@ -89,5 +90,5 @@ docs/           Project documentation
 
 ## Pending
 
-Database backups (D-010), monitoring and backups,
+Monitoring and error tracking (D-011), monitoring and backups,
 brand and design system, roles and permission matrix.

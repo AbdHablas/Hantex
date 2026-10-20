@@ -18,10 +18,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-007 | Staff sign-in method and Workers plan | Confirmed | Passwordless: passkeys, emailed codes plus recovery codes for new devices and recovery; Workers Free |
 | D-008 | Cloudflare account, plan and domain | Confirmed | Cloudflare Free; hantexultra.com active on Cloudflare DNS; no existing website or email; canonical host www |
 | D-009 | Email sending service | Confirmed | Resend (free tier) |
-| D-010 | Database backups | Proposed | Neon's built-in restore plus nightly encrypted exports to R2 — awaiting owner's answer |
+| D-010 | Database backups | Confirmed | Neon's built-in restore plus nightly encrypted exports to R2 (30 daily, 12 monthly), restore-tested regularly |
+| D-011 | Monitoring and error tracking | Proposed | Cloudflare's built-in logs plus free uptime and backup alerts by email — awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order): monitoring
-and error tracking, brand reference, roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): brand
+reference, roles and permission matrix.
 
 ---
 
@@ -217,3 +218,20 @@ and error tracking, brand reference, roles and permission matrix.
   Cloudflare DNS only with the owner's approval; the Resend API key is stored
   as a Worker secret, never in the repository; a newsletter or mailing list,
   if wanted later, is a separate decision.
+
+## D-010 — Database backups
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** Neon built-in restore plus nightly exports to R2 ·
+  Neon built-in restore only · Neon paid plan
+- **Recommended and chosen:** Neon built-in restore plus nightly exports.
+- **Design:** a scheduled job (GitHub Actions) exports the whole database
+  every night with a read-only backup user, encrypts the export, and stores
+  it in a private R2 bucket; retention 30 daily and 12 monthly copies;
+  restore tested regularly against a temporary Neon branch, never against
+  production.
+- **Cost:** US$0 (within GitHub Actions and R2 free allowances).
+- **Owner responsibility:** keep the backup decryption key safe offline; it
+  is also stored as a CI secret for the backup job.
+- **Consequences:** documented restore procedure in `docs/` before launch;
+  a failed backup triggers an email alert (see D-011).

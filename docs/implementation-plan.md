@@ -19,8 +19,8 @@ approved by the project owner.
 - [x] File storage — Cloudflare R2 (D-003)
 - [x] Email sending — Resend (D-009)
 - [x] Testing tools — Vitest 4.x, Playwright, axe, Lighthouse (D-003)
-- [ ] Database backups (D-010 — proposed)
-- [ ] Monitoring and error tracking
+- [x] Database backups — Neon restore plus nightly encrypted exports to R2 (D-010)
+- [ ] Monitoring and error tracking (D-011 — proposed)
 - [ ] Brand reference analysed (waiting for the reference page)
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions
