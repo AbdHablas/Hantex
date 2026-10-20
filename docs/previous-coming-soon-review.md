@@ -64,8 +64,8 @@ is an open content question.
 
 ## Open questions for the owner
 
-1. Is the previous Worker deployed anywhere (for example `*.workers.dev`),
-   and has its D1 database collected real subscribers that must be migrated?
+1. ~~Is the previous Worker deployed anywhere?~~ **Answered: never
+   deployed, no real subscribers** (D-016).
 2. Which of the content items above are confirmed and may be used?
 
 The existing D1 database is left untouched until the owner decides.

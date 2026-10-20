@@ -24,7 +24,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
 | D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
 | D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
-| D-016 | Previous Coming Soon project | Pending | Deployment status, existing subscribers and confirmed content |
+| D-016 | Previous Coming Soon project | Confirmed (status) | Never deployed; no subscribers to migrate; its D1 database stays untouched until the owner approves deleting it. Content confirmation pending |
 
 Upcoming decisions (asked one at a time, in roughly this order): previous
 Coming Soon project (status and which content is confirmed), roles and
@@ -314,3 +314,14 @@ permission matrix.
   Arabic pages) uses Poppins. Both are licensed under the SIL Open Font
   Licence 1.1 and self-hosted (no requests to Google); only the weights
   actually used are shipped.
+
+## D-016 — Previous Coming Soon project
+
+- **Status:** Status confirmed — 2026-10-20; content confirmation pending
+- **Owner's answer:** the earlier project was **never deployed**; there are
+  no real subscribers.
+- **Consequences:** no data migration; the new Coming Soon page is built on
+  the confirmed stack; the unused D1 database `hantex-ultra-db` is left
+  untouched and may be deleted later only with the owner's explicit approval;
+  its features and content are treated as ideas (see
+  `docs/previous-coming-soon-review.md`).
