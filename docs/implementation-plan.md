@@ -25,14 +25,21 @@ approved by the project owner.
 - [x] Brand typeface — Poppins (D-013)
 - [x] Website languages — Arabic (default, RTL) + English (D-014)
 - [x] Arabic typeface — Readex Pro (D-015)
-- [ ] Previous Coming Soon project: status and confirmed content
+- [x] Previous Coming Soon project — never deployed; content set from the dashboard (D-016)
+- [x] Dashboard foundation delivered with the Coming Soon page (D-017)
+- [ ] Launch-notification sign-up (D-018)
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions
 - [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
-## Phase 2 — Coming Soon page
+## Phase 2 — Coming Soon page and dashboard foundation (D-017)
 
 - [ ] Design system from the brand reference
+- [ ] Repository scaffolding (apps, packages, CI, tests)
+- [ ] Database schema and migrations for the foundation
+- [ ] Passkey sign-in, invitations, sessions (Better Auth)
+- [ ] Roles and permissions foundation, audit log
+- [ ] Coming Soon settings in the dashboard (Arabic and English) with Publish → rebuild
 - [ ] Coming Soon page built and tested (desktop, tablet, mobile)
 - [ ] Optional launch notification (only if approved)
 - [ ] SEO and social metadata for the Coming Soon state

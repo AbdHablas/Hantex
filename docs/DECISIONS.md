@@ -25,11 +25,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
 | D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
 | D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
-| D-017 | Dashboard timing for the Coming Soon page | Proposed | Build the dashboard foundation with the Coming Soon page — awaiting owner's answer |
+| D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
+| D-018 | Launch-notification sign-up | Proposed | Awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order): previous
-Coming Soon project (status and which content is confirmed), roles and
-permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order):
+launch-notification sign-up, roles and permission matrix.
 
 ---
 
@@ -330,3 +330,18 @@ permission matrix.
   collections and finishes **will be set from the dashboard** — none of it
   is hard-coded. Until the owner enters it, the page shows only the brand and
   a neutral "coming soon" message (no dates, specifications or claims).
+
+## D-017 — Dashboard timing for the Coming Soon page
+
+- **Status:** Confirmed — 2026-10-20 (agreed change to the brief's phase order)
+- **Options considered:** build the dashboard foundation together with the
+  Coming Soon page · launch a brand-only page first, dashboard after
+- **Recommended and chosen:** build both together.
+- **Phase 2 scope now includes:** passkey sign-in (invite-only), the roles
+  and permissions foundation, Coming Soon settings in Arabic and English,
+  Publish (which rebuilds the static page), audit log, all behind
+  Cloudflare Access.
+- **Consequences:** the roles and permission matrix must be approved before
+  Phase 2 starts; the full content-management dashboard (products, pages,
+  media) remains Phase 3 and later; the public page stays brand-only until
+  the owner publishes content.
