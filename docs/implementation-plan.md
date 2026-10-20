@@ -15,7 +15,7 @@ approved by the project owner.
 - [x] Rendering strategy — static pages rebuilt on publish (D-006)
 - [x] Database and data access layer — Neon PostgreSQL via Hyperdrive, Drizzle (D-003)
 - [x] Staff sign-in method — passkeys, Workers Free (D-007)
-- [ ] Cloudflare account, plan and domain status (D-008 — waiting for owner)
+- [x] Cloudflare account, plan and domain — Free plan, domain active on Cloudflare (D-008)
 - [ ] File storage, email, monitoring, backups, testing tools
 - [ ] Brand reference analysed (waiting for the reference page)
 - [ ] Initial roles and permission matrix approved

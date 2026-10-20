@@ -59,6 +59,13 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 - No public sign-up; staff accounts are created by invitation.
 - Secrets live in Cloudflare and CI secret stores, never in the repository.
 
+## Domain (confirmed, D-008)
+
+- hantexultra.com is active on the owner's Cloudflare account (Free plan).
+- Canonical address: `https://www.hantexultra.com`; the bare domain redirects
+  to it.
+- No existing website or email on the domain.
+
 ## Cost
 
 Lowest cost (D-005): free tiers first, paid services only with owner
@@ -81,5 +88,5 @@ docs/           Project documentation
 
 ## Pending
 
-Cloudflare account and domain (D-008), email delivery, monitoring and backups,
+Email delivery (D-009), monitoring and backups,
 brand and design system, roles and permission matrix.

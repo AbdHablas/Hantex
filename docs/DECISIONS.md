@@ -16,11 +16,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-005 | Cost principle | Confirmed | Lowest cost: start on free tiers; every paid service needs owner approval |
 | D-006 | Public site rendering | Confirmed | Static pages rebuilt on publish (a few minutes' delay), plus small server endpoints for forms |
 | D-007 | Staff sign-in method and Workers plan | Confirmed | Passwordless: passkeys, emailed codes plus recovery codes for new devices and recovery; Workers Free |
-| D-008 | Cloudflare account, plan and domain | Pending | Waiting for the current state of the account, DNS and existing services |
+| D-008 | Cloudflare account, plan and domain | Confirmed | Cloudflare Free; hantexultra.com active on Cloudflare DNS; no existing website or email; canonical host www |
+| D-009 | Email sending service | Proposed | Resend free tier — awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order): email
-delivery, monitoring and backups, brand reference, roles and permission
-matrix.
+Upcoming decisions (asked one at a time, in roughly this order): monitoring
+and backups, brand reference, roles and permission matrix.
 
 ---
 
@@ -191,8 +191,13 @@ matrix.
 
 ## D-008 — Cloudflare account, plan and domain
 
-- **Status:** Pending — waiting for the owner's information
-- **Needed:** whether a Cloudflare account exists and its plan; whether
-  hantexultra.com already uses Cloudflare DNS (and the registrar if not);
-  anything already running on the domain (website, company email).
-- **Recommended plan:** Cloudflare Free, under D-005.
+- **Status:** Confirmed — 2026-10-20
+- **Facts from the owner:** existing Cloudflare account on the **Free** plan;
+  hantexultra.com is **active on Cloudflare** DNS; **no email** on the domain;
+  **no website** live on the domain.
+- **Consequences:** no DNS migration needed and no existing services to
+  protect; the Coming Soon page can go live without replacing anything.
+  `https://www.hantexultra.com` is the canonical address (per the brief); the
+  bare domain redirects to it. Sending email from the domain needs SPF, DKIM
+  and DMARC records, added only with the owner's approval. Any DNS change
+  is proposed first and applied only after explicit approval.
