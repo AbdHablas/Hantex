@@ -27,7 +27,7 @@ approved by the project owner.
 - [x] Arabic typeface — Readex Pro (D-015)
 - [x] Previous Coming Soon project — never deployed; content set from the dashboard (D-016)
 - [x] Dashboard foundation delivered with the Coming Soon page (D-017)
-- [ ] Launch-notification sign-up (D-018)
+- [x] Launch-notification sign-up — email or WhatsApp (D-018)
 - [ ] Initial roles and permission matrix approved
 - [x] `docs/architecture.md` started from confirmed decisions
 - [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
@@ -41,7 +41,7 @@ approved by the project owner.
 - [ ] Roles and permissions foundation, audit log
 - [ ] Coming Soon settings in the dashboard (Arabic and English) with Publish → rebuild
 - [ ] Coming Soon page built and tested (desktop, tablet, mobile)
-- [ ] Optional launch notification (only if approved)
+- [ ] Launch-notification sign-up (email or WhatsApp) with consent, Turnstile, rate limits
 - [ ] SEO and social metadata for the Coming Soon state
 - [ ] Cloudflare deployment prepared
 - [ ] Owner approval to continue

@@ -26,10 +26,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
 | D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
 | D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
-| D-018 | Launch-notification sign-up | Proposed | Awaiting owner's answer |
+| D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
+| D-019 | Roles and permission matrix | Pending | Waiting for who will use the dashboard |
 
-Upcoming decisions (asked one at a time, in roughly this order):
-launch-notification sign-up, roles and permission matrix.
+Upcoming decisions (asked one at a time): roles and permission matrix —
+the last Phase 1 decision.
 
 ---
 
@@ -345,3 +346,20 @@ launch-notification sign-up, roles and permission matrix.
   Phase 2 starts; the full content-management dashboard (products, pages,
   media) remains Phase 3 and later; the public page stays brand-only until
   the owner publishes content.
+
+## D-018 — Launch-notification sign-up
+
+- **Status:** Confirmed — 2026-10-20
+- **Options considered:** email or WhatsApp · email only · no sign-up
+- **Recommended and chosen:** email **or** WhatsApp number.
+- **Controls:** server-side validation and normalisation, Cloudflare
+  Turnstile, rate limits, honeypot field, duplicate handling without
+  revealing whether an entry exists, explicit consent checkbox with a privacy
+  note (Arabic and English), only the contact value, its type, the consent
+  text version and the time stored; subscriber list, delete and CSV export
+  (formula-injection safe) in the dashboard, each action permission-checked
+  and audited.
+- **Launch-day messages:** email through Resend (batched across days within
+  the free tier, or one month of a paid plan with the owner's approval);
+  WhatsApp numbers contacted manually, or later through a WhatsApp service as
+  a separate decision.
