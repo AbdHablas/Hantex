@@ -22,7 +22,7 @@ approved by the project owner.
 - [x] Database backups — Neon restore plus nightly encrypted exports to R2 (D-010)
 - [x] Monitoring — Cloudflare logs plus email alerts (D-011)
 - [x] Brand reference analysed — `docs/brand-guidelines.md`, icon mark SVGs in `brand/logo/` (D-012)
-- [ ] Brand typeface (D-013 — proposed)
+- [x] Brand typeface — Poppins (D-013)
 - [ ] Website languages and Arabic typeface
 - [ ] Previous Coming Soon project: status and confirmed content
 - [ ] Initial roles and permission matrix approved

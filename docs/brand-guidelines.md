@@ -20,21 +20,19 @@ choice is tracked in [`DECISIONS.md`](DECISIONS.md).
 
 ## Logo files
 
-Extracted directly from the vector artwork inside the brand guidelines PDF —
-not redrawn. Each file was rendered and compared pixel by pixel with the PDF
-(differences limited to anti-aliasing at edges).
+Taken directly from the vector artwork inside the brand guidelines PDF — not
+redrawn. The mark geometry comes from the PDF's vector paths; the lettering
+uses the Poppins glyphs embedded in the PDF, converted to outlines, at their
+exact positions. Each file was rendered and compared pixel by pixel with the
+PDF (differences limited to anti-aliasing).
 
-| File | Use | Source in the guidelines |
-|------|-----|--------------------------|
-| `brand/logo/mark-on-dark.svg` | Icon mark on Graphite or other dark grounds | "On Graphite", cover, construction page |
-| `brand/logo/mark-on-light.svg` | Icon mark on Ice, white or other light grounds | "On Ice"; trademark "Color version" |
-| `brand/logo/mark-mono-light.svg` | Single-colour Ice mark on teal, photos or dark grounds | "Mono Light" |
-| `brand/logo/mark-mono-dark.svg` | Single-colour Graphite mark on light grounds | "Mono Dark" |
+See [`brand/README.md`](../brand/README.md) for the full list: lockup
+(default), icon mark and wordmark, each on dark, on light, mono light and
+mono dark.
 
-The **full lockup** (mark + "Hantex" + tracked "ULTRA") is the default logo
-per the guidelines. Its SVG will be produced once the typeface question is
-settled (D-013), with the lettering converted to outlines so it never depends
-on installed fonts.
+- **Lockup:** mark, then "Hantex" in Poppins Bold above "ULTRA" in Poppins
+  Medium, tracked, in Circuit Teal (Ice on dark, Graphite on light).
+- **Wordmark:** "Hantex" centred above "ULTRA".
 
 ## Mark construction (from the original artwork)
 
@@ -98,8 +96,8 @@ logo itself is exempt from contrast requirements.
 - **What the artwork actually uses:** every page of both PDFs, including the
   trademark sheet's own "Hantex ULTRA" sample, embeds only Poppins.
 
-Decision pending (D-013). Arabic typography is not covered by either
-document.
+**Confirmed (D-013): Poppins** for the wordmark, headings and body, self-hosted.
+Arabic typography is not covered by either document (open question).
 
 ## Discrepancies
 

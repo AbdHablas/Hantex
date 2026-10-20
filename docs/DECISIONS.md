@@ -21,7 +21,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-010 | Database backups | Confirmed | Neon's built-in restore plus nightly encrypted exports to R2 (30 daily, 12 monthly), restore-tested regularly |
 | D-011 | Monitoring and error tracking | Confirmed | Cloudflare Workers logs (no personal data) plus scheduled health and backup checks that alert by email |
 | D-012 | Brand reference | Confirmed | Brand guidelines and trademark sheet (2026) are the sources; icon mark SVGs extracted from the original artwork |
-| D-013 | Brand typeface | Proposed | Poppins (used in all artwork) vs Sora + Inter (trademark sheet text) — awaiting owner's answer |
+| D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
 
 Upcoming decisions (asked one at a time, in roughly this order): website
 languages, Arabic typeface, previous Coming Soon project (status and which
@@ -271,7 +271,7 @@ content is confirmed), roles and permission matrix.
 
 ## D-013 — Brand typeface
 
-- **Status:** Proposed — awaiting the owner's answer
+- **Status:** Confirmed — 2026-10-20
 - **Options:**
   - **A. Poppins** for the wordmark, headings and body (recommended).
   - **B. Sora** for the wordmark and headings, **Inter** for body and
@@ -279,4 +279,8 @@ content is confirmed), roles and permission matrix.
 - **Recommended:** A — every page of both PDFs, including the trademark
   sheet's own wordmark sample, is set in Poppins; one family means fewer
   font files and faster pages.
-- **Owner's choice:** —
+- **Owner's choice:** A — Poppins.
+- **Consequences:** the trademark sheet's Sora/Inter wording is treated as an
+  error for the owner to correct; fonts are self-hosted (no requests to
+  Google); the lockup lettering is converted to outlines from the Poppins
+  glyphs embedded in the guidelines artwork.
