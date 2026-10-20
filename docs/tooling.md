@@ -5,8 +5,6 @@ website or run in production.
 
 | Tool | What it does | Where it's configured | When we use it |
 |------|--------------|-----------------------|----------------|
-| [agent-skills](https://github.com/addyosmani/agent-skills) | Engineering workflow skills (spec, plan, TDD, security, review, ship) | `.claude/skills`, `.claude/agents` | Every phase |
-| Third-party skills | Skills from Strix, Context7, 21st.dev and Graphify | `.claude/skills` (see its README) | As each tool comes into use |
 | [Context7](https://github.com/upstash/context7) | Up-to-date, version-specific library docs for the coding agent | `.mcp.json` (`context7`) | Every phase — before using any framework API |
 | [21st.dev Magic](https://21st.dev/mcp) | Generates UI components from prompts | `.mcp.json` (`magic`) | Phase 2 onwards, as a starting point only — every component is reviewed and restyled to the Hantex Ultra design system |
 | [Graphify](https://github.com/Graphify-Labs/graphify) | Builds a queryable knowledge graph of the codebase | Installed per developer machine (`uv tool install graphifyy`) | Once the codebase is large enough to benefit (Phase 3+) |
