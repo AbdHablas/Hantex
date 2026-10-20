@@ -7,6 +7,7 @@ Decisions are recorded here only once they are confirmed by the project owner.
 | # | Date | Decision | Notes |
 |---|------|----------|-------|
 | 1 | 2026-10-20 | Use the engineering skills from addyosmani/agent-skills as the development workflow | Vendored into `.claude/skills` and `.claude/agents`; upstream hooks and commands not installed |
+| 2 | 2026-10-20 | Development tooling: Context7, 21st.dev Magic, Graphify, Strix | See `docs/tooling.md`. Dev-only; nothing ships to production |
 
 ## Open questions
 
