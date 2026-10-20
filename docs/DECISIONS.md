@@ -15,11 +15,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-004 | Public website framework | Confirmed | Astro |
 | D-005 | Cost principle | Confirmed | Lowest cost: start on free tiers; every paid service needs owner approval |
 | D-006 | Public site rendering | Confirmed | Static pages rebuilt on publish (a few minutes' delay), plus small server endpoints for forms |
-| D-007 | Staff sign-in method and Workers plan | Proposed | Passwordless (passkeys, emailed codes) on Workers Free — awaiting owner's answer |
+| D-007 | Staff sign-in method and Workers plan | Confirmed | Passwordless: passkeys, emailed codes plus recovery codes for new devices and recovery; Workers Free |
+| D-008 | Cloudflare account, plan and domain | Pending | Waiting for the current state of the account, DNS and existing services |
 
-Upcoming decisions (asked one at a time, in roughly this order): Cloudflare
-plan and services, email delivery, monitoring and backups, brand reference,
-roles and permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): email
+delivery, monitoring and backups, brand reference, roles and permission
+matrix.
 
 ---
 
@@ -155,7 +156,7 @@ roles and permission matrix.
 
 ## D-007 — Staff sign-in method and Workers plan
 
-- **Status:** Proposed — awaiting the owner's answer
+- **Status:** Confirmed — 2026-10-20
 - **Options:**
   - **A. Passwordless, on Workers Free (recommended).** Staff sign in with a
     passkey (fingerprint, face or device PIN, on phone or computer). New
@@ -180,6 +181,18 @@ roles and permission matrix.
 - **Common to both:** invite-only accounts, Turnstile on sign-in, database
   rate limits, revocable sessions, Cloudflare Access in front of the
   dashboard, audit log of sign-ins and account changes.
-- **Deviation from the brief if A is chosen:** password hashing and password
-  reset do not apply; recovery is covered by the flow above.
-- **Owner's choice:** —
+- **Deviation from the brief (approved with A):** password hashing and
+  password reset do not apply; recovery is covered by the flow above.
+- **Owner's choice:** A — passkeys, on Workers Free.
+- **Consequences:** an email delivery service is required (invitations,
+  sign-in codes); the dashboard Worker's bundle size is checked in CI against
+  the free plan's limit; if it is exceeded, upgrading to Workers Paid is
+  proposed to the owner.
+
+## D-008 — Cloudflare account, plan and domain
+
+- **Status:** Pending — waiting for the owner's information
+- **Needed:** whether a Cloudflare account exists and its plan; whether
+  hantexultra.com already uses Cloudflare DNS (and the registrar if not);
+  anything already running on the domain (website, company email).
+- **Recommended plan:** Cloudflare Free, under D-005.

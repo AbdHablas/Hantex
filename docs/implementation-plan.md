@@ -14,8 +14,8 @@ approved by the project owner.
 - [x] Cost principle — lowest cost (D-005)
 - [x] Rendering strategy — static pages rebuilt on publish (D-006)
 - [x] Database and data access layer — Neon PostgreSQL via Hyperdrive, Drizzle (D-003)
-- [ ] Staff sign-in method and Workers plan (D-007 — proposed)
-- [ ] Cloudflare plan and available services
+- [x] Staff sign-in method — passkeys, Workers Free (D-007)
+- [ ] Cloudflare account, plan and domain status (D-008 — waiting for owner)
 - [ ] File storage, email, monitoring, backups, testing tools
 - [ ] Brand reference analysed (waiting for the reference page)
 - [ ] Initial roles and permission matrix approved

@@ -41,7 +41,7 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 | Public website | Astro, Tailwind CSS, shared design tokens, custom components |
 | Admin dashboard | React + Vite + TypeScript, Tailwind CSS, shadcn/ui, Lucide |
 | API | Hono on Cloudflare Workers |
-| Authentication | Better Auth — sign-in, sessions, two-factor, invitations; invite-only |
+| Authentication | Better Auth — passwordless: passkeys (`@better-auth/passkey`), emailed one-time codes plus recovery codes for new devices and recovery; invite-only |
 | Authorisation | Own roles and permissions tables, enforced by Hono middleware on every request |
 | Audit log | Own table |
 | Database | PostgreSQL on Neon, via Cloudflare Hyperdrive, standard Postgres driver |
@@ -62,7 +62,8 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 ## Cost
 
 Lowest cost (D-005): free tiers first, paid services only with owner
-approval. The Workers plan is decided together with authentication.
+approval. Workers Free plan (D-007); the dashboard Worker's bundle size is
+checked against the free plan's limit in CI.
 
 ## Planned repository layout
 
@@ -80,6 +81,5 @@ docs/           Project documentation
 
 ## Pending
 
-Staff sign-in method and Workers plan (D-007),
-Cloudflare plan and services, email delivery, monitoring and backups,
+Cloudflare account and domain (D-008), email delivery, monitoring and backups,
 brand and design system, roles and permission matrix.
