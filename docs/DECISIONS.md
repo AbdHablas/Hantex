@@ -14,12 +14,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-003 | Frontend and backend stack | Confirmed | React + Vite admin, Workers + Hono, Neon + Hyperdrive, Drizzle, Better Auth, Tailwind + shadcn/ui + Lucide, Vitest + Playwright, with the recommended adjustments |
 | D-004 | Public website framework | Confirmed | Astro |
 | D-005 | Cost principle | Confirmed | Lowest cost: start on free tiers; every paid service needs owner approval |
-| D-006 | Public site rendering | Proposed | Static pages rebuilt on publish, plus small server endpoints for forms — awaiting owner's answer |
+| D-006 | Public site rendering | Confirmed | Static pages rebuilt on publish (a few minutes' delay), plus small server endpoints for forms |
+| D-007 | Staff sign-in method and Workers plan | Proposed | Passwordless (passkeys, emailed codes) on Workers Free — awaiting owner's answer |
 
-Upcoming decisions (asked one at a time, in roughly this order):
-authentication and MFA (including the Workers plan), Cloudflare plan and
-services, email delivery, monitoring and backups, brand reference, roles and
-permission matrix.
+Upcoming decisions (asked one at a time, in roughly this order): Cloudflare
+plan and services, email delivery, monitoring and backups, brand reference,
+roles and permission matrix.
 
 ---
 
@@ -131,7 +131,7 @@ permission matrix.
 
 ## D-006 — Public site rendering
 
-- **Status:** Proposed — awaiting the owner's answer
+- **Status:** Confirmed — 2026-10-20
 - **Options:**
   - **A. Static pages rebuilt on publish, plus small server endpoints**
     (recommended). Pages are generated ahead of time and served as static
@@ -151,4 +151,35 @@ permission matrix.
   a few minutes) rather than instantly; draft previews are served from the
   protected dashboard side, not the public site; the rebuild needs a
   narrowly scoped deploy credential.
+- **Owner's choice:** A — a few minutes' delay after publishing is acceptable.
+
+## D-007 — Staff sign-in method and Workers plan
+
+- **Status:** Proposed — awaiting the owner's answer
+- **Options:**
+  - **A. Passwordless, on Workers Free (recommended).** Staff sign in with a
+    passkey (fingerprint, face or device PIN, on phone or computer). New
+    devices and recovery use an emailed one-time code plus a single-use
+    recovery code. Invitations are emailed links that set up the first
+    passkey. Better Auth `@better-auth/passkey` (SimpleWebAuthn) and
+    `email-otp` plugins.
+  - **B. Password plus authenticator app, on Workers Paid.** Familiar
+    password sign-in with a second factor from an authenticator app;
+    password reset by email. Needs Workers Paid (about US$5/month) because
+    password hashing exceeds the free plan's per-request CPU limit.
+- **Recommended:** A.
+- **Advantages of A:** US$0; passkeys cannot be phished or reused from
+  other sites' breaches; nothing to hash, store or leak as a password;
+  verification is fast enough for the free plan.
+- **Disadvantages of A:** less familiar to staff; each staff member needs a
+  device with a screen lock (any modern phone or computer); recovery relies
+  on email plus recovery codes, with an audited reset by a Super
+  Administrator as the last resort; if the dashboard's server code outgrows
+  the free plan's Worker size limit, Workers Paid is needed anyway (bundle
+  size is checked during the build).
+- **Common to both:** invite-only accounts, Turnstile on sign-in, database
+  rate limits, revocable sessions, Cloudflare Access in front of the
+  dashboard, audit log of sign-ins and account changes.
+- **Deviation from the brief if A is chosen:** password hashing and password
+  reset do not apply; recovery is covered by the flow above.
 - **Owner's choice:** —

@@ -21,8 +21,18 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
                          Cloudflare R2 (images and documents)
 ```
 
-How the public site gets its content (static rebuild or per-request
-rendering) is *pending* — see D-006.
+## Public site rendering (confirmed, D-006)
+
+- Pages are generated at build time and served as static files — no code
+  runs and no database is queried on a page view.
+- Publishing in the dashboard triggers an automatic rebuild and deploy; changes
+  appear after a few minutes. Scheduled publishing triggers the same rebuild.
+- Forms (contact, inquiries, launch sign-up) post to small server endpoints
+  protected by Turnstile and rate limits, using a database user that can only
+  insert submissions.
+- Draft previews are rendered on the protected dashboard side, never on the
+  public site.
+- Any single page can later be switched to server rendering if needed.
 
 ## Stack (confirmed)
 
@@ -70,6 +80,6 @@ docs/           Project documentation
 
 ## Pending
 
-Rendering strategy (D-006), authentication details and Workers plan,
+Staff sign-in method and Workers plan (D-007),
 Cloudflare plan and services, email delivery, monitoring and backups,
 brand and design system, roles and permission matrix.

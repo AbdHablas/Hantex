@@ -12,9 +12,9 @@ approved by the project owner.
 - [x] Frontend and backend stack (D-003)
 - [x] Public website framework — Astro (D-004)
 - [x] Cost principle — lowest cost (D-005)
-- [ ] Rendering strategy (D-006 — proposed)
+- [x] Rendering strategy — static pages rebuilt on publish (D-006)
 - [x] Database and data access layer — Neon PostgreSQL via Hyperdrive, Drizzle (D-003)
-- [ ] Authentication details, MFA and Workers plan (Better Auth chosen in D-003)
+- [ ] Staff sign-in method and Workers plan (D-007 — proposed)
 - [ ] Cloudflare plan and available services
 - [ ] File storage, email, monitoring, backups, testing tools
 - [ ] Brand reference analysed (waiting for the reference page)
