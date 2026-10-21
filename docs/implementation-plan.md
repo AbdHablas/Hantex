@@ -28,7 +28,7 @@ approved by the project owner.
 - [x] Previous Coming Soon project — never deployed; content set from the dashboard (D-016)
 - [x] Dashboard foundation delivered with the Coming Soon page (D-017)
 - [x] Launch-notification sign-up — email or WhatsApp (D-018)
-- [ ] Initial roles and permission matrix approved
+- [ ] Initial roles and permission matrix approved (D-019 — proposed in `docs/roles-and-permissions.md`)
 - [x] `docs/architecture.md` started from confirmed decisions
 - [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 

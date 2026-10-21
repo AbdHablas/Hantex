@@ -27,7 +27,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
 | D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
 | D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
-| D-019 | Roles and permission matrix | Pending | Waiting for who will use the dashboard |
+| D-019 | Roles and permission matrix | Proposed | Six roles for the owner plus 2–5 staff — see `docs/roles-and-permissions.md`; awaiting approval |
 
 Upcoming decisions (asked one at a time): roles and permission matrix —
 the last Phase 1 decision.
@@ -363,3 +363,15 @@ the last Phase 1 decision.
   the free tier, or one month of a paid plan with the owner's approval);
   WhatsApp numbers contacted manually, or later through a WhatsApp service as
   a separate decision.
+
+## D-019 — Roles and permission matrix
+
+- **Status:** Proposed — awaiting the owner's approval
+- **Input:** the owner plus about 2–5 staff will use the dashboard in the
+  first year.
+- **Proposal:** six roles — Owner, Administrator, Content Manager, Sales &
+  Enquiries, Editor, Viewer — with the matrix and rules in
+  `docs/roles-and-permissions.md` (server-side checks on every request, no
+  self-promotion, no granting permissions one does not hold, last Owner
+  protected, audited changes, owner-only site mode).
+- **Owner's choice:** —
