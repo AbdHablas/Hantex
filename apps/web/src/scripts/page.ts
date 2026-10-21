@@ -15,14 +15,47 @@ if (countdown) {
     for (const [unit, ms] of Object.entries(units)) {
       const value = Math.floor(left / ms);
       left -= value * ms;
-      const cell = countdown.querySelector(`[data-unit="${unit}"]`);
-      if (cell) cell.textContent = String(value).padStart(unit === 'days' ? 1 : 2, '0');
+      const cell = countdown.querySelector<HTMLElement>(`[data-unit="${unit}"]`);
+      const text = String(value).padStart(unit === 'days' ? 1 : 2, '0');
+      if (cell && cell.textContent !== text) {
+        cell.textContent = text;
+        // Restart the digit animation (styles skip it when motion is reduced).
+        cell.classList.remove('tick');
+        void cell.offsetWidth;
+        cell.classList.add('tick');
+      }
     }
   };
   if (Number.isFinite(target)) {
     tick();
     setInterval(tick, 1000);
   }
+}
+
+/* Sections fade in as they scroll into view, where CSS scroll-driven animations are missing. */
+const reveals = document.querySelectorAll<HTMLElement>('.reveal');
+if (
+  reveals.length > 0 &&
+  'IntersectionObserver' in window &&
+  !CSS.supports('animation-timeline: view()') &&
+  !matchMedia('(prefers-reduced-motion: reduce)').matches
+) {
+  // Sections already on screen show at once, so nothing visible flickers.
+  for (const el of reveals) {
+    if (el.getBoundingClientRect().top < innerHeight) el.classList.add('is-visible');
+  }
+  document.documentElement.classList.add('reveal-ready');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -10% 0px' },
+  );
+  for (const el of reveals) if (!el.classList.contains('is-visible')) observer.observe(el);
 }
 
 /* Launch sign-up (D-018): email or WhatsApp, with consent and Cloudflare Turnstile. */
@@ -46,6 +79,22 @@ const form = document.querySelector<HTMLFormElement>('[data-signup]');
 if (form) {
   const message = form.querySelector<HTMLElement>('.message');
   const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const buttonLabel = form.querySelector<HTMLElement>('[data-button-label]');
+  const input = form.querySelector<HTMLInputElement>('#contact');
+  const inputLabel = form.querySelector<HTMLElement>('[data-contact-label]');
+
+  // Email or WhatsApp: only the field's hints change; the server accepts either in one field.
+  form.addEventListener('change', (event) => {
+    const radio = event.target as HTMLInputElement;
+    if (radio.name !== 'method' || !input) return;
+    const whatsapp = radio.value === 'whatsapp';
+    form.dataset['method'] = whatsapp ? 'whatsapp' : 'email';
+    input.inputMode = whatsapp ? 'tel' : 'email';
+    input.autocomplete = whatsapp ? 'tel' : 'email';
+    input.placeholder = radio.dataset['placeholder'] ?? '';
+    if (inputLabel) inputLabel.textContent = radio.dataset['label'] ?? '';
+    if (message) message.textContent = '';
+  });
   const messages = JSON.parse(message?.dataset['messages'] ?? '{}') as Record<string, string>;
   let token = '';
   let widget: string | undefined;
@@ -92,10 +141,9 @@ if (form) {
     if (!contact.ok) return say(contact.error, 'error');
     if (data.get('consent') !== 'on') return say('consent-required', 'error');
     if (!token) return say('captcha-failed', 'error');
-    if (button) {
-      button.disabled = true;
-      button.textContent = button.dataset['sending'] ?? '';
-    }
+    if (button) button.disabled = true;
+    if (buttonLabel) buttonLabel.textContent = button?.dataset['sending'] ?? '';
+    form.dataset['state'] = 'sending';
     fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -111,6 +159,7 @@ if (form) {
         const body = (await response.json().catch(() => ({}))) as { error?: string };
         if (response.ok) {
           form.reset();
+          form.dataset['state'] = 'done';
           say('thanks', 'success');
         } else {
           say(body.error ?? 'request-error', 'error');
@@ -120,10 +169,9 @@ if (form) {
       .finally(() => {
         token = '';
         window.turnstile?.reset(widget);
-        if (button) {
-          button.disabled = false;
-          button.textContent = button.dataset['label'] ?? '';
-        }
+        if (form.dataset['state'] === 'sending') delete form.dataset['state'];
+        if (button) button.disabled = false;
+        if (buttonLabel) buttonLabel.textContent = button?.dataset['label'] ?? '';
       });
   });
 }

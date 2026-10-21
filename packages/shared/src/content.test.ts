@@ -37,6 +37,35 @@ describe('Coming Soon content', () => {
     expect(comingSoonSchema.safeParse(many).success).toBe(false);
   });
 
+  it('lists only the stated product categories, titles only, and no FAQ answers', () => {
+    const content = comingSoonSchema.parse(DEFAULT_COMING_SOON);
+    expect(content.categories.map((c) => c.title.en)).toEqual([
+      'Switches',
+      'Sockets',
+      'Lighting',
+      'Lamps',
+      'Accessories',
+    ]);
+    expect(content.categories.every((c) => c.text.ar === '' && c.text.en === '')).toBe(true);
+    expect(content.faq).toEqual([]);
+  });
+
+  it('reads content saved before categories and FAQ existed as having none', () => {
+    const { categories: _categories, faq: _faq, ...older } = DEFAULT_COMING_SOON;
+    const content = comingSoonSchema.parse(older);
+    expect(content.categories).toEqual([]);
+    expect(content.faq).toEqual([]);
+  });
+
+  it('only accepts the category icons the site can draw', () => {
+    const icon = (value: string) => ({
+      ...DEFAULT_COMING_SOON,
+      categories: [{ icon: value, title: { ar: 'م', en: 'm' }, text: { ar: '', en: '' } }],
+    });
+    expect(comingSoonSchema.safeParse(icon('socket')).success).toBe(true);
+    expect(comingSoonSchema.safeParse(icon('<svg onload>')).success).toBe(false);
+  });
+
   it('rejects impossible milestone dates and unknown fields', () => {
     const bad = {
       ...DEFAULT_COMING_SOON,

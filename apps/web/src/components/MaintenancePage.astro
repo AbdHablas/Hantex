@@ -2,6 +2,7 @@
 import type { Locale } from '@hantex/shared';
 import { TEXT, dirOf } from '../i18n';
 import { SITE } from '../site-data';
+import Icon from './Icon.astro';
 import '../styles/site.css';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 const { locale } = Astro.props;
 const t = TEXT[locale];
 const siteName = SITE.site.name[locale] || SITE.site.name.ar;
+const email = SITE.settings.contact.email;
 ---
 
 <!doctype html>
@@ -17,16 +19,37 @@ const siteName = SITE.site.name[locale] || SITE.site.name.ar;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="robots" content="noindex" />
     <title>{siteName} — {t.maintenanceTitle}</title>
     {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
     <link rel="stylesheet" href="/theme.css" />
+    <script src="../scripts/theme.ts"></script>
   </head>
   <body>
-    <main class="hero container">
-      {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p>{siteName}</p>}
-      <h1>{t.maintenanceTitle}</h1>
-      <p class="intro">{t.maintenanceText}</p>
+    <main class="maintenance">
+      <div class="hero-bg" aria-hidden="true">
+        <span class="hero-lines"></span>
+        <span class="orb orb-a"></span>
+      </div>
+      <div class="maintenance-card rise">
+        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p class="footer-name">{siteName}</p>}
+        <div>
+          <span class="maintenance-icon">
+            <Icon name="accessory" />
+          </span>
+        </div>
+        <h1>{t.maintenanceTitle}</h1>
+        <p>{t.maintenanceText}</p>
+        {
+          email && (
+            <a class="maintenance-contact" href={`mailto:${email}`} dir="ltr">
+              <Icon name="mail" />
+              {email}
+            </a>
+          )
+        }
+      </div>
     </main>
   </body>
 </html>

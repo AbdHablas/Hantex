@@ -62,6 +62,16 @@ await db.insert(documentVersions).values([
       showCountdown: true,
       milestones: [{ date: '2026-10-01', title: { ar: 'التصميم', en: 'Design' }, done: true }],
       highlights: [{ title: { ar: 'ميزة', en: 'Feature' }, text: { ar: 'نص', en: 'Text' } }],
+      categories: [
+        { icon: 'switch', title: { ar: 'مفاتيح', en: 'Switches' }, text: { ar: '', en: '' } },
+        { icon: 'socket', title: { ar: 'مقابس', en: 'Sockets' }, text: { ar: '', en: '' } },
+      ],
+      faq: [
+        {
+          question: { ar: 'سؤال تجريبي؟', en: 'A test question?' },
+          answer: { ar: 'جواب تجريبي.', en: 'A test answer.' },
+        },
+      ],
     },
   },
   {
@@ -71,6 +81,7 @@ await db.insert(documentVersions).values([
     data: {
       ...DEFAULT_SITE_SETTINGS,
       contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'hello@example.test' },
+      social: { ...DEFAULT_SITE_SETTINGS.social, instagram: 'https://instagram.com/example' },
       privacy: {
         note: { ar: 'ملاحظة خصوصية للاختبار.', en: 'A test privacy note.' },
         url: 'https://www.hantexultra.com/privacy',
