@@ -43,8 +43,19 @@ marked **Confirmed** once the project owner has approved it.
 | D-032 | Typography system | Confirmed | Named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
 | D-033 | Custom fonts | Confirmed | Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
 | D-034 | Component system across dashboard and public sites | Confirmed | Shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
+| D-035 | Website builder model | Pending | Proposed: a structured section registry with validated settings and a page editor with live device preview; no free HTML, CSS or scripts — see `docs/website-builder.md` |
+| D-036 | Builder editing libraries | Pending | Proposed: dnd-kit for drag and drop (keyboard accessible), Tiptap for limited rich text stored as JSON |
+| D-037 | Publishing model for the builder | Pending | Proposed: drafts per item, one *Publish changes* per site with validation, versions, rollback and automatic redirects |
+| D-038 | Shared templates and global sections | Pending | Proposed: platform templates copied into a site when used; global sections shared within one site only |
+| D-039 | Builder scope and order | Pending | Proposed: Phase 3a builder core without media, 3b media library, 3c product catalogue; Coming Soon stays a site mode |
+| D-040 | Launch announcement to sign-ups | Pending | Not yet proposed |
+| D-041 | Privacy policy page | Pending | Not yet proposed |
+| D-042 | Visitor statistics | Pending | Not yet proposed |
+| D-043 | Automated accessibility checks | Pending | Proposed: axe-core in the browser tests |
 
-All open decisions are settled. Next: the typography system (D-032).
+Open: D-035 to D-043 (website builder, launch announcement, privacy policy,
+statistics, accessibility checks), asked one at a time. Builder work waits
+until D-035 to D-039 are confirmed.
 
 ---
 
@@ -822,4 +833,89 @@ All open decisions are settled. Next: the typography system (D-032).
 - **Consequences:** each public component has a matching dashboard preview
   using the same tokens; the strict security policy stays (no inline scripts
   or styles).
+
+## D-035 — Website builder model
+
+- **Status:** Pending
+- **Requirement (owner):** create and manage several independent websites;
+  pages, sections and menus managed visually, previewed on phone, tablet and
+  desktop, and published without code (`docs/website-builder.md`).
+- **Options:** (a) our own structured section registry: each section type
+  has a validated settings schema, a site renderer and a dashboard form; a
+  page editor with a section list (drag to reorder), a settings panel and the
+  real site shown in a device-sized preview · (b) an open-source visual page
+  builder such as Puck, which edits React components on a canvas · (c) a
+  free-form builder such as GrapesJS, which stores HTML and CSS.
+- **Recommended:** (a). It keeps the public sites static and fast (D-034), the
+  preview is the real site, bilingual fields and right-to-left layout are
+  built in, and nothing free-form reaches the pages, so the strict security
+  policy holds. (b) would mean maintaining every section twice (React for the
+  editor, Astro for the sites). (c) stores free HTML and CSS, which the
+  security rules forbid.
+- **Consequences:** the dashboard's security policy allows framing the
+  sites' preview address, and the preview allows being framed only by the
+  dashboard's address.
+
+## D-036 — Builder editing libraries
+
+- **Status:** Pending
+- **Options:** dnd-kit (drag and drop, works with keyboard and screen readers,
+  MIT) · Tiptap (rich text on ProseMirror, MIT) stored as JSON and rendered by
+  our own code · or buttons only (move up/down) and plain text with line
+  breaks, adding no libraries.
+- **Recommended:** dnd-kit and Tiptap, limited to headings, bold, italic,
+  lists and links. Both are widely used, free and work with the strict
+  security policy (to be verified in the browser tests).
+
+## D-037 — Publishing model for the builder
+
+- **Status:** Pending
+- **Options:** (a) drafts per item (page, menu, theme, settings) and one
+  *Publish changes* per site that validates everything changed, records
+  versions and rebuilds once · (b) each page publishes on its own, one
+  rebuild per publish.
+- **Recommended:** (a): related changes (a new page and its menu link) go live
+  together, there is one rebuild, and validation sees the whole site. Rollback
+  per item stays available. Changed slugs and unpublished pages get redirects.
+
+## D-038 — Shared templates and global sections
+
+- **Status:** Pending
+- **Options for templates shared across websites:** copied into the site
+  when used (later template changes never affect existing sites) · linked
+  with per-site overrides (template changes flow into every site using them).
+- **Recommended:** copied. Within one website, global sections (header,
+  footer and saved sections) are linked, so editing one updates every page of
+  that site. Nothing is ever linked across websites.
+
+## D-039 — Builder scope and order
+
+- **Status:** Pending
+- **Proposed:** Phase 3a builds the essential builder without media (guided
+  new website, duplicate website, pages, sections without images, header and
+  footer menus, publish changes, device preview). Phase 3b adds the media
+  library on R2, logo and image uploads and image sections. Phase 3c adds the
+  product catalogue and product sections; 3D follows in Phase 4. The Coming
+  Soon page remains a site mode: built pages go public only when the owner
+  switches a site to live.
+
+## D-040 — Launch announcement to sign-ups
+
+- **Status:** Pending — to be proposed
+
+## D-041 — Privacy policy page
+
+- **Status:** Pending — to be proposed
+
+## D-042 — Visitor statistics
+
+- **Status:** Pending — to be proposed
+
+## D-043 — Automated accessibility checks
+
+- **Status:** Pending
+- **Proposed:** add `@axe-core/playwright` (MPL 2.0, free) to the browser
+  tests of the dashboard and the public sites, failing on serious and
+  critical problems in Arabic and English, light and dark. The owner stopped
+  its installation once (2026-10-21), so it waits for an explicit choice.
 

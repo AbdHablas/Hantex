@@ -19,6 +19,7 @@ prepared; nothing is live yet. Next: Phase 3 (media, product catalogue and the
 - [`docs/3d-product-studio.md`](docs/3d-product-studio.md): AI 3D Product Studio, with options, costs, storage and limitations
 - [`docs/theming.md`](docs/theming.md): light/dark modes, per-site themes, typography and the design system
 - [`docs/dashboard-navigation.md`](docs/dashboard-navigation.md): how the dashboard's menus are organised
+- [`docs/website-builder.md`](docs/website-builder.md): website builder and multi-website management (proposed)
 - [`docs/brand-guidelines.md`](docs/brand-guidelines.md): brand, colours, logo
 - [`docs/roles-and-permissions.md`](docs/roles-and-permissions.md): dashboard roles and permissions
 - [`docs/security.md`](docs/security.md): security controls and risks

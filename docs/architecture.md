@@ -76,6 +76,13 @@ catalogue, sign-ups and enquiries. Shared across all sites:
 New sites are created in the dashboard by the Owner and start in Coming Soon
 mode. Details: [`multi-site.md`](multi-site.md).
 
+## Website builder (D-035 to D-039, proposed)
+
+Pages, sections and menus per website, built from a structured section
+registry with validated settings and previewed on the real site at phone,
+tablet and desktop widths. Details, minimum scope and acceptance criteria:
+[`website-builder.md`](website-builder.md).
+
 ## Product catalogue (D-026 confirmed)
 
 Each site has its own catalogue:

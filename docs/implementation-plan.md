@@ -114,20 +114,52 @@ Next:
 - [ ] Mixed Arabic/English text isolated correctly (product names, model numbers, prices, specifications); icons mirrored only where direction matters
 - [ ] Every major page checked in Arabic and English, light and dark, phone to desktop
 
-## Phase 3: Content, catalogue, media and 3D Studio foundation (dashboard)
+## Phase 3: Website builder, media, catalogue and 3D Studio foundation (dashboard)
+
+Multi-website management is foundational: every module below works on the
+website chosen in the switcher, and nothing is specific to Hantex Ultra
+([`website-builder.md`](website-builder.md)).
+
+### 3a. Website builder core *(waiting for D-035 to D-039)*
+
+- [ ] Section registry (`packages/sections`): typed, validated settings;
+      site renderers and dashboard forms; responsive by design
+- [ ] Pages: create, rename, duplicate, reorder, hide/show, publish/unpublish,
+      delete; slug, SEO and sharing fields; home page; parent page
+- [ ] Section editor: add, remove, reorder, duplicate, hide per device;
+      live preview at phone, tablet and desktop widths
+- [ ] Sections without media: hero, rich text, features, call to action, FAQ,
+      statistics, contact, newsletter sign-up, category list, divider
+- [ ] Global sections per site: header, footer, saved sections
+- [ ] Menus: header and footer; links to pages and addresses; dropdowns
+- [ ] Publish changes: validation, versions, rollback, redirects for changed
+      slugs; one rebuild per site
+- [ ] Guided *New website*; duplicate a website; templates copied on use
+- [ ] Site engine renders pages, menus and sections; Coming Soon stays a mode
+- [ ] Tests: isolation, permissions, validation, publishing, builder
+      workflow in the browser, responsive at 360/768/1024/1440 px
+- [ ] **Acceptance:** a second website created, customised and published
+      without code; the first website unchanged
+
+### 3b. Media
 
 - [ ] Media library on R2:
   - private uploads with signed links;
   - image processing and metadata removal;
   - SVG sanitiser;
-  - font library uploads;
+  - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).
+- [ ] Image, gallery, video and image-and-text sections; sharing images per page
+
+### 3c. Catalogue and studio
+
 - [ ] Product catalogue (D-026):
   - categories, with switches and sockets first;
   - series, products, variants and finishes;
   - attributes and documents;
   - CSV/Excel import and export.
-- [ ] Pages and navigation built from blocks; news and FAQs if wanted
+- [ ] Product sections: grids, featured collections, carousels,
+      specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site
 - [ ] 3D Product Studio, stage 1 (D-029):
   - captures and capture checks;
