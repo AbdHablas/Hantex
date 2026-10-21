@@ -50,7 +50,7 @@ admin.hantexultra.com ── Cloudflare Access (second lock)
 | Admin dashboard | React + Vite + TypeScript, Tailwind CSS, shadcn/ui, Lucide |
 | API | Hono on Cloudflare Workers |
 | Authentication | Better Auth, passwordless: passkeys (`@better-auth/passkey`), with emailed one-time codes plus recovery codes for new devices and recovery; invite-only |
-| Authorisation | Six standard roles in a dashboard-editable matrix; permissions enforced by Hono middleware on every request, per site (D-025 pending) |
+| Authorisation | Six standard roles in a dashboard-editable matrix; permissions enforced by Hono middleware on every request, per site, with an "all sites" option (D-025) |
 | Audit log | Own table; every entry records its site |
 | Database | PostgreSQL 18 on Neon, via Cloudflare Hyperdrive, standard Postgres driver |
 | Data access | Drizzle ORM with versioned migrations |
@@ -180,6 +180,5 @@ docs/               Project documentation
 
 ## Pending
 
-- D-025: where staff roles apply (per site or all sites).
 - D-030: 3D processing location, provider choice and budget.
 - Approval of the proposed designs: D-024 to D-029.

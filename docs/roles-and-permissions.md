@@ -106,13 +106,13 @@ The matrix is managed from the dashboard, not fixed in code:
 
 The matrix editor is part of the Phase 2 dashboard foundation.
 
-## Several websites (D-024; access model pending, D-025)
+## Several websites (D-024; per-site roles confirmed, D-025)
 
 The dashboard now manages any number of websites ([`multi-site.md`](multi-site.md)).
-Role definitions (the matrix above) stay shared by all sites. What is still
-open is **where a role applies**:
+Role definitions (the matrix above) stay shared by all sites. The owner
+chose option A for **where a role applies** (2026-10-21):
 
-- **A. Per site, with an "all sites" option (recommended).**
+- **A. Per site, with an "all sites" option (chosen).**
   - A person's role is assigned for one site, or for all sites.
   - Owners always cover all sites.
   - *Staff* and *Audit log* rows apply within the sites the assignment

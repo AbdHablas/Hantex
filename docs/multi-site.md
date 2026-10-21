@@ -1,8 +1,8 @@
 # Multi-website platform
 
 **Status:** the requirement was confirmed by the owner on 2026-10-21 (D-024).
-The design below is **Proposed** until the owner approves it. Staff access
-across websites is an open question (D-025), and the hosting design is
+The design below is **Proposed** until the owner approves it. Staff roles
+are assigned per website (D-025, confirmed), and the hosting design is
 proposed in D-028. Nothing in this document is built yet.
 
 ## Requirement (owner, 2026-10-21)
@@ -74,9 +74,9 @@ are never deleted silently.
 
   A record that belongs to another site is answered as "not found".
 
-## Staff access across sites (D-025, pending)
+## Staff access across sites (D-025, confirmed: option A)
 
-- **A. Per site, with an "all sites" option (recommended).** Each staff
+- **A. Per site, with an "all sites" option (chosen by the owner).** Each staff
   member gets a role on each site they work on, for example Content Manager
   on Hantex Ultra and Viewer on another site, or one role covering all sites.
   Owners always cover all sites. This is least privilege: staff of one brand

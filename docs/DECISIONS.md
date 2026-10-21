@@ -33,15 +33,15 @@ marked **Confirmed** once the project owner has approved it.
 | D-022 | Central appearance customisation | Confirmed | Dashboard theme editor driving design tokens for all public sites; logo colours adjustable behind a brand warning |
 | D-023 | Latest versions policy | Confirmed | Latest stable release of every platform and library: Node.js 26, pnpm 12, PostgreSQL 18; recorded exceptions (TypeScript 6.0 until the lint tools support 7) |
 | D-024 | Multi-website platform | Confirmed (requirement) · design Proposed | One dashboard manages any number of sites, each with its own branding, design, content, products and configuration — see `docs/multi-site.md` |
-| D-025 | Staff access across websites | Pending | Recommended: roles assigned per site, with an "all sites" option |
+| D-025 | Staff access across websites | Confirmed | Roles assigned per site, with an "all sites" option; Owners always cover all sites |
 | D-026 | Product-focused catalogue | Confirmed (requirement) · structure Proposed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
 | D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
 | D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Pending | Needs the owner's input: CAD files, capture equipment, budget for paid AI services |
 
-Next: the owner's answers to D-025 and D-030, and approval of the proposed
-designs (D-024 to D-029), before development continues.
+Next: the owner's answers to D-030, and approval of the proposed designs
+(D-024, D-026 to D-029), before development continues.
 
 ---
 
@@ -536,7 +536,7 @@ designs (D-024 to D-029), before development continues.
 
 ## D-025 — Staff access across websites
 
-- **Status:** Pending — the owner's choice
+- **Status:** Confirmed — 2026-10-21 (owner chose A)
 - **Options:**
   - **A. Per site, with an "all sites" option (recommended).** A role is
     assigned for one site, or for all sites. Owners always cover all sites.
@@ -546,6 +546,7 @@ designs (D-024 to D-029), before development continues.
   - least privilege: staff of one brand never see another site's customers;
   - flexible as more sites are added;
   - no change for Owners.
+- **Owner's choice:** A, per site with an "all sites" option.
 - **Trade-off:** inviting someone means choosing their sites, and there are
   more cases to test. Details in `docs/multi-site.md` and
   `docs/roles-and-permissions.md`.

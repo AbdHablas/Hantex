@@ -12,7 +12,7 @@ reflected in this plan and in the documents listed.
 
 | Requirement | Decision | Document |
 |-------------|----------|----------|
-| The dashboard manages any website the owner creates, each with its own branding, design, content, products and configuration | D-024 (design proposed), D-025 (pending), D-028 (proposed) | [`multi-site.md`](multi-site.md) |
+| The dashboard manages any website the owner creates, each with its own branding, design, content, products and configuration | D-024 (design proposed), D-025 (confirmed: per site), D-028 (proposed) | [`multi-site.md`](multi-site.md) |
 | Product-focused catalogue: switches and sockets first; lighting, lamps, accessories | D-026 (structure proposed) | [`product-catalogue.md`](product-catalogue.md) |
 | SVG design system with light/dark and adaptable colours per site; central customisation without code; new sites, brands, themes, fonts and palettes without rebuilding | D-027 (design proposed) | [`theming.md`](theming.md) |
 | Latest versions of every platform | D-023 (confirmed) | [`development.md`](development.md) |
@@ -59,7 +59,8 @@ Done:
 
 Next:
 
-- [ ] Owner's answers: D-025 (staff access) and D-030 (3D inputs). Approval of D-024 and D-026 to D-029.
+- [x] Staff access across websites: roles per site, with an "all sites" option (D-025)
+- [ ] Owner's answers: D-030 (3D inputs). Approval of D-024 and D-026 to D-029.
 - [ ] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18, patch updates
 - [ ] Database made site-aware (D-024, D-025):
   - sites and site domains;
