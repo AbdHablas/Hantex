@@ -34,7 +34,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-023 | Latest versions policy | Confirmed | Latest stable release of every platform and library: Node.js 26, pnpm 12, PostgreSQL 18; recorded exceptions (TypeScript 6.0 until the lint tools support 7) |
 | D-024 | Multi-website platform | Confirmed | One dashboard manages any number of sites, each with its own branding, design, content, products and configuration — see `docs/multi-site.md` |
 | D-025 | Staff access across websites | Confirmed | Roles assigned per site, with an "all sites" option; Owners always cover all sites |
-| D-026 | Product-focused catalogue | Confirmed (requirement) · structure Proposed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
+| D-026 | Product-focused catalogue | Confirmed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
 | D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
 | D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
@@ -553,13 +553,13 @@ development continues.
 
 ## D-026 — Product-focused catalogue
 
-- **Status:** Confirmed (requirement) — 2026-10-21 · structure Proposed
+- **Status:** Confirmed — 2026-10-21 (requirement and structure; structure approved by the owner the same day)
 - **Requirement (owner):** Hantex Ultra is a brand specialising in
   electrical switches, sockets, lighting, lamps and related accessories.
   Switches and sockets are the main
   categories and lead the product structure, navigation, categorisation and
   presentation. Lamps, lighting and accessories are also supported.
-- **Proposed structure** (`docs/product-catalogue.md`):
+- **Structure** (`docs/product-catalogue.md`, approved 2026-10-21):
   - categories, as a tree with *main* categories;
   - series (design lines);
   - products, with variants usually by finish;

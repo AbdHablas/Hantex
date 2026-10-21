@@ -1,7 +1,7 @@
 # Product catalogue: switches and sockets first
 
-**Status:** the requirement was confirmed by the owner on 2026-10-21 (D-026).
-The structure below is **Proposed**. The dashboard side is built in Phase 3
+**Status:** Confirmed by the owner on 2026-10-21, both the requirement and the
+structure below (D-026). No prices or online ordering. The dashboard side is built in Phase 3
 and the public pages in Phase 4. Nothing is built yet.
 
 ## Business context

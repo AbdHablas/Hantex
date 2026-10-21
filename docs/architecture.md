@@ -77,7 +77,7 @@ catalogue, sign-ups and enquiries. Shared across all sites:
 New sites are created in the dashboard by the Owner and start in Coming Soon
 mode. Details: [`multi-site.md`](multi-site.md).
 
-## Product catalogue (D-026 confirmed; structure proposed)
+## Product catalogue (D-026 confirmed)
 
 Each site has its own catalogue:
 
@@ -180,4 +180,4 @@ docs/               Project documentation
 
 ## Pending
 
-- Approval of the proposed designs: D-026 to D-029.
+- Approval of the proposed designs: D-027 to D-029.
