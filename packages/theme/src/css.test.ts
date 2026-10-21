@@ -44,7 +44,7 @@ describe('themeToCss', () => {
 
   it('puts the Latin font first so Arabic falls back to the Arabic font per character', () => {
     const css = themeToCss(brandTheme);
-    expect(css).toContain(`--hx-font-family: "Poppins", "Readex Pro", system-ui, sans-serif;`);
+    expect(css).toContain(`--hx-font-family: "Poppins", "Cairo", system-ui, sans-serif;`);
   });
 
   it('derives a type scale, radii and motion timing from the settings', () => {

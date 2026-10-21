@@ -37,7 +37,7 @@ reflected in this plan and in the documents listed.
 - [x] Brand reference analysed: `docs/brand-guidelines.md`, icon mark SVGs in `brand/logo/` (D-012)
 - [x] Brand typeface: Poppins (D-013)
 - [x] Website languages: Arabic (default, RTL) and English (D-014)
-- [x] Arabic typeface: Readex Pro (D-015)
+- [x] Arabic typeface: Readex Pro (D-015), replaced by Cairo (D-031)
 - [x] Previous Coming Soon project: never deployed; content set from the dashboard (D-016)
 - [x] Dashboard foundation delivered with the Coming Soon page (D-017)
 - [x] Launch-notification sign-up: email or WhatsApp (D-018)
@@ -105,9 +105,9 @@ Next:
 - [x] Phase 2 report: [`phase-2-report.md`](phase-2-report.md)
 - [ ] Owner approval to continue, and to start the first deployment
 
-## Frontend quality and typography *(core requirement; waiting for D-031 to D-034)*
+## Frontend quality and typography *(core requirement; D-031 confirmed, waiting for D-032 to D-034)*
 
-- [ ] Arabic typeface switched to the confirmed choice, on the public sites and the dashboard (D-031)
+- [x] Arabic typeface switched to Cairo, self-hosted, on the public sites and the dashboard (D-031)
 - [ ] Typography & Fonts section per site: text styles, Arabic and Latin families, sizes, weights, line heights, letter spacing, presets, preview, publish, revert (D-032)
 - [ ] Custom font uploads, if approved (D-033; needs R2 media storage)
 - [ ] Shared component system: tokens shared; dashboard components; public Astro components with islands; product cards, navigation, filters, search, gallery and 3D viewer for product pages (D-034, with Phase 3 catalogue)

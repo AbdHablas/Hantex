@@ -1,5 +1,5 @@
 /**
- * Curated, self-hosted font library (D-013, D-015, D-022). Administrators can only pick fonts
+ * Curated, self-hosted font library (D-013, D-022, D-031). Administrators can only pick fonts
  * from this list; adding one is a reviewed code change (licence check, files from @fontsource).
  */
 export type Script = 'latin' | 'arabic';
@@ -26,6 +26,13 @@ export const FONT_LIBRARY = {
     scripts: ['latin'],
     weights: [300, 400, 500, 600, 700],
     source: '@fontsource/inter',
+    licence: 'OFL-1.1',
+  },
+  cairo: {
+    family: 'Cairo',
+    scripts: ['arabic', 'latin'],
+    weights: [300, 400, 500, 600, 700],
+    source: '@fontsource/cairo',
     licence: 'OFL-1.1',
   },
   'readex-pro': {

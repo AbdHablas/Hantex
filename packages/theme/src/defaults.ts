@@ -67,7 +67,7 @@ export const brandTheme: Theme = {
   },
   typography: {
     latin: 'poppins',
-    arabic: 'readex-pro',
+    arabic: 'cairo',
     baseSize: 16,
     scale: 1.25,
     bodyWeight: 400,

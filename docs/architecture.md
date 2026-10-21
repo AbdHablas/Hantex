@@ -45,7 +45,7 @@ admin.hantexultra.com ── Cloudflare Access (second lock)
 | Layer | Choice |
 |-------|--------|
 | Public websites | Astro site engine (one code base, one build per site), Tailwind CSS, shared design tokens, custom components; Arabic (default, RTL) and English for Hantex Ultra, languages set per site |
-| Typefaces | Poppins (Latin) and Readex Pro (Arabic) for Hantex Ultra, self-hosted; other sites choose from the font library |
+| Typefaces | Poppins (Latin) and Cairo (Arabic, D-031) for Hantex Ultra, self-hosted; other sites choose from the font library |
 | Admin dashboard | React + Vite + TypeScript, Tailwind CSS, shadcn/ui, Lucide |
 | API | Hono on Cloudflare Workers |
 | Authentication | Better Auth, passwordless: passkeys (`@better-auth/passkey`), with emailed one-time codes plus recovery codes for new devices and recovery; invite-only |

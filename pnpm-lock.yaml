@@ -239,10 +239,10 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
-      '@fontsource/poppins':
+      '@fontsource/cairo':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource/readex-pro':
+      '@fontsource/poppins':
         specifier: 5.3.0
         version: 5.3.0
       '@hantex/db':
@@ -366,6 +366,9 @@ importers:
       '@astrojs/cloudflare':
         specifier: 14.4.1
         version: 14.4.1(@types/node@26.6.5)(astro@7.4.1(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(wrangler@4.151.3(@cloudflare/workers-types@5.20261019.1)(@types/node@26.6.5))(yaml@2.9.1)
+      '@fontsource/cairo':
+        specifier: 5.3.0
+        version: 5.3.0
       '@hantex/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -1460,6 +1463,9 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource/cairo@5.3.0':
+    resolution: {integrity: sha512-MdY6+gee1DVz4eUvx1Dd8Y1f50WcRELRKwKBarYZA3zT8dMhkuTWbcoE1LzezAy97h/9rob87s02NI6L8MaDgA==}
 
   '@fontsource/ibm-plex-sans-arabic@5.3.0':
     resolution: {integrity: sha512-ZZ4g+JDgQY0NqSh4o0MNWU1sHQmtcee1g++aKAwyJvZxnT5y51JXsN1cIXnaQaMd40dcbK6QFYa+Z1LbaiNuqA==}
@@ -5820,6 +5826,8 @@ snapshots:
       react-dom: 19.3.1(react@19.3.1)
 
   '@floating-ui/utils@0.2.12': {}
+
+  '@fontsource/cairo@5.3.0': {}
 
   '@fontsource/ibm-plex-sans-arabic@5.3.0': {}
 

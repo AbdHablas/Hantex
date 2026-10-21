@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.4.1",
+    "@fontsource/cairo": "5.3.0",
     "@hantex/shared": "workspace:*",
     "@hantex/theme": "workspace:*",
     "astro": "7.4.1",

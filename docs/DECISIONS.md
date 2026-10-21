@@ -23,7 +23,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-012 | Brand reference | Confirmed | Brand guidelines and trademark sheet (2026) are the sources; icon mark SVGs extracted from the original artwork |
 | D-013 | Brand typeface | Confirmed | Poppins for wordmark, headings and body (self-hosted) |
 | D-014 | Website languages | Confirmed | Arabic (default, right-to-left first) and English |
-| D-015 | Arabic typeface | Confirmed | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
+| D-015 | Arabic typeface | Superseded by D-031 | Readex Pro for Arabic, paired with Poppins (both self-hosted, OFL-1.1) |
 | D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
 | D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
 | D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
@@ -39,12 +39,12 @@ marked **Confirmed** once the project owner has approved it.
 | D-028 | Hosting of multiple websites | Confirmed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
-| D-031 | Arabic typeface (revisits D-015) | Pending | Proposed: IBM Plex Sans Arabic for the public sites and the dashboard; Readex Pro stays in the library |
+| D-031 | Arabic typeface (revisits D-015) | Confirmed | Cairo for Arabic on the public sites and the dashboard, paired with Poppins; self-hosted; other fonts stay in the library |
 | D-032 | Typography system | Pending | Proposed: named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
 | D-033 | Custom fonts | Pending | Proposed: Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
 | D-034 | Component system across dashboard and public sites | Pending | Proposed: shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
 
-Open: D-031 to D-034 (typography and the frontend component system), asked
+Open: D-032 to D-034 (typography and the frontend component system), asked
 one at a time. Implementation that depends on them waits until they are
 confirmed.
 
@@ -331,7 +331,7 @@ confirmed.
 
 ## D-015 — Arabic typeface
 
-- **Status:** Confirmed — 2026-10-20
+- **Status:** Superseded by D-031 on 2026-10-21 (was Confirmed 2026-10-20)
 - **Options considered (rendered samples shown to the owner):** Readex Pro ·
   Tajawal · IBM Plex Sans Arabic · Noto Kufi Arabic
 - **Recommended and chosen:** Readex Pro.
@@ -738,7 +738,7 @@ confirmed.
 
 ## D-031 — Arabic typeface (revisits D-015)
 
-- **Status:** Pending — asked 2026-10-21
+- **Status:** Confirmed — 2026-10-21
 - **Requirement (owner):** replace the current Arabic font with a more
   modern, professional typeface with excellent readability and full support
   for diacritics; Arabic and Latin fonts configurable separately per site.
@@ -754,9 +754,17 @@ confirmed.
   weights) as the default Arabic font for the public sites and the dashboard.
   Readex Pro and the others stay in the library, so a site can still choose
   them.
-- **Consequences:** the brand theme, the dashboard and the default presets
-  switch font; existing sites keep their published theme until a new one is
-  published; D-015 is marked superseded.
+- **Owner's choice:** Cairo (Google Fonts design, SIL OFL 1.1). It is
+  self-hosted from the `@fontsource/cairo` package, like every other font, so
+  visitors' browsers never contact Google and the security policy stays
+  strict. Its diacritics and Arabic numerals render well; its lines are a
+  little taller, so Arabic text gets a larger line height (1.75 on the sites,
+  1.7 in the dashboard).
+- **Consequences:** the brand theme and the dashboard switch to Cairo for
+  Arabic. Latin text, including product names and model numbers inside
+  Arabic pages, stays in Poppins. Cairo, IBM Plex Sans Arabic, Tajawal and
+  Readex Pro all stay in the library for other sites. Existing sites keep
+  their published theme until a new one is published. D-015 is superseded.
 
 ## D-032 — Typography system
 
