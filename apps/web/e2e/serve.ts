@@ -71,6 +71,10 @@ await db.insert(documentVersions).values([
     data: {
       ...DEFAULT_SITE_SETTINGS,
       contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'hello@example.test' },
+      privacy: {
+        note: { ar: 'ملاحظة خصوصية للاختبار.', en: 'A test privacy note.' },
+        url: 'https://www.hantexultra.com/privacy',
+      },
     },
   },
 ]);

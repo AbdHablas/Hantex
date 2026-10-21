@@ -1,4 +1,4 @@
-import { publishJobs, siteDomains, sites } from '@hantex/db/worker';
+import { documentDrafts, publishJobs, siteDomains, sites } from '@hantex/db/worker';
 import { LOCALES, SITE_MODES, hostnameSchema, newSiteSchema } from '@hantex/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -7,6 +7,7 @@ import type { AppEnv } from '../context';
 import { coversSite } from '../lib/access';
 import { writeAudit } from '../lib/audit';
 import { badRequest, conflict, notFound } from '../lib/errors';
+import { presetTheme, publishedTheme, siteIdByKey } from '../lib/presets';
 import { notifyOwners } from '../lib/staff';
 import { validate } from '../lib/validate';
 import { requirePermission, requirePlatformPermission } from '../middleware/session';
@@ -42,6 +43,16 @@ export const sitesRoutes = new Hono<AppEnv>()
     async (c) => {
       const v = c.var;
       const body = c.req.valid('json');
+      // The starting theme is resolved first so an unknown preset or site creates nothing.
+      let startTheme: unknown = null;
+      if (body.startTheme && 'preset' in body.startTheme) {
+        startTheme = await presetTheme(v.db, body.startTheme.preset);
+        if (!startTheme) throw badRequest('unknown-preset');
+      } else if (body.startTheme) {
+        const sourceId = await siteIdByKey(v.db, body.startTheme.site);
+        if (!sourceId || !coversSite(v.access, sourceId)) throw badRequest('unknown-site');
+        startTheme = await publishedTheme(v.db, sourceId);
+      }
       // New sites always start in Coming Soon mode (the column default), whatever is sent.
       const [site] = await v.db
         .insert(sites)
@@ -57,6 +68,12 @@ export const sitesRoutes = new Hono<AppEnv>()
         .onConflictDoNothing({ target: sites.key })
         .returning({ id: sites.id });
       if (!site) throw conflict('site-key-in-use');
+      // A starting theme becomes the new site's theme draft, to review and publish as usual.
+      if (startTheme) {
+        await v.db
+          .insert(documentDrafts)
+          .values({ siteId: site.id, kind: 'theme', data: startTheme, updatedBy: v.access.userId });
+      }
       await writeAudit(
         v.db,
         auditActor(v),

@@ -9,8 +9,9 @@ import {
   type Mode,
   type Theme,
 } from '@hantex/theme';
-import { RotateCcw } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { RotateCcw, Trash2 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import {
   BilingualField,
@@ -23,6 +24,7 @@ import {
   Alert,
   Button,
   Card,
+  ErrorText,
   Field,
   Input,
   Loading,
@@ -30,7 +32,10 @@ import {
   Select,
   confirmAction,
 } from '../components/ui';
-import { useI18n } from '../lib/i18n';
+import { api } from '../lib/api';
+import { useBilingual, useI18n } from '../lib/i18n';
+import { presetsQueryKey, useThemeChoices } from '../lib/presets';
+import { useMe } from '../lib/session';
 
 /* ------------------------------------ Site settings ------------------------------------ */
 
@@ -146,6 +151,23 @@ export function SiteSettingsEditor() {
                 )}
               </div>
             ))}
+          </div>
+        </Card>
+        <Card title={t.privacy}>
+          <p className="mb-4 text-sm text-muted">{t.privacyHelp}</p>
+          <div className="flex flex-col gap-5">
+            <BilingualField
+              label={t.privacyNote}
+              max={600}
+              multiline
+              disabled={!editable}
+              value={draft.privacy.note}
+              onChange={(note) => set('privacy', { note })}
+            />
+            {text(t.privacyUrl, draft.privacy.url, (url) => set('privacy', { url }), {
+              help: t.linkHelp,
+              type: 'url',
+            })}
           </div>
         </Card>
         <VersionHistory editor={editor} />
@@ -320,6 +342,18 @@ export function AppearanceEditor() {
             </Alert>
           ))}
 
+        <ThemeLibrary
+          draft={draft}
+          editable={editable}
+          canSave={
+            editor.valid &&
+            checks.errors.length === 0 &&
+            editor.site.permissions.includes('appearance.publish')
+          }
+          // Without the logo permission, a preset never changes the logo colours.
+          apply={(theme) => update(canEditLogo ? theme : { ...theme, logo: draft.logo })}
+        />
+
         <Card title={t.colors}>
           <div className="grid gap-6 lg:grid-cols-2">
             {(['light', 'dark'] as const).map((mode) => (
@@ -468,5 +502,145 @@ export function AppearanceEditor() {
         />
       </div>
     </>
+  );
+}
+
+/** Copy a theme from a preset or another site into the draft, or save the draft as a preset. */
+function ThemeLibrary({
+  draft,
+  editable,
+  canSave,
+  apply,
+}: {
+  draft: Theme;
+  editable: boolean;
+  canSave: boolean;
+  apply: (theme: Theme) => void;
+}) {
+  const { m } = useI18n();
+  const t = m.appearance;
+  const bi = useBilingual();
+  const { data: me } = useMe();
+  const queryClient = useQueryClient();
+  const choices = useThemeChoices();
+  const [selected, setSelected] = useState('');
+  const [name, setName] = useState({ ar: '', en: '' });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: presetsQueryKey });
+  const save = useMutation({
+    mutationFn: () => api('/theme-presets', { method: 'POST', body: { name, theme: draft } }),
+    onSuccess: async () => {
+      setName({ ar: '', en: '' });
+      await refresh();
+    },
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api(`/theme-presets/${id}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      setSelected('');
+      await refresh();
+    },
+  });
+  if (!choices.data) return null;
+  const choice = choices.data.find((c) => c.value === selected);
+  const groups = [
+    { id: 'builtIn', label: t.presetsBuiltIn },
+    { id: 'saved', label: t.presetsSaved },
+    { id: 'sites', label: t.presetsSites },
+  ] as const;
+  const canDelete = me?.permissions.includes('sites.manage') === true;
+
+  return (
+    <Card title={t.library}>
+      <p className="mb-4 text-sm text-muted">{t.libraryHelp}</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-end gap-2">
+          <Field label={t.presetPick}>
+            {(props) => (
+              <Select {...props} value={selected} onChange={(e) => setSelected(e.target.value)}>
+                <option value="">{t.presetPick}</option>
+                {groups.map((g) => {
+                  const items = choices.data.filter((c) => c.group === g.id);
+                  if (items.length === 0) return null;
+                  return (
+                    <optgroup key={g.id} label={g.label}>
+                      {items.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {bi(c.name)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </Select>
+            )}
+          </Field>
+          <Button
+            variant="secondary"
+            disabled={!editable || !choice}
+            onClick={() => {
+              if (choice && confirmAction(t.presetApplyConfirm)) apply(choice.theme);
+            }}
+          >
+            {t.presetApply}
+          </Button>
+          {choice?.savedId && canDelete && (
+            <Button
+              variant="ghost"
+              busy={remove.isPending}
+              onClick={() => {
+                if (choice.savedId && confirmAction(t.presetDeleteConfirm)) {
+                  remove.mutate(choice.savedId);
+                }
+              }}
+            >
+              <Trash2 className="size-4" aria-hidden />
+              {m.delete}
+            </Button>
+          )}
+        </div>
+        <ErrorText error={remove.error} />
+        {canSave && (
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              save.mutate();
+            }}
+          >
+            <Field label={t.presetNameAr}>
+              {(props) => (
+                <Input
+                  {...props}
+                  required
+                  lang="ar"
+                  dir="rtl"
+                  maxLength={60}
+                  value={name.ar}
+                  onChange={(e) => setName({ ...name, ar: e.target.value })}
+                />
+              )}
+            </Field>
+            <Field label={t.presetNameEn}>
+              {(props) => (
+                <Input
+                  {...props}
+                  required
+                  lang="en"
+                  dir="ltr"
+                  maxLength={60}
+                  value={name.en}
+                  onChange={(e) => setName({ ...name, en: e.target.value })}
+                />
+              )}
+            </Field>
+            <Button type="submit" variant="secondary" busy={save.isPending}>
+              {t.presetSave}
+            </Button>
+          </form>
+        )}
+        <ErrorText error={save.error} />
+        {save.isSuccess && <Alert tone="success">{t.presetSaved}</Alert>}
+      </div>
+    </Card>
   );
 }

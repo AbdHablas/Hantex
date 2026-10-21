@@ -412,6 +412,19 @@ export const documentVersions = pgTable(
   ],
 );
 
+/**
+ * Saved theme presets, shared by all sites (D-027). The built-in presets (brand, neutral) live in
+ * code (@hantex/theme); these are the ones staff save from a site's theme.
+ */
+export const themePresets = pgTable('theme_presets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nameAr: text('name_ar').notNull(),
+  nameEn: text('name_en').notNull(),
+  data: jsonb('data').notNull(),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+});
+
 /** Static-site rebuilds triggered by publishing (D-006); each rebuilds one site (D-028). */
 export const publishJobs = pgTable(
   'publish_jobs',

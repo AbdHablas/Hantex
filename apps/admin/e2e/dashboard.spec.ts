@@ -1,3 +1,7 @@
+import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 /**
@@ -107,6 +111,24 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByRole('group', { name: 'Headline' }).getByLabel('English')).toHaveValue(
     'Coming soon to your walls',
   );
+
+  // The whole chain: the public site's build reads the published version from the database.
+  const web = fileURLToPath(new URL('../../web/', import.meta.url));
+  execFileSync('pnpm', ['data'], {
+    cwd: web,
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      SITE: 'hantex-ultra',
+      HANTEX_BUILD_DATABASE_URL: process.env['E2E_BUILD_DATABASE_URL'],
+    },
+  });
+  const built = JSON.parse(await readFile(join(web, 'src', 'data', 'site.json'), 'utf8')) as {
+    source: string;
+    comingSoon: { headline: { en: string } };
+  };
+  expect(built.source).toBe('database');
+  expect(built.comingSoon.headline.en).toBe('Coming soon to your walls');
 
   await context.close();
 });

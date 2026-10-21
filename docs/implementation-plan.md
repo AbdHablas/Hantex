@@ -83,10 +83,13 @@ Next:
   - platform: websites, all staff, roles matrix editor, full audit log, my account (passkeys, recovery codes);
   - browser tests with a virtual passkey authenticator, in CI.
 - [x] First-Owner setup link (`setup-owner`): single use, 24 hours, closes once an Owner exists
-- [ ] Sites screens: choosing a starting theme preset for a new site
+- [x] Sites screens: choosing a starting theme (built-in preset, saved preset or another site's published theme) for a new site; it becomes the new site's theme draft
 - [x] Site settings editor (SEO, contact details, social links), with publish, history and preview
 - [x] Appearance editor per site (D-022, D-027): colours for light and dark, logo colours (Owner only, confirmed before publishing), fonts from the library, size and scale, corner rounding, shadows, animation, default mode and the visitor toggle; live contrast checks; preview, publish and rollback; "start again from the brand theme"
-- [ ] Saved theme presets and copying a theme between sites (D-027)
+- [x] Saved theme presets and copying a theme between sites (D-027): built-in "brand" and "neutral" starters; saving needs appearance.publish and passes the contrast checks; deleting is Owner-only; without the logo permission a preset never changes the logo colours
+- [x] Sign-up privacy note, edited per site in Site settings (empty hides it)
+- [x] Nightly encrypted backup (`backup.yml`) and health check (`health.yml`) workflows, inactive until configured
+- [x] Browser test of the whole publish chain: dashboard publish → the site build reads it from the database
 - [x] Site engine (`apps/web`, Astro on a site Worker):
   - builds any one site from its published content with the read-only build user (`SITE=<key>`), or from fact-free defaults without a database;
   - Coming Soon and maintenance templates; Arabic at `/`, English at `/en/` (per site languages); light/dark with a visitor toggle;

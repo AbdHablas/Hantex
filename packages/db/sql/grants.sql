@@ -10,7 +10,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   users, sessions, accounts, verifications, passkeys, auth_rate_limits,
   roles, role_permissions, role_assignments, invitations, recovery_codes,
   enrolment_tickets, email_challenges, dashboard_rate_limits,
-  site_domains, document_drafts, publish_jobs
+  site_domains, document_drafts, publish_jobs, theme_presets
 TO hantex_admin_app;
 -- Sites are archived, never deleted (D-024).
 GRANT SELECT, INSERT, UPDATE ON sites TO hantex_admin_app;

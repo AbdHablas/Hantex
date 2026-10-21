@@ -56,15 +56,16 @@ the current code.
   This environment can't reach Cloudflare, so the browser test uses
   Turnstile's always-failing key and the database side is tested separately.
   It will be checked on the staging deployment.
-- **Privacy note** for the sign-up form: needs the owner's wording.
+- **Privacy note** for the sign-up form: editable per site in Site settings;
+  hidden until the owner writes it.
 - **Site-wide rate limit** (all visitors together): a Cloudflare rule, set up
   with the deployment.
-- **Theme presets** and copying a theme between sites (D-027), and choosing a
-  starting theme when creating a site.
 - **Emails** are sent from the platform's domain until each site's domain is
   verified with Resend.
-- **Preview environment**, **nightly backups** and **health alerts** are
-  planned with the deployment (D-010, D-011).
+- **Nightly backups** and **health checks** are written (`backup.yml`,
+  `health.yml`) but stay inactive until their configuration is added with the
+  deployment (D-010, D-011); a restore rehearsal follows the first backup.
+- **Preview environment**: set up with the deployment.
 - The dashboard's JavaScript is one 570 kB file (173 kB compressed); it can
   be split later if loading feels slow.
 
@@ -82,4 +83,5 @@ repository.
    [`deployment.md`](deployment.md#first-deployment-step-by-step). Each step,
    including every DNS change, still needs the owner's go-ahead. The public
    site stays in Coming Soon mode.
-3. **The sign-up privacy note's wording**, when convenient.
+3. **The sign-up privacy note's wording**, when convenient (it is typed in
+   the dashboard: Site settings → Privacy note).

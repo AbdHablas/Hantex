@@ -66,6 +66,16 @@ describe('site settings', () => {
     expect(siteSettingsSchema.safeParse(settings('http://instagram.com/x')).success).toBe(false);
   });
 
+  it('reads settings saved before the privacy note existed as having none', () => {
+    const { privacy: _privacy, ...older } = DEFAULT_SITE_SETTINGS;
+    expect(siteSettingsSchema.parse(older).privacy).toEqual({ note: { ar: '', en: '' }, url: '' });
+    const link = (url: string) => ({
+      ...DEFAULT_SITE_SETTINGS,
+      privacy: { note: { ar: '', en: '' }, url },
+    });
+    expect(siteSettingsSchema.safeParse(link('javascript:alert(1)')).success).toBe(false);
+  });
+
   it('requires international phone numbers in E.164 form', () => {
     const contact = (phone: string) => ({
       ...DEFAULT_SITE_SETTINGS,

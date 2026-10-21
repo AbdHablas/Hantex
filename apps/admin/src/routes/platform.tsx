@@ -21,6 +21,7 @@ import {
 } from '../components/ui';
 import { ApiError, api, sitePath } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
+import { useThemeChoices } from '../lib/presets';
 import { registerPasskey } from '../lib/passkey';
 import { meQueryKey, useCurrentSite, useMe, usePlatform } from '../lib/session';
 import { useRoles } from './staff';
@@ -46,13 +47,18 @@ function CreateSiteDialog({ open, onClose }: { open: boolean; onClose: () => voi
     locales: ['ar', 'en'] as string[],
     defaultLocale: 'ar',
     template: 'coming-soon',
+    startTheme: '',
   });
+  const bi = useBilingual();
+  const choices = useThemeChoices(open);
+  const start = choices.data?.find((c) => c.value === form.startTheme)?.start;
   const body = {
     key: form.key.trim(),
     name: { ar: form.nameAr, en: form.nameEn },
     locales: form.locales,
     defaultLocale: form.defaultLocale,
     template: form.template,
+    ...(start ? { startTheme: start } : {}),
   };
   const valid = newSiteSchema.safeParse(body);
   const create = useMutation({
@@ -156,6 +162,24 @@ function CreateSiteDialog({ open, onClose }: { open: boolean; onClose: () => voi
                   {m.sites[`template.${t}`] ?? t}
                 </option>
               ))}
+            </Select>
+          )}
+        </Field>
+        <Field label={m.sites['startTheme']} help={m.sites['startThemeHelp']}>
+          {(props) => (
+            <Select
+              {...props}
+              value={form.startTheme}
+              onChange={(e) => setForm({ ...form, startTheme: e.target.value })}
+            >
+              <option value="">{m.sites['startThemeDefault']}</option>
+              {choices.data
+                ?.filter((c) => c.value !== 'preset:brand')
+                .map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {bi(c.name)}
+                  </option>
+                ))}
             </Select>
           )}
         </Field>

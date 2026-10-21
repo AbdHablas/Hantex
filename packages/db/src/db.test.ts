@@ -89,6 +89,7 @@ describe('migrations', () => {
       'site_domains',
       'sites',
       'subscribers',
+      'theme_presets',
       'users',
       'verifications',
     ]);

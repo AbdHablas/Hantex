@@ -43,6 +43,16 @@ export const newSiteSchema = z
     locales: z.array(localeSchema).min(1).max(LOCALES.length),
     defaultLocale: localeSchema,
     template: z.enum(SITE_TEMPLATES),
+    /**
+     * The new site's first theme draft (D-027): a built-in or saved preset, or a copy of another
+     * site's published theme. Without it, the site starts from the brand theme.
+     */
+    startTheme: z
+      .union([
+        z.strictObject({ preset: z.string().min(1).max(64) }),
+        z.strictObject({ site: siteKeySchema }),
+      ])
+      .optional(),
   })
   .refine((site) => new Set(site.locales).size === site.locales.length, {
     message: 'Each language may appear only once',

@@ -1,5 +1,6 @@
 import {
   auditLog,
+  documentDrafts,
   documentVersions,
   invitations,
   roleAssignments,
@@ -7,8 +8,10 @@ import {
   siteDomains,
   sites,
   subscribers,
+  themePresets,
   users,
 } from '@hantex/db/worker';
+import { brandTheme, neutralTheme } from '@hantex/theme';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTicket } from '../src/auth/tickets';
@@ -462,6 +465,95 @@ describe('sites (D-024)', () => {
     ).toBe(200);
     const [site] = await h.db.select().from(sites).where(eq(sites.key, 'ss-new-site'));
     expect(site?.archivedAt).toBeNull();
+  });
+});
+
+describe('theme presets (D-027)', () => {
+  const newSite = (key: string, startTheme?: unknown) => ({
+    key,
+    name: { ar: 'P', en: 'P' },
+    locales: ['ar', 'en'],
+    defaultLocale: 'ar',
+    template: 'product-showcase',
+    ...(startTheme ? { startTheme } : {}),
+  });
+  const themeDraft = async (key: string) => {
+    const [site] = await h.db.select().from(sites).where(eq(sites.key, key));
+    const [draft] = await h.db
+      .select()
+      .from(documentDrafts)
+      .where(and(eq(documentDrafts.siteId, site!.id), eq(documentDrafts.kind, 'theme')));
+    return draft?.data;
+  };
+
+  it('lists the built-in presets and only the sites the person may style', async () => {
+    const list = await json<{ builtIn: { id: string }[]; sites: { key: string }[] }>(
+      await h.request('GET', '/api/theme-presets', { cookie: adminA }),
+    );
+    expect(list.builtIn.map((p) => p.id)).toEqual(['brand', 'neutral']);
+    expect(list.sites.map((s) => s.key)).toEqual([A]);
+    const all = await json<{ sites: { key: string }[] }>(
+      await h.request('GET', '/api/theme-presets', { cookie: owner }),
+    );
+    expect(all.sites.map((s) => s.key)).toEqual(expect.arrayContaining([A, B]));
+  });
+
+  it('saves presets only for people who may publish a theme, and checks contrast', async () => {
+    const preset = { name: { ar: 'تجربة', en: 'Trial' }, theme: neutralTheme };
+    expect(
+      (await h.request('POST', '/api/theme-presets', { cookie: contentA, body: preset })).status,
+    ).toBe(403);
+    const unreadable = structuredClone(neutralTheme);
+    unreadable.colors.light.text = unreadable.colors.light.background;
+    expect(
+      (
+        await h.request('POST', '/api/theme-presets', {
+          cookie: adminA,
+          body: { ...preset, theme: unreadable },
+        })
+      ).status,
+    ).toBe(400);
+    const created = await h.request('POST', '/api/theme-presets', { cookie: adminA, body: preset });
+    expect(created.status).toBe(201);
+    const { id } = await json<{ id: string }>(created);
+    // Only an Owner may delete a shared preset.
+    expect((await h.request('DELETE', `/api/theme-presets/${id}`, { cookie: adminA })).status).toBe(
+      403,
+    );
+    expect((await h.request('DELETE', `/api/theme-presets/${id}`, { cookie: owner })).status).toBe(
+      200,
+    );
+    expect(await h.db.select().from(themePresets).where(eq(themePresets.id, id))).toHaveLength(0);
+  });
+
+  it('starts a new site from a preset or another site, as a draft to review', async () => {
+    expect(
+      (
+        await h.request('POST', '/api/sites', {
+          cookie: owner,
+          body: newSite('ss-preset-site', { preset: 'neutral' }),
+        })
+      ).status,
+    ).toBe(201);
+    expect(await themeDraft('ss-preset-site')).toEqual(neutralTheme);
+
+    expect(
+      (
+        await h.request('POST', '/api/sites', {
+          cookie: owner,
+          body: newSite('ss-copied-site', { site: A }),
+        })
+      ).status,
+    ).toBe(201);
+    expect(await themeDraft('ss-copied-site')).toMatchObject({ logo: brandTheme.logo });
+
+    // An unknown preset creates nothing.
+    const bad = await h.request('POST', '/api/sites', {
+      cookie: owner,
+      body: newSite('ss-bad-preset', { preset: 'missing' }),
+    });
+    expect(bad.status).toBe(400);
+    expect(await h.db.select().from(sites).where(eq(sites.key, 'ss-bad-preset'))).toHaveLength(0);
   });
 });
 

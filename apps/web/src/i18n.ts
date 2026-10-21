@@ -37,6 +37,7 @@ export const TEXT = {
     maintenanceTitle: 'الموقع قيد الصيانة',
     maintenanceText: 'نجري بعض التحسينات وسنعود قريبًا.',
     preview: 'معاينة مسودة — غير منشورة',
+    privacyLink: 'سياسة الخصوصية',
   },
   en: {
     languageName: 'English',
@@ -73,6 +74,7 @@ export const TEXT = {
     maintenanceTitle: 'We’re doing some maintenance',
     maintenanceText: 'We’re making a few improvements and will be back soon.',
     preview: 'Draft preview — not published',
+    privacyLink: 'Privacy policy',
   },
 } satisfies Record<Locale, unknown>;
 

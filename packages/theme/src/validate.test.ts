@@ -63,3 +63,14 @@ describe('validateTheme', () => {
     );
   });
 });
+
+describe('built-in presets', () => {
+  it('pass the contrast checks and the schema', async () => {
+    const { BUILT_IN_PRESETS } = await import('./defaults');
+    const { themeSchema } = await import('./schema');
+    for (const preset of BUILT_IN_PRESETS) {
+      expect(themeSchema.safeParse(preset.theme).success, preset.id).toBe(true);
+      expect(validateTheme(preset.theme).errors, preset.id).toEqual([]);
+    }
+  });
+});

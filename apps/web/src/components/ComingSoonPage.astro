@@ -189,6 +189,18 @@ const contact = settings.contact;
                 <input name="consent" type="checkbox" required />
                 <span>{t.consent.replace('{site}', siteName)}</span>
               </label>
+              {
+                (pick(settings.privacy.note) || settings.privacy.url) && (
+                  <p class="privacy">
+                    {pick(settings.privacy.note)}{' '}
+                    {settings.privacy.url && (
+                      <a href={settings.privacy.url} rel="noopener" target="_blank">
+                        {t.privacyLink}
+                      </a>
+                    )}
+                  </p>
+                )
+              }
               <div data-turnstile></div>
               <button type="submit" data-label={t.submit} data-sending={t.sending} disabled={preview}>
                 {t.submit}

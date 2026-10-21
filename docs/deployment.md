@@ -72,8 +72,21 @@ environment variables, never stored in the repository).
 - This repository is public, so workflow logs are public: builds read no
   personal data (the build user can't), secrets are masked, and nothing
   sensitive is uploaded as an artifact.
-- **Nightly (planned):** encrypted database export to R2 (D-010) and health
-  checks with email alerts (D-011).
+- **`backup.yml` (nightly, D-010):** exports the whole database as the
+  read-only `hantex_backup` user with `pg_dump` 18, streams it straight into
+  `age` encryption (the plain export never touches the disk), and uploads it to
+  the private R2 bucket under `daily/`, plus `monthly/` on the 1st. Retention is
+  an R2 lifecycle rule the owner adds once: delete `daily/` after 30 days and
+  `monthly/` after 365 days. Only the owner holds the age *private* key,
+  offline; the workflow has only the public key. Restore:
+  `age -d -i key.txt file.dump.age | pg_restore --no-owner -d <database>`,
+  rehearsed on a Neon branch, never on production.
+- **`health.yml` (every 30 minutes, D-011):** the public sites must answer
+  200, and the dashboard must answer below 400 (a Cloudflare Access sign-in
+  redirect counts as up).
+- Both are skipped, with a notice, until their configuration exists. A failed
+  run emails whoever GitHub's notification settings name (the owner's
+  account: Settings → Notifications → Actions → "only failed workflows").
 - **3D Studio processing (D-030, confirmed):** photo reconstruction,
   optimisation, validation and poster rendering run on a *processing runner*
   on the owner's own Mac or PC. It never runs in this public repository,
@@ -95,13 +108,17 @@ environment variables, never stored in the repository).
 | `PUBLISH_TRIGGER_TOKEN` | deploy (dashboard) | GitHub fine-grained token for this repository with Actions: read and write only |
 | `PUBLISH_CALLBACK_SECRET` | deploy, publish | Random secret the publish workflow uses to report results |
 | `ACCESS_CLIENT_ID`, `ACCESS_CLIENT_SECRET` | publish | Cloudflare Access service token, so the result report can reach the dashboard |
+| `BACKUP_DATABASE_URL` | backup | Connection as the read-only `hantex_backup` user |
+| `BACKUP_R2_API_TOKEN` | backup | Cloudflare token limited to writing objects in the backups bucket |
 
 **GitHub variables** (not secret): `CLOUDFLARE_ACCOUNT_ID`, `APP_ORIGIN`
 (`https://admin.hantexultra.com`), `ADMIN_HYPERDRIVE_ID`,
-`SITE_HYPERDRIVE_ID`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`.
+`SITE_HYPERDRIVE_ID`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`,
+`BACKUP_AGE_RECIPIENT` (the age *public* key; the private key stays offline
+with the owner), `BACKUP_BUCKET` (default `backups`), `HEALTH_SITE_URLS`
+(space-separated), `HEALTH_DASHBOARD_URL`.
 
-**Later phases:** `BACKUP_ENCRYPTION_KEY` (D-010; the owner keeps an offline
-copy); R2 and processing-runner credentials for the 3D Studio; one API key
+**Later phases:** R2 and processing-runner credentials for the 3D Studio; one API key
 per 3D provider only after the owner approves it (D-005, D-030).
 
 ## Rollback

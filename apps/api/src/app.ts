@@ -12,6 +12,7 @@ import { meRoutes } from './routes/me';
 import { overviewRoutes } from './routes/overview';
 import { previewRoutes } from './routes/preview';
 import { publishCallbackRoutes, publishJobRoutes } from './routes/publish';
+import { presetRoutes } from './routes/presets';
 import { roleRoutes } from './routes/roles';
 import { siteConfigRoutes, sitesRoutes } from './routes/sites';
 import { siteStaffRoutes, staffRoutes } from './routes/staff';
@@ -45,6 +46,7 @@ function staffApi() {
     .route('/staff', staffRoutes)
     .route('/roles', roleRoutes)
     .route('/audit', auditRoutes)
+    .route('/theme-presets', presetRoutes)
     .route('/sites', sitesRoutes)
     .route('/sites/:siteKey', siteApi());
 }

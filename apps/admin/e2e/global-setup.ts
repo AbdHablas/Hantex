@@ -36,6 +36,11 @@ export default async function globalSetup() {
     ]),
   ) as Record<(typeof APP_DB_ROLES)[number], string>;
   await applyDatabaseRoles(url.toString(), passwords);
+  // The site build's read-only user, so the tests can build the public site from what they publish.
+  const build = new URL(url);
+  build.username = 'hantex_build';
+  build.password = passwords.hantex_build;
+  env['E2E_BUILD_DATABASE_URL'] = build.toString();
   const { link } = await createOwnerSetupInvitation(db, {
     email: 'owner@example.test',
     appOrigin: env['E2E_ORIGIN'] ?? 'http://localhost:8788',

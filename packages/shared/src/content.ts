@@ -94,6 +94,14 @@ export const siteSettingsSchema = z.strictObject({
     youtube: optionalHttpsUrl,
     tiktok: optionalHttpsUrl,
   }),
+  /**
+   * Shown under the launch sign-up form. The wording is the owner's: nothing is pre-filled
+   * (docs/security.md). Empty text hides it; the link may point to a full privacy policy.
+   * Settings saved before this field existed read as empty.
+   */
+  privacy: z
+    .strictObject({ note: bilingual(600), url: optionalHttpsUrl })
+    .default({ note: { ar: '', en: '' }, url: '' }),
 });
 
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
@@ -109,4 +117,5 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     hours: { ar: '', en: '' },
   },
   social: { instagram: '', facebook: '', linkedin: '', x: '', youtube: '', tiktok: '' },
+  privacy: { note: { ar: '', en: '' }, url: '' },
 };

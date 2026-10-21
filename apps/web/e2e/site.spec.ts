@@ -31,6 +31,8 @@ test('the Arabic page is the default, right-to-left, and shows only published co
   await expect(page.getByText('مفاتيح ومقابس')).toBeVisible();
   await expect(page.getByText('التصميم')).toBeVisible();
   await expect(page.getByRole('link', { name: 'hello@example.test' })).toBeVisible();
+  // The privacy note the dashboard published sits under the sign-up form.
+  await expect(page.getByText('ملاحظة خصوصية للاختبار.')).toBeVisible();
   // The countdown runs (it starts as dashes).
   await expect(page.locator('[data-unit="days"]')).not.toHaveText('–');
   // Search engines get the canonical address and both languages.

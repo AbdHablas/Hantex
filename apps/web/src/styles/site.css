@@ -335,6 +335,11 @@ main {
   opacity: 0.6;
   cursor: wait;
 }
+.signup .privacy {
+  margin: 0 0 1rem;
+  font-size: var(--hx-font-size-small);
+  color: var(--hx-color-text-muted);
+}
 .honeypot {
   position: absolute;
   inset-inline-start: -10000px;

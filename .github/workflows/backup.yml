@@ -1,0 +1,72 @@
+name: Nightly backup
+
+# D-010: a nightly export of the whole database with the read-only backup user, encrypted with
+# age before it leaves the runner, stored in the private R2 bucket. Retention (30 daily, 12
+# monthly) is an R2 lifecycle rule on the bucket (docs/deployment.md). Until the configuration
+# below exists the job is skipped, so it does nothing before the first deployment.
+# A failed run emails the repository's notification settings (D-011).
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: backups
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.BACKUP_R2_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      BUCKET: ${{ vars.BACKUP_BUCKET || 'backups' }}
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ] || [ -z "$BACKUP_AGE_RECIPIENT" ] || [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Backups are not configured yet (see docs/deployment.md); skipping."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install PostgreSQL 18 client and age
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -q
+          sudo apt-get install -yq postgresql-client-18 age
+
+      - name: Export and encrypt
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          umask 077
+          name="hantex-$(date -u +%Y-%m-%dT%H%MZ).dump.age"
+          # The plain export never touches the disk: pg_dump streams straight into age.
+          /usr/lib/postgresql/18/bin/pg_dump --format=custom --no-owner --no-privileges "$BACKUP_DATABASE_URL" \
+            | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" --output "$name"
+          test -s "$name"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+
+      - name: Upload to R2
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.151.3 r2 object put "$BUCKET/daily/$NAME" --file "$NAME" --remote
+          if [ "$(date -u +%d)" = "01" ]; then
+            npx --yes wrangler@4.151.3 r2 object put "$BUCKET/monthly/$NAME" --file "$NAME" --remote
+          fi
+          rm -f "$NAME"

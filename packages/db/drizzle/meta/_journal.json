@@ -15,6 +15,13 @@
       "when": 1792587157501,
       "tag": "0001_assignment_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792604736569,
+      "tag": "0002_theme_presets",
+      "breakpoints": true
     }
   ]
 }
