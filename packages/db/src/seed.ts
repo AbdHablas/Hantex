@@ -1,7 +1,7 @@
-import { ALL_PERMISSIONS, STANDARD_ROLES } from '@hantex/shared';
+import { ALL_PERMISSIONS, STANDARD_ROLES, newSiteSchema, type NewSite } from '@hantex/shared';
 import { eq, notInArray, sql } from 'drizzle-orm';
 import type { Database } from './client';
-import { rolePermissions, roles } from './schema';
+import { rolePermissions, roles, siteDomains, sites } from './schema';
 
 /**
  * Ensures the six standard roles exist (D-019). Existing roles keep the permissions an Owner set
@@ -58,5 +58,63 @@ export async function resetStandardRole(db: Database, roleId: string): Promise<v
         permission,
       })),
     );
+  });
+}
+
+/**
+ * The first site (D-024). Its name is the brand name in both languages until the Owner changes
+ * it in the dashboard. The domains start as 'pending': they become active only through a
+ * production deployment the Owner approves.
+ */
+export const FIRST_SITE: NewSite & { domains: { hostname: string; isPrimary: boolean }[] } = {
+  key: 'hantex-ultra',
+  name: { ar: 'Hantex Ultra', en: 'Hantex Ultra' },
+  locales: ['ar', 'en'],
+  defaultLocale: 'ar',
+  template: 'coming-soon',
+  domains: [
+    { hostname: 'www.hantexultra.com', isPrimary: true },
+    { hostname: 'hantexultra.com', isPrimary: false },
+  ],
+};
+
+/**
+ * Creates a site in Coming Soon mode with pending domains, if no site has its key yet. An
+ * existing site is left exactly as it is, so the dashboard's changes are never overwritten.
+ * Returns the site's id.
+ */
+export async function ensureSite(
+  db: Database,
+  site: NewSite & { domains?: { hostname: string; isPrimary: boolean }[] },
+): Promise<string> {
+  const { domains = [], ...fields } = site;
+  const valid = newSiteSchema.parse(fields);
+  return db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(sites)
+      .values({
+        key: valid.key,
+        nameAr: valid.name.ar,
+        nameEn: valid.name.en,
+        locales: valid.locales,
+        defaultLocale: valid.defaultLocale,
+        template: valid.template,
+      })
+      .onConflictDoNothing({ target: sites.key })
+      .returning({ id: sites.id });
+    if (created) {
+      if (domains.length > 0) {
+        await tx
+          .insert(siteDomains)
+          .values(domains.map((d) => ({ siteId: created.id, ...d, status: 'pending' })));
+      }
+      return created.id;
+    }
+    const [existing] = await tx
+      .select({ id: sites.id })
+      .from(sites)
+      .where(eq(sites.key, valid.key));
+    if (!existing) throw new Error(`Site "${valid.key}" could not be created or found`);
+    return existing.id;
   });
 }

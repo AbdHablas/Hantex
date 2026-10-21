@@ -8,22 +8,24 @@ GRANT USAGE ON SCHEMA public TO hantex_admin_app, hantex_public_app, hantex_buil
 -- Dashboard API (apps/api)
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   users, sessions, accounts, verifications, passkeys, auth_rate_limits,
-  roles, role_permissions, user_roles, invitations, recovery_codes,
-  document_drafts, publish_jobs
+  roles, role_permissions, role_assignments, invitations, recovery_codes,
+  site_domains, document_drafts, publish_jobs
 TO hantex_admin_app;
+-- Sites are archived, never deleted (D-024).
+GRANT SELECT, INSERT, UPDATE ON sites TO hantex_admin_app;
 -- Published versions are immutable; the audit log is append-only.
 GRANT SELECT, INSERT ON document_versions, audit_log TO hantex_admin_app;
 -- Sign-ups: view, export and delete only — sign-ups arrive through the public site.
 GRANT SELECT, DELETE ON subscribers TO hantex_admin_app;
 
 -- Public site endpoints (apps/web): add sign-ups (cannot read them back), rate limits,
--- and read published content.
-GRANT INSERT (contact_type, contact_value, locale, consent_version) ON subscribers TO hantex_public_app;
+-- and read published content. Each site's Worker supplies site_id from its own configuration.
+GRANT INSERT (site_id, contact_type, contact_value, locale, consent_version) ON subscribers TO hantex_public_app;
 GRANT SELECT, INSERT, UPDATE ON form_rate_limits TO hantex_public_app;
 GRANT SELECT ON document_versions TO hantex_public_app;
 
--- Static site build: published content and theme only.
-GRANT SELECT ON document_versions TO hantex_build;
+-- Static site build: published content and theme, and the site's own configuration.
+GRANT SELECT ON document_versions, sites, site_domains TO hantex_build;
 
 -- Nightly backups (D-010): read-only.
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO hantex_backup;

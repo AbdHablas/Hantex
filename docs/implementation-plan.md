@@ -67,10 +67,10 @@ Next:
 - [x] Hosting approved: one Worker per site (D-028)
 - [x] 3D Studio approach approved (D-029)
 - [x] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18
-- [ ] Database made site-aware (D-024, D-025):
+- [x] Database made site-aware (D-024, D-025), with 106 tests passing on PostgreSQL 18:
   - sites and site domains;
   - site-scoped documents, versions, publish jobs, sign-ups, rate limits and audit;
-  - role assignments.
+  - role assignments, with the scope rules enforced in the database and in `@hantex/shared`.
 - [ ] Dashboard API (parked work adapted to site-scoped routes):
   - passkey sign-in, invitations and recovery;
   - sessions;

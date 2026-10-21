@@ -17,6 +17,7 @@ CREATE TABLE "accounts" (
 CREATE TABLE "audit_log" (
 	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "audit_log_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
 	"occurred_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"site_id" uuid,
 	"actor_user_id" text,
 	"actor_label" text NOT NULL,
 	"action" text NOT NULL,
@@ -35,15 +36,18 @@ CREATE TABLE "auth_rate_limits" (
 );
 --> statement-breakpoint
 CREATE TABLE "document_drafts" (
-	"kind" text PRIMARY KEY NOT NULL,
+	"site_id" uuid NOT NULL,
+	"kind" text NOT NULL,
 	"data" jsonb NOT NULL,
 	"updated_by" text,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "document_drafts_site_id_kind_pk" PRIMARY KEY("site_id","kind"),
 	CONSTRAINT "document_drafts_kind_check" CHECK ("document_drafts"."kind" in ('coming-soon', 'site-settings', 'theme'))
 );
 --> statement-breakpoint
 CREATE TABLE "document_versions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"site_id" uuid NOT NULL,
 	"kind" text NOT NULL,
 	"version" integer NOT NULL,
 	"data" jsonb NOT NULL,
@@ -54,9 +58,11 @@ CREATE TABLE "document_versions" (
 );
 --> statement-breakpoint
 CREATE TABLE "form_rate_limits" (
-	"key" text PRIMARY KEY NOT NULL,
+	"site_id" uuid NOT NULL,
+	"key" text NOT NULL,
 	"count" integer NOT NULL,
-	"window_started_at" bigint NOT NULL
+	"window_started_at" bigint NOT NULL,
+	CONSTRAINT "form_rate_limits_site_id_key_pk" PRIMARY KEY("site_id","key")
 );
 --> statement-breakpoint
 CREATE TABLE "invitations" (
@@ -64,6 +70,7 @@ CREATE TABLE "invitations" (
 	"email" text NOT NULL,
 	"name" text DEFAULT '' NOT NULL,
 	"role_id" text NOT NULL,
+	"site_id" uuid,
 	"token_hash" text NOT NULL,
 	"invited_by" text,
 	"expires_at" timestamp with time zone NOT NULL,
@@ -91,6 +98,7 @@ CREATE TABLE "passkeys" (
 --> statement-breakpoint
 CREATE TABLE "publish_jobs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"site_id" uuid NOT NULL,
 	"requested_by" text,
 	"requested_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"status" text DEFAULT 'queued' NOT NULL,
@@ -106,6 +114,16 @@ CREATE TABLE "recovery_codes" (
 	"used_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "recovery_codes_code_hash_unique" UNIQUE("code_hash")
+);
+--> statement-breakpoint
+CREATE TABLE "role_assignments" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
+	"role_id" text NOT NULL,
+	"site_id" uuid,
+	"assigned_by" text,
+	"assigned_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "role_assignments_user_site_unique" UNIQUE NULLS NOT DISTINCT("user_id","site_id")
 );
 --> statement-breakpoint
 CREATE TABLE "role_permissions" (
@@ -139,8 +157,42 @@ CREATE TABLE "sessions" (
 	CONSTRAINT "sessions_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
+CREATE TABLE "site_domains" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"site_id" uuid NOT NULL,
+	"hostname" text NOT NULL,
+	"is_primary" boolean DEFAULT false NOT NULL,
+	"status" text DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "site_domains_hostname_check" CHECK ("site_domains"."hostname" ~ '^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$'),
+	CONSTRAINT "site_domains_status_check" CHECK ("site_domains"."status" in ('pending', 'active', 'removed'))
+);
+--> statement-breakpoint
+CREATE TABLE "sites" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"key" text NOT NULL,
+	"name_ar" text NOT NULL,
+	"name_en" text NOT NULL,
+	"locales" text[] NOT NULL,
+	"default_locale" text NOT NULL,
+	"mode" text DEFAULT 'coming-soon' NOT NULL,
+	"template" text NOT NULL,
+	"created_by" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"archived_at" timestamp with time zone,
+	CONSTRAINT "sites_key_unique" UNIQUE("key"),
+	CONSTRAINT "sites_key_check" CHECK ("sites"."key" ~ '^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){1,39}$'),
+	CONSTRAINT "sites_mode_check" CHECK ("sites"."mode" in ('coming-soon', 'live', 'maintenance')),
+	CONSTRAINT "sites_template_check" CHECK ("sites"."template" in ('coming-soon', 'product-showcase')),
+	CONSTRAINT "sites_locales_check" CHECK (cardinality("sites"."locales") >= 1 and "sites"."locales" <@ array['ar', 'en']::text[]),
+	CONSTRAINT "sites_default_locale_check" CHECK ("sites"."default_locale" = any("sites"."locales"))
+);
+--> statement-breakpoint
 CREATE TABLE "subscribers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"site_id" uuid NOT NULL,
 	"contact_type" text NOT NULL,
 	"contact_value" text NOT NULL,
 	"locale" text NOT NULL,
@@ -148,13 +200,6 @@ CREATE TABLE "subscribers" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "subscribers_contact_type_check" CHECK ("subscribers"."contact_type" in ('email', 'whatsapp')),
 	CONSTRAINT "subscribers_locale_check" CHECK ("subscribers"."locale" in ('ar', 'en'))
-);
---> statement-breakpoint
-CREATE TABLE "user_roles" (
-	"user_id" text PRIMARY KEY NOT NULL,
-	"role_id" text NOT NULL,
-	"assigned_by" text,
-	"assigned_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -181,28 +226,44 @@ CREATE TABLE "verifications" (
 );
 --> statement-breakpoint
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_drafts" ADD CONSTRAINT "document_drafts_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_drafts" ADD CONSTRAINT "document_drafts_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_published_by_users_id_fk" FOREIGN KEY ("published_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "form_rate_limits" ADD CONSTRAINT "form_rate_limits_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invitations" ADD CONSTRAINT "invitations_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_invited_by_users_id_fk" FOREIGN KEY ("invited_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_accepted_user_id_users_id_fk" FOREIGN KEY ("accepted_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "passkeys" ADD CONSTRAINT "passkeys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "publish_jobs" ADD CONSTRAINT "publish_jobs_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "publish_jobs" ADD CONSTRAINT "publish_jobs_requested_by_users_id_fk" FOREIGN KEY ("requested_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "recovery_codes" ADD CONSTRAINT "recovery_codes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "role_assignments" ADD CONSTRAINT "role_assignments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "role_assignments" ADD CONSTRAINT "role_assignments_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "role_assignments" ADD CONSTRAINT "role_assignments_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "role_assignments" ADD CONSTRAINT "role_assignments_assigned_by_users_id_fk" FOREIGN KEY ("assigned_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_roles" ADD CONSTRAINT "user_roles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_roles" ADD CONSTRAINT "user_roles_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_roles" ADD CONSTRAINT "user_roles_assigned_by_users_id_fk" FOREIGN KEY ("assigned_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "site_domains" ADD CONSTRAINT "site_domains_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sites" ADD CONSTRAINT "sites_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subscribers" ADD CONSTRAINT "subscribers_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "accounts_user_id_idx" ON "accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "audit_log_occurred_at_idx" ON "audit_log" USING btree ("occurred_at");--> statement-breakpoint
+CREATE INDEX "audit_log_site_idx" ON "audit_log" USING btree ("site_id","occurred_at");--> statement-breakpoint
 CREATE INDEX "audit_log_actor_idx" ON "audit_log" USING btree ("actor_user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "document_versions_kind_version_unique" ON "document_versions" USING btree ("kind","version");--> statement-breakpoint
+CREATE UNIQUE INDEX "document_versions_site_kind_version_unique" ON "document_versions" USING btree ("site_id","kind","version");--> statement-breakpoint
 CREATE INDEX "invitations_email_idx" ON "invitations" USING btree (lower("email"));--> statement-breakpoint
 CREATE INDEX "passkeys_user_id_idx" ON "passkeys" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "publish_jobs_site_idx" ON "publish_jobs" USING btree ("site_id","requested_at");--> statement-breakpoint
 CREATE INDEX "recovery_codes_user_id_idx" ON "recovery_codes" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "role_assignments_role_id_idx" ON "role_assignments" USING btree ("role_id");--> statement-breakpoint
+CREATE INDEX "role_assignments_site_id_idx" ON "role_assignments" USING btree ("site_id");--> statement-breakpoint
 CREATE INDEX "sessions_user_id_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "subscribers_contact_unique" ON "subscribers" USING btree ("contact_type","contact_value");--> statement-breakpoint
-CREATE INDEX "user_roles_role_id_idx" ON "user_roles" USING btree ("role_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "site_domains_hostname_unique" ON "site_domains" USING btree ("hostname") WHERE "site_domains"."status" <> 'removed';--> statement-breakpoint
+CREATE UNIQUE INDEX "site_domains_primary_unique" ON "site_domains" USING btree ("site_id") WHERE "site_domains"."is_primary" and "site_domains"."status" <> 'removed';--> statement-breakpoint
+CREATE INDEX "site_domains_site_id_idx" ON "site_domains" USING btree ("site_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "subscribers_site_contact_unique" ON "subscribers" USING btree ("site_id","contact_type","contact_value");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_unique" ON "users" USING btree (lower("email"));--> statement-breakpoint
 CREATE INDEX "verifications_identifier_idx" ON "verifications" USING btree ("identifier");

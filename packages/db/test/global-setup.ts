@@ -4,7 +4,7 @@ import type { TestProject } from 'vitest/node';
 import { createPoolDb } from '../src/client';
 import { runMigrations } from '../src/migrate';
 import { APP_DB_ROLES, applyDatabaseRoles, type AppDbRole } from '../src/roles';
-import { syncStandardRoles } from '../src/seed';
+import { FIRST_SITE, ensureSite, syncStandardRoles } from '../src/seed';
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -30,6 +30,7 @@ export default async function setup(project: TestProject) {
   const { db, close } = createPoolDb(databaseUrl, 1);
   await runMigrations(db);
   await syncStandardRoles(db);
+  await ensureSite(db, FIRST_SITE);
   await close();
 
   const rolePasswords = Object.fromEntries(

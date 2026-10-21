@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PERMISSIONS, RESERVED_PERMISSIONS, STANDARD_ROLES, permissionsOf } from './permissions';
+import {
+  PERMISSIONS,
+  PLATFORM_PERMISSIONS,
+  RESERVED_PERMISSIONS,
+  STANDARD_ROLES,
+  permissionsOf,
+} from './permissions';
 
 // The approved matrix (docs/roles-and-permissions.md, D-019, D-022) for the Phase 2 features.
 const EXPECTED: Record<string, string[]> = {
@@ -70,5 +76,14 @@ describe('standard roles', () => {
       expect(role.name.ar.length).toBeGreaterThan(0);
       expect(role.name.en.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('permission scopes (D-025)', () => {
+  it('keeps platform-wide permissions Owner-only', () => {
+    expect([...PLATFORM_PERMISSIONS].sort()).toEqual(
+      ['roles.manage', 'security.manage', 'sites.manage', 'staff.manageAdmins'].sort(),
+    );
+    for (const p of PLATFORM_PERMISSIONS) expect(RESERVED_PERMISSIONS).toContain(p);
   });
 });

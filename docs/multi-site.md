@@ -130,7 +130,9 @@ How option A works:
   production deployment the owner approves ([`deployment.md`](deployment.md)).
   The dashboard holds no Cloudflare credentials.
 
-## Data model changes (Phase 2)
+## Data model (Phase 2, built 2026-10-21)
+
+Built in `packages/db` and tested against PostgreSQL 18:
 
 - New `sites` and `site_domains` tables.
 - A site column, and site-aware unique keys, added to:
@@ -140,10 +142,21 @@ How option A works:
   - form rate limits;
   - invitations;
   - audit log entries (empty for platform-wide events).
-- `user_roles` (one role per user) becomes `role_assignments` (person, role,
-  and one site or all sites), shaped by the D-025 answer.
-- No production database exists yet, so the existing migrations are revised
-  rather than migrated in place.
+- `user_roles` (one role per user) became `role_assignments` (person, role,
+  and one site or all sites, D-025).
+- The database enforces the rules as well as the API:
+  - one role per person per site, and at most one all-sites role;
+  - never both an all-sites role and per-site roles (trigger);
+  - Owners and their invitations always cover all sites (trigger);
+  - site keys, hostnames, modes and languages are checked;
+  - a hostname belongs to one site, with one primary domain per site;
+  - sites can't be deleted, only archived. The dashboard's database user has
+    no permission to delete them.
+- `pnpm --filter @hantex/db seed` creates Hantex Ultra as the first site, in
+  Coming Soon mode, with `www.hantexultra.com` (primary) and
+  `hantexultra.com` recorded as *pending*. It never changes an existing site.
+- No production database exists yet, so the initial migration was
+  regenerated rather than migrated in place.
 
 ## Security
 

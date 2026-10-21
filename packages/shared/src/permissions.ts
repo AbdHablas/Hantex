@@ -2,7 +2,12 @@ import type { Bilingual } from './i18n';
 
 export interface PermissionDefinition {
   label: Bilingual;
-  group: 'overview' | 'content' | 'customers' | 'appearance' | 'staff' | 'site';
+  group: 'overview' | 'content' | 'customers' | 'appearance' | 'staff' | 'site' | 'platform';
+  /**
+   * 'site' permissions apply on the sites a role assignment covers; 'platform' permissions apply
+   * across the whole platform and only count from an all-sites assignment (D-025).
+   */
+  scope: 'site' | 'platform';
   /** Shown as a warning label in the roles matrix. */
   sensitive?: 'personal-data' | 'destructive' | 'brand';
   /** Owner-only: can never be given to another role (docs/roles-and-permissions.md). */
@@ -15,26 +20,32 @@ export interface PermissionDefinition {
  */
 export const PERMISSIONS = {
   'dashboard.view': {
+    scope: 'site',
     group: 'overview',
     label: { en: 'View the dashboard overview and statistics', ar: 'عرض النظرة العامة والإحصاءات' },
   },
   'comingSoon.view': {
+    scope: 'site',
     group: 'content',
     label: { en: 'View Coming Soon content', ar: 'عرض محتوى صفحة الإطلاق' },
   },
   'comingSoon.edit': {
+    scope: 'site',
     group: 'content',
     label: { en: 'Edit Coming Soon drafts', ar: 'تعديل مسودات صفحة الإطلاق' },
   },
   'site.publish': {
+    scope: 'site',
     group: 'content',
     label: { en: 'Publish changes to the public website', ar: 'نشر التغييرات على الموقع العام' },
   },
   'settings.view': {
+    scope: 'site',
     group: 'site',
     label: { en: 'View site settings', ar: 'عرض إعدادات الموقع' },
   },
   'settings.edit': {
+    scope: 'site',
     group: 'site',
     label: {
       en: 'Edit site settings (contact details, social links, SEO)',
@@ -42,29 +53,35 @@ export const PERMISSIONS = {
     },
   },
   'subscribers.view': {
+    scope: 'site',
     group: 'customers',
     sensitive: 'personal-data',
     label: { en: 'View launch sign-ups', ar: 'عرض المشتركين في إشعار الإطلاق' },
   },
   'subscribers.export': {
+    scope: 'site',
     group: 'customers',
     sensitive: 'personal-data',
     label: { en: 'Export launch sign-ups', ar: 'تصدير قائمة المشتركين' },
   },
   'subscribers.delete': {
+    scope: 'site',
     group: 'customers',
     sensitive: 'destructive',
     label: { en: 'Delete launch sign-ups', ar: 'حذف المشتركين' },
   },
   'appearance.edit': {
+    scope: 'site',
     group: 'appearance',
     label: { en: 'Edit theme drafts', ar: 'تعديل مسودات المظهر' },
   },
   'appearance.publish': {
+    scope: 'site',
     group: 'appearance',
     label: { en: 'Publish or roll back the theme', ar: 'نشر المظهر أو استرجاع نسخة سابقة' },
   },
   'appearance.editLogo': {
+    scope: 'site',
     group: 'appearance',
     sensitive: 'brand',
     label: {
@@ -73,10 +90,12 @@ export const PERMISSIONS = {
     },
   },
   'staff.view': {
+    scope: 'site',
     group: 'staff',
     label: { en: 'View staff accounts', ar: 'عرض حسابات الفريق' },
   },
   'staff.manage': {
+    scope: 'site',
     group: 'staff',
     label: {
       en: 'Invite and disable staff (below Administrator)',
@@ -84,20 +103,24 @@ export const PERMISSIONS = {
     },
   },
   'staff.manageAdmins': {
+    scope: 'platform',
     group: 'staff',
     reserved: true,
     label: { en: 'Manage Owners and Administrators', ar: 'إدارة المالكين والمديرين' },
   },
   'roles.manage': {
+    scope: 'platform',
     group: 'staff',
     reserved: true,
     label: { en: 'Create and edit roles', ar: 'إنشاء الأدوار وتعديلها' },
   },
   'audit.view': {
+    scope: 'site',
     group: 'staff',
     label: { en: 'View the audit log', ar: 'عرض سجل التدقيق' },
   },
   'siteMode.manage': {
+    scope: 'site',
     group: 'site',
     reserved: true,
     label: {
@@ -106,9 +129,19 @@ export const PERMISSIONS = {
     },
   },
   'security.manage': {
-    group: 'site',
+    scope: 'platform',
+    group: 'platform',
     reserved: true,
     label: { en: 'Change security settings', ar: 'تغيير إعدادات الأمان' },
+  },
+  'sites.manage': {
+    scope: 'platform',
+    group: 'platform',
+    reserved: true,
+    label: {
+      en: 'Create and manage websites (domains, languages, archiving)',
+      ar: 'إنشاء المواقع وإدارتها (النطاقات واللغات والأرشفة)',
+    },
   },
 } as const satisfies Record<string, PermissionDefinition>;
 
@@ -118,6 +151,10 @@ export const ALL_PERMISSIONS = Object.keys(PERMISSIONS) as Permission[];
 
 export const RESERVED_PERMISSIONS = ALL_PERMISSIONS.filter(
   (p) => (PERMISSIONS[p] as PermissionDefinition).reserved === true,
+);
+
+export const PLATFORM_PERMISSIONS = ALL_PERMISSIONS.filter(
+  (p) => (PERMISSIONS[p] as PermissionDefinition).scope === 'platform',
 );
 
 export const isPermission = (value: string): value is Permission =>

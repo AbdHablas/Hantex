@@ -48,6 +48,7 @@ or extended later without rebuilding anything.
 | Roles: create and edit custom roles | ✓ | — | — | — | — | — |
 | Audit log: view | ✓ | ✓ | — | — | — | — |
 | Security settings (sessions, sign-in policy) | ✓ | — | — | — | — | — |
+| Sites: create and manage websites (domains, languages, archiving) *(D-024)* | ✓ | — | — | — | — | — |
 
 ## Rules that always apply
 
@@ -125,12 +126,19 @@ Either way, the rules above (no self-changes, no granting what you don't
 hold, last Owner protected, audited and emailed changes) apply on every
 site.
 
+**Built (2026-10-21):** each permission in code is marked *site* or
+*platform*. Platform permissions (managing Owners and Administrators, roles,
+security settings, sites) count only from an all-sites assignment, so a
+per-site role can never act on the whole platform, even if a custom role
+lists them. `@hantex/shared` works out a person's permissions on each site,
+and the database rejects per-site Owners and mixed all-sites and per-site
+assignments.
+
 ## Permissions planned for later features
 
 These are added to the matrix as each feature is built. Each one is proposed
 with its standard-role defaults before it is used:
 
-- *Sites: create and manage*: Owner only.
 - Font library: add and remove fonts.
 - Catalogue: view, edit drafts, publish, delete
   ([`product-catalogue.md`](product-catalogue.md)).

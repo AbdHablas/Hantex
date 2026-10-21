@@ -10,6 +10,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
@@ -123,6 +124,76 @@ export const authRateLimits = pgTable('auth_rate_limits', {
 });
 
 /* ------------------------------------------------------------------------------------------
+ * Sites (D-024): every public website the dashboard manages. Sites are archived, never deleted,
+ * so their records and audit history stay intact (foreign keys to sites use ON DELETE RESTRICT).
+ * ---------------------------------------------------------------------------------------- */
+
+export const sites = pgTable(
+  'sites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Short key, e.g. 'hantex-ultra': names the Worker `site-<key>` and appears in API paths. */
+    key: text('key').notNull().unique(),
+    nameAr: text('name_ar').notNull(),
+    nameEn: text('name_en').notNull(),
+    locales: text('locales').array().notNull(),
+    defaultLocale: text('default_locale').notNull(),
+    /** New sites always start in Coming Soon mode; only an Owner switches them live. */
+    mode: text('mode').notNull().default('coming-soon'),
+    template: text('template').notNull(),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+  },
+  (t) => [
+    check('sites_key_check', sql`${t.key} ~ '^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){1,39}$'`),
+    check('sites_mode_check', sql`${t.mode} in ('coming-soon', 'live', 'maintenance')`),
+    check('sites_template_check', sql`${t.template} in ('coming-soon', 'product-showcase')`),
+    check(
+      'sites_locales_check',
+      sql`cardinality(${t.locales}) >= 1 and ${t.locales} <@ array['ar', 'en']::text[]`,
+    ),
+    check('sites_default_locale_check', sql`${t.defaultLocale} = any(${t.locales})`),
+  ],
+);
+
+/**
+ * A site's domains. Added as 'pending' from the dashboard; they become 'active' only through a
+ * production deployment the Owner approves (docs/deployment.md). The dashboard never touches DNS.
+ */
+export const siteDomains = pgTable(
+  'site_domains',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: uuid('site_id')
+      .notNull()
+      .references(() => sites.id, { onDelete: 'restrict' }),
+    hostname: text('hostname').notNull(),
+    /** The canonical address; other domains redirect to it. */
+    isPrimary: boolean('is_primary').notNull().default(false),
+    status: text('status').notNull().default('pending'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    // A hostname belongs to one site at a time; removed entries keep their history.
+    uniqueIndex('site_domains_hostname_unique')
+      .on(t.hostname)
+      .where(sql`${t.status} <> 'removed'`),
+    uniqueIndex('site_domains_primary_unique')
+      .on(t.siteId)
+      .where(sql`${t.isPrimary} and ${t.status} <> 'removed'`),
+    index('site_domains_site_id_idx').on(t.siteId),
+    check(
+      'site_domains_hostname_check',
+      sql`${t.hostname} ~ '^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$'`,
+    ),
+    check('site_domains_status_check', sql`${t.status} in ('pending', 'active', 'removed')`),
+  ],
+);
+
+/* ------------------------------------------------------------------------------------------
  * Roles and permissions (D-019). Permissions are defined in code (@hantex/shared); roles are data.
  * ---------------------------------------------------------------------------------------- */
 
@@ -152,20 +223,31 @@ export const rolePermissions = pgTable(
   (t) => [primaryKey({ columns: [t.roleId, t.permission] })],
 );
 
-/** Exactly one role per staff member. */
-export const userRoles = pgTable(
-  'user_roles',
+/**
+ * Who holds which role where (D-025). site_id null = all sites. A person has either one
+ * all-sites assignment or per-site assignments (one per site), never both, and roles that are
+ * locked (Owner) are always all-sites. The unique index and the trigger in migration 0001 enforce
+ * this in the database as well as in the API (checkAssignmentScope in @hantex/shared).
+ */
+export const roleAssignments = pgTable(
+  'role_assignments',
   {
+    id: uuid('id').primaryKey().defaultRandom(),
     userId: text('user_id')
-      .primaryKey()
+      .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     roleId: text('role_id')
       .notNull()
       .references(() => roles.id, { onDelete: 'restrict' }),
+    siteId: uuid('site_id').references(() => sites.id, { onDelete: 'restrict' }),
     assignedBy: text('assigned_by').references(() => users.id, { onDelete: 'set null' }),
     assignedAt: timestamp('assigned_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('user_roles_role_id_idx').on(t.roleId)],
+  (t) => [
+    unique('role_assignments_user_site_unique').on(t.userId, t.siteId).nullsNotDistinct(),
+    index('role_assignments_role_id_idx').on(t.roleId),
+    index('role_assignments_site_id_idx').on(t.siteId),
+  ],
 );
 
 /** Staff invitations, including the single-use first-Owner setup invitation (invitedBy null). */
@@ -178,6 +260,8 @@ export const invitations = pgTable(
     roleId: text('role_id')
       .notNull()
       .references(() => roles.id, { onDelete: 'restrict' }),
+    /** The site the role applies to once accepted; null = all sites (D-025). */
+    siteId: uuid('site_id').references(() => sites.id, { onDelete: 'restrict' }),
     /** SHA-256 of the invitation token; the token itself is only ever in the email. */
     tokenHash: text('token_hash').notNull().unique(),
     invitedBy: text('invited_by').references(() => users.id, { onDelete: 'set null' }),
@@ -214,6 +298,8 @@ export const auditLog = pgTable(
   {
     id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+    /** The site the action concerned; null for platform-wide actions. */
+    siteId: uuid('site_id').references(() => sites.id, { onDelete: 'restrict' }),
     actorUserId: text('actor_user_id'),
     /** Snapshot of who acted (email), kept even if the account is later removed. */
     actorLabel: text('actor_label').notNull(),
@@ -225,13 +311,14 @@ export const auditLog = pgTable(
   },
   (t) => [
     index('audit_log_occurred_at_idx').on(t.occurredAt),
+    index('audit_log_site_idx').on(t.siteId, t.occurredAt),
     index('audit_log_actor_idx').on(t.actorUserId),
   ],
 );
 
 /* ------------------------------------------------------------------------------------------
  * Versioned documents: Coming Soon content, site settings and the theme (D-016, D-022).
- * One editable draft per kind; publishing appends an immutable version. Rollback republishes
+ * Each site has one editable draft per kind (D-024); publishing appends an immutable version. Rollback republishes
  * an older version's data as a new version, so history stays linear and auditable.
  * ---------------------------------------------------------------------------------------- */
 
@@ -239,21 +326,31 @@ export const DOCUMENT_KINDS = ['coming-soon', 'site-settings', 'theme'] as const
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 const kindCheck = (column: unknown) => sql`${column} in ('coming-soon', 'site-settings', 'theme')`;
 
+const siteRef = () =>
+  uuid('site_id')
+    .notNull()
+    .references(() => sites.id, { onDelete: 'restrict' });
+
 export const documentDrafts = pgTable(
   'document_drafts',
   {
-    kind: text('kind').primaryKey(),
+    siteId: siteRef(),
+    kind: text('kind').notNull(),
     data: jsonb('data').notNull(),
     updatedBy: text('updated_by').references(() => users.id, { onDelete: 'set null' }),
     updatedAt: updatedAt(),
   },
-  (t) => [check('document_drafts_kind_check', kindCheck(t.kind))],
+  (t) => [
+    primaryKey({ columns: [t.siteId, t.kind] }),
+    check('document_drafts_kind_check', kindCheck(t.kind)),
+  ],
 );
 
 export const documentVersions = pgTable(
   'document_versions',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
     kind: text('kind').notNull(),
     version: integer('version').notNull(),
     data: jsonb('data').notNull(),
@@ -263,16 +360,17 @@ export const documentVersions = pgTable(
     restoredFrom: integer('restored_from'),
   },
   (t) => [
-    uniqueIndex('document_versions_kind_version_unique').on(t.kind, t.version),
+    uniqueIndex('document_versions_site_kind_version_unique').on(t.siteId, t.kind, t.version),
     check('document_versions_kind_check', kindCheck(t.kind)),
   ],
 );
 
-/** Static-site rebuilds triggered by publishing (D-006). */
+/** Static-site rebuilds triggered by publishing (D-006); each rebuilds one site (D-028). */
 export const publishJobs = pgTable(
   'publish_jobs',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
     requestedBy: text('requested_by').references(() => users.id, { onDelete: 'set null' }),
     requestedAt: timestamp('requested_at', { withTimezone: true }).notNull().defaultNow(),
     status: text('status').notNull().default('queued'),
@@ -280,6 +378,7 @@ export const publishJobs = pgTable(
     completedAt: timestamp('completed_at', { withTimezone: true }),
   },
   (t) => [
+    index('publish_jobs_site_idx').on(t.siteId, t.requestedAt),
     check(
       'publish_jobs_status_check',
       sql`${t.status} in ('queued', 'dispatched', 'succeeded', 'failed')`,
@@ -288,13 +387,15 @@ export const publishJobs = pgTable(
 );
 
 /* ------------------------------------------------------------------------------------------
- * Launch-notification sign-ups (D-018). The public site's database user may only INSERT.
+ * Launch-notification sign-ups (D-018), per site. The public site's database user may only
+ * INSERT; each site's Worker sets site_id from its own configuration, never from the request.
  * ---------------------------------------------------------------------------------------- */
 
 export const subscribers = pgTable(
   'subscribers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
     contactType: text('contact_type').notNull(),
     contactValue: text('contact_value').notNull(),
     locale: text('locale').notNull(),
@@ -302,15 +403,20 @@ export const subscribers = pgTable(
     createdAt: createdAt(),
   },
   (t) => [
-    uniqueIndex('subscribers_contact_unique').on(t.contactType, t.contactValue),
+    uniqueIndex('subscribers_site_contact_unique').on(t.siteId, t.contactType, t.contactValue),
     check('subscribers_contact_type_check', sql`${t.contactType} in ('email', 'whatsapp')`),
     check('subscribers_locale_check', sql`${t.locale} in ('ar', 'en')`),
   ],
 );
 
-/** Fixed-window rate limits for public endpoints, shared across Worker instances. */
-export const formRateLimits = pgTable('form_rate_limits', {
-  key: text('key').primaryKey(),
-  count: integer('count').notNull(),
-  windowStartedAt: bigint('window_started_at', { mode: 'number' }).notNull(),
-});
+/** Fixed-window rate limits for public endpoints, per site, shared across Worker instances. */
+export const formRateLimits = pgTable(
+  'form_rate_limits',
+  {
+    siteId: siteRef(),
+    key: text('key').notNull(),
+    count: integer('count').notNull(),
+    windowStartedAt: bigint('window_started_at', { mode: 'number' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.siteId, t.key] })],
+);
