@@ -6,7 +6,7 @@ website or run in production.
 | Tool | What it does | Where it's configured | When we use it |
 |------|--------------|-----------------------|----------------|
 | [Context7](https://github.com/upstash/context7) | Up-to-date, version-specific library docs for the coding agent | `.mcp.json` (`context7`) | Every phase — before using any framework API |
-| [21st.dev Magic](https://21st.dev/mcp) | Generates UI components from prompts | `.mcp.json` (`magic`) | Phase 2 onwards, as a starting point only — every component is reviewed and restyled to the Hantex Ultra design system |
+| [21st.dev](https://21st.dev/mcp) | Searches and installs ready-made React/Tailwind components | `.mcp.json` (`21st`, HTTP server at `https://21st.dev/api/mcp`, key from `API_KEY_21ST`) | Phase 2 onwards, as a starting point only — every component is reviewed and restyled to the Hantex Ultra design system |
 | [Graphify](https://github.com/Graphify-Labs/graphify) | Builds a queryable knowledge graph of the codebase | Installed per developer machine (`uv tool install graphifyy`) | Once the codebase is large enough to benefit (Phase 3+) |
 | [Strix](https://github.com/usestrix/strix) | Autonomous AI penetration testing | Installed per developer machine; needs Docker and an LLM key | Phase 5 hardening, and later in CI — only against our own local or staging builds, never production without approval |
 
@@ -15,6 +15,9 @@ website or run in production.
 1. Copy `.env.example` to `.env` and fill in the keys you need. Never commit `.env`.
 2. Export the variables in your shell before starting Claude Code, so `.mcp.json` can read them.
 3. Claude Code asks you to approve the project MCP servers the first time it opens the repo.
+4. In a Claude Code cloud session, add the keys in the environment's settings
+   instead (Network secrets or environment variables), and allow `21st.dev`
+   under Network access. A new session picks them up.
 
 ## Notes
 
