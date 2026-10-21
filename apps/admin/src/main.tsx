@@ -8,6 +8,7 @@ import { I18nProvider } from './lib/i18n';
 import { ThemeProvider } from './lib/theme';
 import { AcceptInvitation, Recover, SignIn } from './routes/auth';
 import { Account, AuditLog, Home, Roles, SiteSettings, Sites } from './routes/platform';
+import { AppearanceEditor, SiteSettingsEditor } from './routes/editors';
 import { ComingSoonEditor, SiteOverview, SitePage, Subscribers } from './routes/site';
 import { PlatformStaff, SiteStaff } from './routes/staff';
 import './styles.css';
@@ -46,6 +47,22 @@ const router = createBrowserRouter([
             element: (
               <SitePage>
                 <ComingSoonEditor />
+              </SitePage>
+            ),
+          },
+          {
+            path: 'site-settings',
+            element: (
+              <SitePage>
+                <SiteSettingsEditor />
+              </SitePage>
+            ),
+          },
+          {
+            path: 'appearance',
+            element: (
+              <SitePage>
+                <AppearanceEditor />
               </SitePage>
             ),
           },

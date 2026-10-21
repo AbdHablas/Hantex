@@ -10,7 +10,9 @@ import {
   Mail,
   Monitor,
   Moon,
+  Palette,
   ScrollText,
+  Settings2,
   ShieldCheck,
   Sun,
   UserRound,
@@ -198,6 +200,16 @@ export function Shell() {
               {siteCan('comingSoon.view') && (
                 <NavItem to={`/s/${site.key}/coming-soon`} icon={<FileText />}>
                   {m.nav.comingSoon}
+                </NavItem>
+              )}
+              {siteCan('settings.view') && (
+                <NavItem to={`/s/${site.key}/site-settings`} icon={<Settings2 />}>
+                  {m.nav.settings}
+                </NavItem>
+              )}
+              {siteCan('appearance.edit') && (
+                <NavItem to={`/s/${site.key}/appearance`} icon={<Palette />}>
+                  {m.nav.appearance}
                 </NavItem>
               )}
               {siteCan('subscribers.view') && (

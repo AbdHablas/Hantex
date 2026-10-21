@@ -1,5 +1,6 @@
 ---
 import type { ComingSoonContent, Locale, SiteSettings } from '@hantex/shared';
+import type { Theme } from '@hantex/theme';
 import { TEXT, dirOf } from '../i18n';
 import { SITE, pathFor } from '../site-data';
 import '../styles/site.css';
@@ -16,9 +17,11 @@ interface Props {
   preview?: boolean;
   /** A draft theme's stylesheet, inlined with a nonce (previews only). */
   themeCss?: { css: string; nonce: string };
+  /** The theme in use; a draft theme in previews. */
+  theme?: Theme;
 }
 
-const { locale, content, settings, preview = false, themeCss } = Astro.props;
+const { locale, content, settings, preview = false, themeCss, theme = SITE.theme } = Astro.props;
 const t = TEXT[locale];
 const site = SITE.site;
 const siteName = site.name[locale] || site.name.ar || site.name.en;
@@ -83,11 +86,15 @@ const contact = settings.contact;
               </a>
             ))
           }
+          {
+            theme.mode.allowToggle && (
           <button class="tool" type="button" data-theme-toggle aria-label={t.themeToggle} title={t.themeToggle}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"></path>
             </svg>
           </button>
+            )
+          }
         </div>
       </div>
     </header>

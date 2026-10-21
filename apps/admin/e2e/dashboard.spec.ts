@@ -54,6 +54,37 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByText(/كنسخة 1/)).toBeVisible();
   await expect(page.getByRole('cell', { name: '#1' })).toBeVisible();
 
+  // Preview: the dashboard signs the draft and posts it to the site's own address.
+  await context.route('https://www.hantexultra.com/**', (route) =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: `<p id="preview">${route.request().method()} ${route.request().postData() ?? ''}</p>`,
+    }),
+  );
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'معاينة' }).click();
+  const popup = await popupPromise;
+  await expect(popup.locator('#preview')).toContainText(
+    /^POST payload=.+&expires=\d+&signature=[0-9a-f]{64}/,
+  );
+  await popup.close();
+
+  // Site settings: publish a contact email.
+  await page.getByRole('link', { name: 'إعدادات الموقع' }).click();
+  await page.getByLabel('البريد الإلكتروني').fill('hello@example.test');
+  await page.getByRole('button', { name: 'نشر', exact: true }).click();
+  await expect(page.getByText(/كنسخة 1/)).toBeVisible();
+
+  // Appearance: unreadable colours are reported before publishing.
+  await page.getByRole('link', { name: 'المظهر' }).click();
+  await expect(page.getByText('كل النصوص مقروءة في الوضعين.')).toBeVisible();
+  await page
+    .getByRole('group', { name: 'الوضع الفاتح' })
+    .first()
+    .getByRole('textbox', { name: 'النص', exact: true })
+    .fill('#F4F6F8');
+  await expect(page.getByRole('alert')).toContainText('النص على خلفية الصفحة');
+
   // Recovery codes need a fresh sign-in, which this is.
   await page.getByRole('link', { name: 'حسابي' }).click();
   await page.getByRole('button', { name: 'إنشاء رموز استرداد جديدة' }).click();

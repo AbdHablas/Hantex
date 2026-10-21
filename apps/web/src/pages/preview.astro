@@ -48,6 +48,7 @@ if (data) {
       settings={data['site-settings']}
       preview
       themeCss={{ css: themeToCss(data.theme), nonce }}
+      theme={data.theme}
     />
   ) : (
     <p>Preview link expired or invalid.</p>

@@ -1,7 +1,7 @@
 import { comingSoonSchema, type ComingSoonContent } from '@hantex/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Download, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import {
   Alert,
@@ -14,9 +14,15 @@ import {
   Loading,
   PageHeader,
   Table,
-  Textarea,
   confirmAction,
 } from '../components/ui';
+import {
+  BilingualField,
+  DocumentActions,
+  DocumentStatus,
+  VersionHistory,
+  useDocumentEditor,
+} from '../components/document';
 import { api, sitePath } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
 import { useCurrentSite } from '../lib/session';
@@ -120,54 +126,6 @@ export function SiteOverview() {
 
 /* --------------------------------- Coming Soon editor --------------------------------- */
 
-type Bi = { ar: string; en: string };
-
-function BilingualField({
-  label,
-  value,
-  onChange,
-  max,
-  multiline,
-  disabled,
-}: {
-  label: string;
-  value: Bi;
-  onChange: (value: Bi) => void;
-  max: number;
-  multiline?: boolean;
-  disabled: boolean;
-}) {
-  const { m } = useI18n();
-  const Control = multiline ? Textarea : Input;
-  return (
-    <fieldset className="grid gap-3 sm:grid-cols-2">
-      <legend className="mb-1.5 text-sm font-medium">{label}</legend>
-      {(['ar', 'en'] as const).map((lang) => (
-        <Field
-          key={lang}
-          label={
-            <span className="text-muted">{lang === 'ar' ? m.comingSoon.ar : m.comingSoon.en}</span>
-          }
-        >
-          {(props) => (
-            <Control
-              {...props}
-              lang={lang}
-              dir={lang === 'ar' ? 'rtl' : 'ltr'}
-              maxLength={max}
-              disabled={disabled}
-              value={value[lang]}
-              onChange={(e: { target: { value: string } }) =>
-                onChange({ ...value, [lang]: e.target.value })
-              }
-            />
-          )}
-        </Field>
-      ))}
-    </fieldset>
-  );
-}
-
 /** "2026-11-01T10:00" (local time in the input) ⇄ ISO 8601 with offset (stored). */
 const toLocalInput = (iso: string | null) => {
   if (!iso) return '';
@@ -177,105 +135,20 @@ const toLocalInput = (iso: string | null) => {
 };
 const fromLocalInput = (value: string) => (value ? new Date(value).toISOString() : null);
 
-interface DocumentResponse {
-  draft: ComingSoonContent;
-  draftUpdatedAt: string | null;
-  published: { version: number; publishedAt: string } | null;
-}
-
-interface PublishResult {
-  version: number;
-  job: { dispatched: boolean; detail: string } | null;
-}
-
 export function ComingSoonEditor() {
-  const { site, siteKey, can } = useCurrentSite();
-  const { m, format, date } = useI18n();
-  const queryClient = useQueryClient();
-  const key = ['site', siteKey, 'doc', 'coming-soon'];
-  const query = useQuery({
-    queryKey: key,
-    queryFn: () => api<DocumentResponse>(sitePath(siteKey, '/documents/coming-soon')),
-    enabled: site !== null,
+  const { m } = useI18n();
+  const editor = useDocumentEditor<ComingSoonContent>({
+    kind: 'coming-soon',
+    schema: comingSoonSchema,
+    edit: ['comingSoon.edit'],
+    publish: ['site.publish'],
   });
-  const versions = useQuery({
-    queryKey: [...key, 'versions'],
-    queryFn: () =>
-      api<
-        {
-          version: number;
-          publishedAt: string;
-          restoredFrom: number | null;
-          publishedBy: string | null;
-        }[]
-      >(sitePath(siteKey, '/documents/coming-soon/versions')),
-    enabled: site !== null,
-  });
-  const [draft, setDraft] = useState<ComingSoonContent | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { draft, editable } = editor;
 
-  useEffect(() => {
-    if (query.data && !dirty) setDraft(query.data.draft);
-  }, [query.data, dirty]);
+  if (!editor.site) return <Navigate to="/" replace />;
+  if (editor.query.isPending || !draft) return <Loading />;
 
-  const editable = can('comingSoon.edit') && site?.archived !== true;
-  const canPublish = can('site.publish') && site?.archived !== true;
-  const parsed = draft ? comingSoonSchema.safeParse(draft) : null;
-
-  const refresh = () => queryClient.invalidateQueries({ queryKey: key });
-  const save = useMutation({
-    mutationFn: (data: ComingSoonContent) =>
-      api(sitePath(siteKey, '/documents/coming-soon/draft'), { method: 'PUT', body: data }),
-    onSuccess: async () => {
-      setDirty(false);
-      setNotice(m.saved);
-      await refresh();
-    },
-  });
-  const describe = (result: PublishResult) =>
-    result.job?.dispatched === false
-      ? format(m.comingSoon.publishedNoBuild, {
-          version: result.version,
-          detail: result.job.detail,
-        })
-      : format(m.comingSoon.published, { version: result.version });
-  const publish = useMutation({
-    mutationFn: async (data: ComingSoonContent | null) => {
-      if (data)
-        await api(sitePath(siteKey, '/documents/coming-soon/draft'), { method: 'PUT', body: data });
-      return api<PublishResult>(sitePath(siteKey, '/documents/coming-soon/publish'), {
-        method: 'POST',
-        body: {},
-      });
-    },
-    onSuccess: async (result) => {
-      setDirty(false);
-      setNotice(describe(result));
-      await refresh();
-    },
-  });
-  const rollback = useMutation({
-    mutationFn: (version: number) =>
-      api<PublishResult>(sitePath(siteKey, '/documents/coming-soon/rollback'), {
-        method: 'POST',
-        body: { version },
-      }),
-    onSuccess: async (result) => {
-      setDirty(false);
-      setNotice(describe(result));
-      await refresh();
-    },
-  });
-
-  if (!site) return <Navigate to="/" replace />;
-  if (query.isPending || !draft) return <Loading />;
-
-  const update = (patch: Partial<ComingSoonContent>) => {
-    setDraft({ ...draft, ...patch });
-    setDirty(true);
-    setNotice(null);
-  };
+  const update = (patch: Partial<ComingSoonContent>) => editor.update({ ...draft, ...patch });
   const updateItem = <K extends 'milestones' | 'readiness' | 'highlights'>(
     list: K,
     index: number,
@@ -292,39 +165,10 @@ export function ComingSoonEditor() {
       <PageHeader
         title={m.comingSoon.title}
         intro={m.comingSoon.intro}
-        actions={
-          <>
-            {editable && (
-              <Button
-                variant="secondary"
-                busy={save.isPending}
-                disabled={!dirty || !parsed?.success}
-                onClick={() => save.mutate(draft)}
-              >
-                {m.comingSoon.saveDraft}
-              </Button>
-            )}
-            {canPublish && (
-              <Button
-                busy={publish.isPending}
-                disabled={!parsed?.success}
-                onClick={() => {
-                  if (confirmAction(m.comingSoon.publishConfirm))
-                    publish.mutate(dirty && editable ? draft : null);
-                }}
-              >
-                {m.comingSoon.publish}
-              </Button>
-            )}
-          </>
-        }
+        actions={<DocumentActions editor={editor} />}
       />
       <div className="flex flex-col gap-4">
-        {!editable && <Alert>{m.comingSoon.readOnly}</Alert>}
-        {dirty && <Alert tone="warning">{m.comingSoon.unsaved}</Alert>}
-        {notice && <Alert tone="success">{notice}</Alert>}
-        {parsed && !parsed.success && <Alert tone="danger">{m.errors['invalid-input']}</Alert>}
-        <ErrorText error={save.error ?? publish.error ?? rollback.error} />
+        <DocumentStatus editor={editor} />
 
         <Card>
           <div className="flex flex-col gap-5">
@@ -597,42 +441,7 @@ export function ComingSoonEditor() {
           </div>
         </Card>
 
-        <Card title={m.comingSoon.history}>
-          {versions.data && versions.data.length > 0 ? (
-            <Table>
-              <tbody>
-                {versions.data.map((v) => (
-                  <tr key={v.version}>
-                    <td className="font-medium">#{v.version}</td>
-                    <td>{date(v.publishedAt, true)}</td>
-                    <td>{v.publishedBy ?? ''}</td>
-                    <td className="text-end">
-                      {canPublish && v.version !== query.data?.published?.version && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          busy={rollback.isPending}
-                          onClick={() => {
-                            if (
-                              confirmAction(
-                                format(m.comingSoon.restoreConfirm, { version: v.version }),
-                              )
-                            )
-                              rollback.mutate(v.version);
-                          }}
-                        >
-                          {m.comingSoon.restore}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
-            <p className="text-muted">{m.overview.notPublished}</p>
-          )}
-        </Card>
+        <VersionHistory editor={editor} />
       </div>
     </>
   );
