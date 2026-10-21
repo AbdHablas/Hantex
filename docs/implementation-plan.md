@@ -47,7 +47,7 @@ reflected in this plan and in the documents listed.
 - [x] `docs/architecture.md` started from confirmed decisions
 - [x] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
-## Phase 2: Coming Soon page and multi-site dashboard foundation *(in progress; approved 2026-10-21; scope extended by D-024)*
+## Phase 2: Coming Soon page and multi-site dashboard foundation *(built and approved by the owner 2026-10-21; first deployment in progress; scope extended by D-024)*
 
 Done:
 

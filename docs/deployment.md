@@ -134,11 +134,19 @@ deployed before the owner says so.
 
 1. **Neon** (free): create a project with PostgreSQL 18 in a region near the
    visitors. Copy the owner connection string into `DATABASE_URL`.
-2. **Passwords and secrets:** generate the four database passwords and the
-   random secrets, and add them to GitHub secrets.
-3. **GitHub environments:** create `production` with the owner as required
-   reviewer, and `sites` (no reviewer: publishing from the dashboard runs
-   unattended).
+2. **Passwords and secrets:** on your own computer, in this repository's
+   folder, run `bash scripts/first-deploy-secrets.sh` (needs the GitHub CLI,
+   signed in as the owner). It asks for the Neon connection string (hidden),
+   generates the four database passwords and the random secrets, and stores
+   them directly as GitHub secrets, with the build and backup connection
+   strings. Nothing passes through chat. It also writes the two Hyperdrive
+   connection strings to `.local/hyperdrive-connections.txt` for step 5;
+   delete that file afterwards.
+3. **GitHub environments** (Settings → Environments), each limited to the
+   `main` branch: `production` with the owner as required reviewer, `sites`
+   (no reviewer: publishing from the dashboard runs unattended) and `backups`
+   (no reviewer). Create `production` **before** the first deployment run: a
+   workflow that names a missing environment creates it without protection.
 4. **Run `Deploy (production)` → `database`** and approve it. This creates the
    tables, the database users, the standard roles and the Hantex Ultra site
    (Coming Soon, domains pending).

@@ -1,8 +1,7 @@
 # Phase 2 report: Coming Soon page and multi-site dashboard foundation
 
-**Date:** 2026-10-21 · **Status:** built and tested, **not deployed**. Waiting
-for the owner's approval to continue (Phase 3) and to start the first
-deployment ([`deployment.md`](deployment.md)).
+**Date:** 2026-10-21 · **Status:** built and tested; **approved by the owner on 2026-10-21**; first deployment started, **not deployed yet**
+([`deployment.md`](deployment.md#first-deployment-step-by-step)).
 
 ## What was built
 
