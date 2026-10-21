@@ -29,7 +29,9 @@ or extended later without rebuilding anything.
 | Coming Soon content (launch date, texts, milestones…) | ✓ | ✓ | ✓ | View | Draft | View |
 | Publish changes (rebuilds the public page) | ✓ | ✓ | ✓ | — | — | — |
 | Pages, news, FAQs *(Phase 3+)* | ✓ | ✓ | ✓ | View | Draft | View |
-| Products and catalogue *(Phase 4)* | ✓ | ✓ | ✓ | View | Draft | View |
+| Products and catalogue *(Phase 3)* | ✓ | ✓ | ✓ | View | Draft | View |
+| 3D Studio: create and review models *(Phase 3, D-029)* | ✓ | ✓ | ✓ | — | Create only | View |
+| 3D Studio: approve models for publishing *(owner's requirement)* | ✓ | — | — | — | — | — |
 | Media library: view and upload | ✓ | ✓ | ✓ | View | ✓ | View |
 | Media library: delete | ✓ | ✓ | — | — | — | — |
 | Permanently delete content | ✓ | ✓ | — | — | — | — |
@@ -103,3 +105,40 @@ The matrix is managed from the dashboard, not fixed in code:
   Owner protected) apply to the matrix too.
 
 The matrix editor is part of the Phase 2 dashboard foundation.
+
+## Several websites (D-024; access model pending, D-025)
+
+The dashboard now manages any number of websites ([`multi-site.md`](multi-site.md)).
+Role definitions (the matrix above) stay shared by all sites. What is still
+open is **where a role applies**:
+
+- **A. Per site, with an "all sites" option (recommended).**
+  - A person's role is assigned for one site, or for all sites.
+  - Owners always cover all sites.
+  - *Staff* and *Audit log* rows apply within the sites the assignment
+    covers.
+  - Owner-only rows stay platform-wide: managing Owners and Administrators,
+    roles, security settings, and the new *Sites: create and manage*.
+- **B. One role for all sites,** as the matrix works today.
+
+Either way, the rules above (no self-changes, no granting what you don't
+hold, last Owner protected, audited and emailed changes) apply on every
+site.
+
+## Permissions planned for later features
+
+These are added to the matrix as each feature is built. Each one is proposed
+with its standard-role defaults before it is used:
+
+- *Sites: create and manage*: Owner only.
+- Font library: add and remove fonts.
+- Catalogue: view, edit drafts, publish, delete
+  ([`product-catalogue.md`](product-catalogue.md)).
+- Media: view and upload, delete.
+- 3D Studio:
+  - create captures and start processing;
+  - review;
+  - approve models for publishing;
+  - manage providers and budget (Owner only)
+  ([`3d-product-studio.md`](3d-product-studio.md)).
+- Enquiries: view, export, delete.

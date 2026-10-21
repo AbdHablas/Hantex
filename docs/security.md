@@ -9,8 +9,10 @@ end.
 
 - Staff accounts and the dashboard (content integrity, site mode).
 - Customer personal data: launch sign-ups (email or WhatsApp number) and,
-  later, enquiries.
-- Availability and reputation of www.hantexultra.com.
+  later, enquiries, for every website the platform manages.
+- Unreleased product information: product photos, 3D models, CAD files and
+  specifications are commercially sensitive until published.
+- Availability and reputation of www.hantexultra.com and every other site.
 - Secrets: database credentials, API keys, signing secrets.
 
 ## Controls by area
@@ -40,6 +42,23 @@ end.
 - Object-level checks for records (no access by guessing IDs).
 - Automated tests call every endpoint as every role, including direct API
   calls without the dashboard.
+
+### Several websites (D-024, proposed)
+
+- **Every request is checked against its site.** Every dashboard API address
+  includes the site. The server checks the user's permission for that site
+  and filters every query by it. Records of another site are answered as
+  "not found".
+- **Tests try to cross sites.** Automated tests call every endpoint with
+  every role against another site's records.
+- **Personal data never crosses sites.** Sign-ups, enquiries and exports
+  belong to one site.
+- **Public form endpoints take the site from their own configuration**,
+  never from the request.
+- **Platform actions are owner-only and audited:** sites, roles, security
+  and Owner accounts.
+- PostgreSQL row-level security as a second layer is evaluated in Phase 5
+  ([`multi-site.md`](multi-site.md)).
 
 ### Input, output and injection
 
@@ -87,9 +106,51 @@ end.
 
 ### File uploads (Phase 3)
 
-- Allow-list of types and sizes, checked by content not just extension;
-  random storage keys in R2; served with safe content types; no
-  user-uploaded SVG unless sanitised.
+- **Accepted files:** an allow-list of types and sizes, checked by content,
+  not just by extension. Files are stored under random keys in R2 and served
+  with safe content types.
+- **Uploads go straight to private storage.** They use short-lived, signed,
+  single-object upload links and never pass through a public bucket.
+- **Photos:** location and other metadata (EXIF/GPS) are removed. Image
+  dimensions are limited, to protect against decompression bombs.
+- **SVG:** parsed and rebuilt from an allow-list. Scripts, event handlers,
+  links, `foreignObject`, external references and CSS `url()` are removed.
+  The original is kept privately and never served
+  ([`theming.md`](theming.md)).
+- **Fonts:** parsed before acceptance, size-limited, licence recorded.
+- **3D models:** checked with the Khronos glTF validator. They must have no
+  external references and stay within size, triangle and texture limits.
+  Other formats are converted on the processing runner, never in the
+  dashboard Worker.
+
+### 3D Product Studio (D-029, proposed)
+
+- **Private by default.** Original photos, CAD files, intermediate files and
+  unapproved models live in a private R2 bucket. Only approved, optimised
+  outputs are copied to the public media bucket, and only when the site is
+  published.
+- **Never published automatically.** Publishing needs an approved model and
+  a person with the publish permission. Approval and publishing are separate
+  permissions, and both are audited.
+- **Third-party AI services see product photos.** Each provider's data
+  policy is recorded before it can be enabled: does it train on uploads, how
+  long does it keep them, can it be opted out. The Owner must approve each
+  provider (D-005).
+  - The dashboard shows which provider a capture will be sent to before
+    sending.
+  - Providers that train on uploads without an opt-out are not recommended
+    for unreleased products.
+- **The processing runner gets only what each job needs:**
+  - storage credentials limited to the Studio bucket;
+  - job callbacks signed with a shared secret;
+  - no database credentials.
+
+  It runs where its logs are private. Logs and artifacts of workflows in
+  this public repository are visible to anyone
+  ([`3d-product-studio.md`](3d-product-studio.md)).
+- **Honest labels.** AI-generated geometry or imagery is never labelled as a
+  measured 3D reconstruction. "View on your wall" (true scale) is offered
+  only when the model's size matches the entered dimensions.
 
 ### Secrets and configuration
 
@@ -111,6 +172,12 @@ end.
 - Lockfile committed; dependencies pinned; automated update pull requests;
   vulnerability scanning in CI; GitHub Actions pinned to commit SHAs; CI
   tokens scoped to the minimum.
+- **Latest stable releases (D-023).** The planned upgrade to pnpm 12 brings
+  safer defaults, which we keep as they are:
+  - packages are installed only once they have been published for at least
+    a day (`minimumReleaseAge`), which avoids freshly hijacked releases;
+  - only packages on the `allowBuilds` list may run install scripts;
+  - exotic sub-dependencies (from Git or URLs) are blocked.
 
 ### Not exposed in production
 
@@ -134,4 +201,9 @@ automated penetration test (Strix) against staging in Phase 5.
 - Single database region (Neon); recovery relies on Neon restore and the
   nightly backups (D-010).
 - The repository is public: the code is visible, so security must never rely
-  on obscurity (it does not).
+  on obscurity (it does not). Workflow logs and artifacts are public too, so
+  no job in this repository may handle product photos, personal data or
+  secrets in its output.
+- Third-party 3D and AI services receive the photos sent to them; their data
+  policies can change. Mitigated by owner approval per provider, recorded
+  policies and the option to use local or self-run processing only.

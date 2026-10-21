@@ -73,7 +73,24 @@ Internal packages are consumed as TypeScript source (`exports` points at
 
 ## Tool versions (pinned)
 
-- **TypeScript 6.0.3** — TypeScript 7 is released, but typescript-eslint and
-  Astro's checker support TypeScript up to 6.0.
+Policy (D-023): the latest stable release of every platform and library,
+pinned exactly. Pre-releases are never used, and exceptions are recorded with
+their reason.
+
+- **Planned upgrade, first step when development resumes** (checked
+  2026-10-21):
+  - Node.js 22 → **26**. It becomes Active LTS on 2026-10-28.
+  - pnpm 10 → **12**. This moves `onlyBuiltDependencies` to pnpm 11+'s
+    `allowBuilds`.
+  - PostgreSQL 17 → **18** in CI and local development, matching Neon's
+    default.
+  - Patch updates for Vite, lucide-react and the Workers types.
+- **TypeScript 6.0.3.** TypeScript 7.0 is the latest, but typescript-eslint
+  (supports below 6.1) and Astro's checker (5–6) don't support it yet.
+  TypeScript 7.0 also has no stable programmatic API until 7.1. A CI check
+  will compile the code with TypeScript 7, so the switch is quick when the
+  tools are ready.
+- **Drizzle ORM 0.45.4,** the latest stable release. 1.0 is still a release
+  candidate.
 - **Vitest 5** with **`@cloudflare/vitest-plugin`** (the renamed
   `@cloudflare/vitest-pool-workers`) for tests inside the Workers runtime.

@@ -1,14 +1,19 @@
 # Theming — light/dark modes and dashboard-controlled appearance
 
-**Status:** confirmed by the owner (D-021, D-022).
+**Status:** light/dark and the dashboard appearance editor were confirmed by
+the owner (D-021, D-022). Extending them to several websites as a reusable
+design system is **Proposed** (D-027, see
+[below](#multiple-websites-and-a-reusable-design-system-d-027-proposed)).
 
 ## Goals
 
-- Every public-facing design — pages, components, icons, illustrations,
-  logo — works in **light and dark mode**.
-- Administrators change **colours, fonts and overall appearance** for all
-  public-facing websites from **one place in the dashboard**, and the change
-  applies consistently everywhere.
+- Every public-facing design works in **light and dark mode**: pages,
+  components, icons, illustrations and logos.
+- Administrators change **colours, fonts and overall appearance** for every
+  public-facing website from **one place in the dashboard**. Each website has
+  its own theme, and a change applies consistently across that website.
+- New websites, brands, themes, fonts and palettes are added from the
+  dashboard without code changes.
 - No change can break accessibility, security or the brand's fixed rules.
 
 ## Design tokens
@@ -58,6 +63,57 @@ earlier version. **Reset to brand defaults** is always available.
   light and dark modes) so a bad public theme can never lock administrators
   out of fixing it.
 
+## Multiple websites and a reusable design system (D-027, proposed)
+
+Owner's requirement (2026-10-21): the design system serves different
+public-facing websites. New websites, brands, categories, themes, fonts and
+palettes are added without rebuilding the platform.
+
+- **One theme per site.** Each site has its own theme document, with its own
+  drafts, versions, rollback and publishing. Publishing a site's theme
+  rebuilds only that site ([`multi-site.md`](multi-site.md)). The theme
+  covers:
+  - colours for light and dark mode;
+  - fonts;
+  - shape, depth and motion;
+  - mode;
+  - logo colours.
+- **Presets.** A new site starts from a preset: *Hantex Ultra* (the brand
+  theme in `packages/theme`), a neutral starter, or a copy of any site's
+  theme. Any theme can be saved as a new preset.
+- **Palettes.** Each theme keeps a named palette (for Hantex Ultra:
+  Graphite, Circuit Teal, Ice, Steel, Volt). The editor offers palette
+  colours first when choosing token colours, and the contrast rules apply to
+  whatever is chosen.
+- **Font library.** The library is platform-wide and managed in the
+  dashboard (Owner by default).
+  - Fonts are uploaded as WOFF2 files together with their licence. Each file
+    is checked: it must be a valid font, within the size limit, with its
+    licence recorded. It then becomes available to every site.
+  - The five fonts installed today stay as the built-in set.
+  - A site loads only the fonts and weights its theme uses.
+- **Logos and brand SVGs.** For each site, an administrator uploads an SVG
+  logo, and optionally a separate mark.
+  1. The upload is sanitised (see Guardrails).
+  2. The editor lists the colours found in it.
+  3. The administrator maps each colour to a logo token (neutral, accent,
+     indicator and so on) or keeps it fixed.
+
+  The result is an adaptive logo that follows light/dark mode and the theme,
+  exactly like the Hantex Ultra files in `brand/logo/`. PNG versions for
+  emails and social images, and the favicon set, are generated from it at
+  build time.
+- **Icons and illustrations** are drawn with `currentColor` and theme
+  variables, so they follow each site's colours and mode. This covers
+  interface icons (Lucide) and product-category icons. Uploaded icons are
+  sanitised and converted to single-colour `currentColor` icons.
+- **Templates and components use only semantic tokens** (enforced by lint),
+  so every template works with every theme. A site picks a template, and its
+  colours, fonts and logo come from its theme.
+- **Done in the dashboard, with no code:** new sites, themes, palettes,
+  fonts, logos, icons, categories and products. **Needs development:** new
+  templates, new content block types and new kinds of features.
+
 ## SVG and light/dark
 
 - **On the website**, SVGs (logo, icons, illustrations) are placed inline and
@@ -78,8 +134,17 @@ earlier version. **Reset to brand defaults** is always available.
   2.1 AA in both modes; publishing is blocked until failing pairs are fixed.
 - **No custom CSS or script fields** — they would bypass security and
   consistency.
-- **Fonts only from the curated, self-hosted library** (licence-checked,
-  validated files). Adding a font to the library is a reviewed change.
+- **Fonts only from the curated, self-hosted library.** Files are validated
+  and their licences recorded. Adding a font is an Owner-permission action in
+  the dashboard (D-027): the file type is checked by content, the font is
+  parsed before it is accepted, and it is served with the correct content
+  type.
+- **Uploaded SVGs** (logos, icons) are parsed and rebuilt from an allow-list
+  of drawing elements and attributes.
+  - Removed: scripts, event handlers, links, embedded HTML
+    (`foreignObject`), external references and CSS `url()`.
+  - Size and complexity are limited.
+  - The original upload is kept privately and never served.
 - **Logo colours** are separate tokens from the site colours; editing them
   requires confirming a brand-guidelines warning, a visibility check warns
   when the logo would be hard to see, and *Reset logo to brand colours* is

@@ -10,7 +10,7 @@ approval.
 |-------------|---------|---------|
 | Local | Development and tests | No |
 | Preview | Testing changes before production | No — behind Cloudflare Access, `noindex` |
-| Production | www.hantexultra.com and the dashboard | Public site only |
+| Production | The public websites (www.hantexultra.com first) and the dashboard | Public sites only |
 
 Each environment has its own Neon database branch, R2 buckets and secrets;
 production data is never used in development or tests.
@@ -19,22 +19,33 @@ production data is never used in development or tests.
 
 | Resource | Use |
 |----------|-----|
-| Worker `hantex-web` | Public site: static pages (Astro) and form endpoints |
-| Worker `hantex-admin` | Dashboard (React app) and its API (Hono) on `admin.hantexultra.com` |
-| Hyperdrive | Database connections: read-only for the public site, uncached for the dashboard |
-| R2 buckets | Media and documents; private bucket for encrypted backups |
+| Worker per site, `site-<key>` (D-028, proposed) | One public site each: static pages from the site engine (`apps/web`) and its form endpoints. The first is `site-hantex-ultra` for www.hantexultra.com. |
+| Worker `hantex-admin` | Dashboard (React app) and its API (Hono) on `admin.hantexultra.com`, managing every site |
+| Hyperdrive | Database connections: the public-site user (insert-only sign-ups) for site Workers, uncached for the dashboard |
+| R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |
+| R2 bucket `studio` (private) | 3D Studio originals, CAD files, intermediate files and unapproved models ([`3d-product-studio.md`](3d-product-studio.md)) |
+| R2 bucket `backups` (private) | Encrypted nightly database exports (D-010) |
 | Turnstile | Spam protection on sign-up and sign-in |
 | Cloudflare Access (Zero Trust free) | Second lock in front of the dashboard and previews |
-| Workers Logs, Cron Triggers | Monitoring, health checks, scheduled publishing |
+| Workers Logs, Cron Triggers | Monitoring, health checks, scheduled publishing. The Free plan allows 5 Cron Triggers per account, so one shared schedule serves all sites. |
 
 ## DNS (each change proposed first, applied only after approval)
 
-- `www.hantexultra.com` → `hantex-web` (custom domain).
+- `www.hantexultra.com` → `site-hantex-ultra` (custom domain).
 - `hantexultra.com` → redirect to `https://www.hantexultra.com`.
 - `admin.hantexultra.com` → `hantex-admin`, behind Cloudflare Access.
+- `media.hantexultra.com` → R2 `media` bucket (custom domain, cached).
 - Email sending records for Resend (SPF, DKIM, DMARC).
+- **Each new site:** its domains and media domain are entered in the
+  dashboard as *pending*. They are applied only by a production deployment
+  the owner approves. The dashboard has no Cloudflare credentials and cannot
+  change DNS itself.
 
 ## Database (Neon, D-003 and D-010)
+
+**PostgreSQL 18**: Neon's default for new projects since June 2026
+([Neon changelog](https://neon.com/docs/changelog/2026-06-05)). CI and local
+development use the same major version (D-023).
 
 Branches: production, preview, development. Database users with least
 privilege: migrations (schema changes), dashboard (read/write), public site
@@ -48,12 +59,18 @@ environment variables, never stored in the repository).
 
 - **Every pull request:** lint, type check, unit and integration tests, build,
   Worker bundle-size check against the free plan's limit, dependency scan.
+  Runs on Node.js 26 and pnpm 12 (D-023).
 - **Merge to main:** deploy to preview; production deploy requires manual
   approval.
-- **Publish in the dashboard:** triggers a rebuild and deploy of the public
-  site (D-006) using a narrowly scoped token.
+- **Publish in the dashboard:** triggers a rebuild and deploy of **that site
+  only** (D-006, D-028), using a narrowly scoped token.
 - **Nightly:** encrypted database export to R2 (D-010) and health checks
   with email alerts (D-011).
+- **3D Studio processing (D-030, pending):** optimisation, validation,
+  poster rendering and provider calls run on a *processing runner*. This is
+  either a workflow in a separate **private** repository or the owner's own
+  computer, never in this public repository, whose logs and artifacts anyone
+  can read.
 
 ## Secrets (names only — values are never written here)
 
@@ -67,6 +84,10 @@ environment variables, never stored in the repository).
 | `RESEND_API_KEY` | Worker secret |
 | `TURNSTILE_SECRET_KEY` | Worker secret |
 | `PUBLISH_TRIGGER_TOKEN` | Worker secret (can only start the site build) |
+| `R2_STUDIO_ACCESS_KEY_ID`, `R2_STUDIO_SECRET_ACCESS_KEY` | Worker secret (signed upload and download links, limited to the `studio` bucket) and processing runner |
+| `STUDIO_DISPATCH_TOKEN` | Worker secret (can only start processing jobs in the private runner repository) |
+| `STUDIO_CALLBACK_SECRET` | Worker secret and processing runner (signs job results) |
+| One API key per approved 3D provider, for example `MESHY_API_KEY` | Processing runner only, added only after the owner approves that provider (D-005) |
 
 ## Rollback
 
@@ -76,7 +97,15 @@ environment variables, never stored in the repository).
 
 ## Owner actions needed before the first deployment
 
-Guided step by step when we reach them: create a free Neon account and
-project; create a free Resend account; enable Cloudflare Zero Trust (free)
-for Access; create a scoped Cloudflare API token; add secrets to GitHub;
-approve each DNS change.
+I'll guide each step when we reach it:
+
+- create a free Neon account and project;
+- create a free Resend account;
+- enable Cloudflare Zero Trust (free) for Access;
+- create a scoped Cloudflare API token;
+- add secrets to GitHub;
+- approve each DNS change.
+
+**For the 3D Studio (Phase 3, D-030):** create a private repository for the
+processing runner, or set up the runner on your own computer. Approve any
+paid provider before its key is added.

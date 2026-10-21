@@ -31,8 +31,17 @@ marked **Confirmed** once the project owner has approved it.
 | D-020 | Logo update | Confirmed | Updated mark from `hantex-ultra-edited2` (indicator dots, outlet-shaped socket holes), aligned to the brand palette and grid; dots light on all backgrounds |
 | D-021 | Light and dark modes | Confirmed | Every public-facing design, including all SVGs, supports light and dark mode |
 | D-022 | Central appearance customisation | Confirmed | Dashboard theme editor driving design tokens for all public sites; logo colours adjustable behind a brand warning |
+| D-023 | Latest versions policy | Confirmed | Latest stable release of every platform and library: Node.js 26, pnpm 12, PostgreSQL 18; recorded exceptions (TypeScript 6.0 until the lint tools support 7) |
+| D-024 | Multi-website platform | Confirmed (requirement) · design Proposed | One dashboard manages any number of sites, each with its own branding, design, content, products and configuration — see `docs/multi-site.md` |
+| D-025 | Staff access across websites | Pending | Recommended: roles assigned per site, with an "all sites" option |
+| D-026 | Product-focused catalogue | Confirmed (requirement) · structure Proposed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
+| D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
+| D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
+| D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
+| D-030 | 3D processing location, providers and budget | Pending | Needs the owner's input: CAD files, capture equipment, budget for paid AI services |
 
-Next: the owner's approval to start Phase 2.
+Next: the owner's answers to D-025 and D-030, and approval of the proposed
+designs (D-024 to D-029), before development continues.
 
 ---
 
@@ -202,6 +211,13 @@ Next: the owner's approval to start Phase 2.
   sign-in codes); the dashboard Worker's bundle size is checked in CI against
   the free plan's limit; if it is exceeded, upgrading to Workers Paid is
   proposed to the owner.
+- **Update 2026-10-21:** Cloudflare removed the compressed Worker size limits
+  (previously 3 MB on Free) on 2026-09-04. Workers on every plan may now be up
+  to 64 MiB uncompressed
+  ([changelog](https://developers.cloudflare.com/changelog/post/2026-09-04-increased-worker-size-limit/),
+  [limits](https://developers.cloudflare.com/workers/platform/limits/)), so
+  bundle size is no longer a likely reason to need Workers Paid. The CI size
+  check stays. The Free plan's 10 ms of CPU per request still applies.
 
 ## D-008 — Cloudflare account, plan and domain
 
@@ -445,3 +461,224 @@ Next: the owner's approval to start Phase 2.
   background; every change is audited; *Reset logo to brand colours* is
   always available; a separate permission *Appearance: edit logo colours*
   is held by the Owner role only by default (changeable in the matrix).
+
+## D-023 — Latest versions policy
+
+- **Status:** Confirmed — 2026-10-21 (owner's instruction: "use the latest
+  versions of the platforms")
+- **Policy:**
+  - Use the latest **stable** release of every platform, framework and
+    library when it is added or updated, pinned exactly.
+  - Automated update pull requests keep versions current.
+  - Pre-releases (alpha, beta, release candidates) are never used.
+  - When the newest major version can't be used yet, the exception is
+    recorded here with its reason and re-checked monthly.
+- **Checked on 2026-10-21** against the npm registry, the Node.js release
+  schedule and Neon's changelog:
+  - **Node.js 26** (26.12.0) replaces 22 for tooling and CI. It becomes
+    Active LTS on 2026-10-28. Workers run on Cloudflare's own runtime, so
+    this affects builds and tests only.
+  - **pnpm 12** (12.14.0) replaces 10.28. pnpm 11 replaced
+    `onlyBuiltDependencies` with `allowBuilds`, and the upgrade migrates it.
+    pnpm 11+'s safer defaults are kept: a minimum release age of one day,
+    and blocking of exotic sub-dependencies.
+  - **PostgreSQL 18** replaces 17 in CI. It has been Neon's default for new
+    projects since 2026-06-05
+    ([changelog](https://neon.com/docs/changelog/2026-06-05)).
+  - **Already the latest:**
+    - Astro 7.4.1 and @astrojs/cloudflare 14.4.1;
+    - React 19.3.1, Tailwind CSS 4.3.3, shadcn 4.22.1;
+    - Hono 4.13.13, Zod 4.6.7, Better Auth 1.7.12;
+    - Vitest 5.0.5, Playwright 1.64.1, ESLint 10.13.0, Prettier 3.9.10;
+    - wrangler 4.151.3;
+    - the pinned GitHub Actions (checkout 7.0.1, setup-node 7.1.0, pnpm
+      action 6.1.0).
+  - **Patch updates:** Vite 8.3.5, lucide-react 1.61.0, Workers types
+    5.20261021.1.
+- **Exceptions:**
+  - **TypeScript stays on 6.0.3.** TypeScript 7.0.2 is the latest, but:
+    - typescript-eslint 8.72 (its latest) supports TypeScript below 6.1;
+    - Astro's checker supports TypeScript 5–6;
+    - TypeScript 7.0 has no stable programmatic API until 7.1, which is still
+      in beta.
+
+    A CI check will compile the code with TypeScript 7 so the switch is quick
+    when the tools are ready.
+  - **Drizzle ORM stays on 0.45.4,** the latest stable release; 1.0 is a
+    release candidate.
+- **Consequences:** the upgrade is the first development step once this plan
+  is approved, with CI and `docs/development.md` updated at the same time.
+
+## D-024 — Multi-website platform
+
+- **Status:** Confirmed (requirement) — 2026-10-21 · design Proposed
+- **Requirement (owner):** the dashboard is a central management platform for
+  any website the owner creates, not only www.hantexultra.com. Each website
+  has its own branding, design settings, content, products and
+  configuration, sharing the same dashboard and management system where
+  appropriate.
+- **Proposed design** (`docs/multi-site.md`):
+  - **Every public website is a *site*** with its own domains, languages,
+    mode, theme, content, catalogue, sign-ups and enquiries.
+  - **Shared by all sites:** staff accounts, role definitions, the font
+    library and design-system components, publishing, the 3D Studio, email,
+    monitoring and backups.
+  - **In the dashboard:** a site switcher, and site-scoped API addresses with
+    permission checks per site on every request.
+  - **New sites:** created by the Owner in the dashboard, starting in Coming
+    Soon mode.
+- **Consequences:**
+  - The Phase 2 database and API become site-aware before anything is
+    deployed. There is no production data, so the migrations are revised.
+  - Hantex Ultra is the first site.
+  - The parked API work (branch `wip/dashboard-api`) is adapted before it is
+    merged.
+
+## D-025 — Staff access across websites
+
+- **Status:** Pending — the owner's choice
+- **Options:**
+  - **A. Per site, with an "all sites" option (recommended).** A role is
+    assigned for one site, or for all sites. Owners always cover all sites.
+  - **B. One role for all sites.** Everyone with access works on every site
+    within their role.
+- **Why A:**
+  - least privilege: staff of one brand never see another site's customers;
+  - flexible as more sites are added;
+  - no change for Owners.
+- **Trade-off:** inviting someone means choosing their sites, and there are
+  more cases to test. Details in `docs/multi-site.md` and
+  `docs/roles-and-permissions.md`.
+
+## D-026 — Product-focused catalogue
+
+- **Status:** Confirmed (requirement) — 2026-10-21 · structure Proposed
+- **Requirement (owner):** Hantex Ultra is a brand specialising in
+  electrical switches, sockets, lighting, lamps and related accessories.
+  Switches and sockets are the main
+  categories and lead the product structure, navigation, categorisation and
+  presentation. Lamps, lighting and accessories are also supported.
+- **Proposed structure** (`docs/product-catalogue.md`):
+  - categories, as a tree with *main* categories;
+  - series (design lines);
+  - products, with variants usually by finish;
+  - reusable finishes;
+  - typed attributes defined in the dashboard;
+  - documents, photos and 3D models;
+  - Apple-style product and series pages built from blocks.
+- **Starting categories for Hantex Ultra:** Switches and Sockets (main),
+  then Lighting, Lamps and Accessories, as named by the owner.
+  Sub-categories, series, attributes and finishes are entered by the owner's
+  team.
+- **Rules:**
+  - Each site owns its products, following the owner's requirement that each
+    website has its own products. *Copy to another site* reuses stored
+    files.
+  - No product fact is shown unless entered.
+  - Certification marks are shown only with a verified supporting document.
+  - Prices and online ordering are out of scope unless decided later.
+
+## D-027 — Reusable design system across websites
+
+- **Status:** Confirmed (requirement) — 2026-10-21 · design Proposed
+- **Requirement (owner):**
+  - an SVG design system with light/dark support and adaptable colours for
+    different public-facing websites;
+  - colours, fonts, typography and other visual settings customised
+    centrally without code changes;
+  - new websites, brands, categories, themes, fonts and palettes added
+    without rebuilding.
+- **Proposed design** (`docs/theming.md`):
+  - **One theme per site,** starting from presets (Hantex Ultra brand,
+    neutral, or a copy), with named palettes.
+  - **A platform font library** managed in the dashboard: validated WOFF2
+    uploads with their licences.
+  - **Sanitised SVG logo uploads,** with their colours mapped to theme tokens
+    to make adaptive light/dark logos.
+  - **`currentColor` icons.**
+  - **Templates and components that use tokens only.**
+- **Boundary:** new templates and new content block types are development
+  work. Everything else is done in the dashboard.
+
+## D-028 — Hosting of multiple websites
+
+- **Status:** Proposed
+- **Options:**
+  - **A. One Cloudflare Worker per site (recommended).** Each serves its
+    static pages and form endpoints. Media comes from R2 through a media
+    domain for each site.
+  - **B. One shared Worker for all sites,** choosing the site by domain on
+    every request.
+- **Why A:**
+  - static-asset requests are free and unlimited and run no code
+    ([Cloudflare](https://developers.cloudflare.com/workers/platform/pricing/));
+  - each site deploys and rolls back on its own;
+  - a mistake in one site can't take down the others.
+
+  Option B would run code on every page view and share the Free plan's
+  100,000 requests per day across all sites.
+- **Cost:** US$0 within free tiers. The Free plan allows 100 Workers and
+  20,000 static files per Worker version
+  ([limits](https://developers.cloudflare.com/workers/platform/limits/)).
+  Media served from R2 has no egress charge.
+- **Consequences:**
+  - The Hantex Ultra Worker is `site-hantex-ultra`.
+  - Site configuration is generated at build time from the dashboard's site
+    records.
+  - Domains and DNS change only through deployments the owner approves.
+  - 3D model files need a Cache Rule on the media domain, because Cloudflare
+    doesn't cache `.glb` files by default
+    ([default cache behaviour](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)).
+
+## D-029 — AI 3D Product Studio
+
+- **Status:** Confirmed (requirement) — 2026-10-21 · approach Proposed
+- **Requirement (owner):**
+  - a reusable dashboard module, for every website, that turns real product
+    photos (front, side, rear, detail) into interactive 3D models;
+  - the models keep the real shape, proportions, colours, materials,
+    finishes, buttons and socket openings, with nothing invented;
+  - Apple-style product pages;
+  - preview, adjust, approve, assign and publish;
+  - originals, models and previews kept per product;
+  - optimised delivery with a fallback image;
+  - modular providers, chosen for cost;
+  - quality control, with no automatic publishing and the owner's approval;
+  - a clear distinction between true 3D models and AI images or animations
+    that only look 3D;
+  - an honest warning when the photos aren't enough.
+- **Key finding:** a few photos can't be *measured*.
+  - True reconstruction needs CAD files or a full capture of dozens of
+    overlapping photos.
+  - AI image-to-3D from a few photos *estimates* the shape and invents
+    whatever it can't see.
+- **Proposed approach** (`docs/3d-product-studio.md`):
+  - **Labels set by method, not by providers' claims:** Exact (CAD),
+    Measured, Artist-modelled, Captured view, AI-estimated, and AI imagery
+    (not 3D).
+  - **Six quality gates,** from capture checks to the Owner's approval.
+  - **One provider interface,** with free CAD conversion and model import
+    first.
+  - **A private processing runner;** never this public repository's CI.
+  - **Website delivery:** model-viewer with posters, finish variants and
+    true-scale "view on your wall".
+  - **Paid AI providers** only with the Owner's approval and a budget.
+- **Consequences:**
+  - Stage 1 is built in Phase 3, stage 2 in Phase 4.
+  - Storage is estimated at under about US$2.10 a month per 100 fully
+    captured products on R2.
+  - Processing is free within GitHub's private-repository allowance or on
+    the owner's own hardware.
+
+## D-030 — 3D processing location, providers and budget
+
+- **Status:** Pending — the owner's input
+- **Questions:**
+  1. Are CAD files available from the factory or supplier?
+  2. Which capture equipment is available: a Mac with Apple silicon, an
+     iPhone or iPad with LiDAR, a Windows PC with an NVIDIA graphics card?
+  3. Is there a monthly budget for paid AI 3D services, or free methods
+     only?
+- **Why it matters:** CAD gives exact models at no cost. Capture equipment
+  decides whether photo reconstruction can run for free on the owner's
+  hardware. The budget decides whether AI drafts are offered at all.
