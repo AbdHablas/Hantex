@@ -1,5 +1,5 @@
 import { documentVersions, publishJobs, users, type DocumentKind } from '@hantex/db/worker';
-import { brandTheme, validateTheme, type Theme } from '@hantex/theme';
+import { brandTheme, publishable, validateTheme, type Theme } from '@hantex/theme';
 import type { Permission } from '@hantex/shared';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
@@ -134,8 +134,11 @@ export const documentRoutes = new Hono<AppEnv>()
       if (!parsed.success) throw conflict('draft-invalid');
       if (kind === 'theme') {
         const theme = parsed.data as Theme;
-        const { errors } = validateTheme(theme);
-        if (errors.length > 0) throw badRequest('theme-contrast', { errors });
+        const checks = validateTheme(theme);
+        if (checks.errors.length > 0) throw badRequest('theme-contrast', { errors: checks.errors });
+        if (!publishable(checks)) {
+          throw badRequest('theme-typography', { issues: checks.typography });
+        }
         guardLogo(v, theme, c.req.valid('json').confirmLogoChange === true);
       }
       return c.json(await publish(c, kind, parsed.data, null));
@@ -190,7 +193,7 @@ export const documentRoutes = new Hono<AppEnv>()
       if (!parsed.success) throw conflict('version-incompatible');
       if (kind === 'theme') {
         const theme = parsed.data as Theme;
-        if (validateTheme(theme).errors.length > 0) throw conflict('version-incompatible');
+        if (!publishable(validateTheme(theme))) throw conflict('version-incompatible');
         guardLogo(v, theme, body.confirmLogoChange === true);
       }
       return c.json(await publish(c, kind, parsed.data, body.version));

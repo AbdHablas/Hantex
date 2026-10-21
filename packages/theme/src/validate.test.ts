@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { brandTheme } from './defaults';
-import { validateTheme } from './validate';
+import { checkTypography, TYPOGRAPHY_PRESETS } from './typography';
+import { publishable, validateTheme } from './validate';
 
 const clone = () => structuredClone(brandTheme);
 
 describe('validateTheme', () => {
   it('passes the brand theme in both modes with no errors or warnings', () => {
-    expect(validateTheme(brandTheme)).toEqual({ errors: [], warnings: [] });
+    expect(validateTheme(brandTheme)).toEqual({ errors: [], typography: [], warnings: [] });
   });
 
   it('blocks text that fails WCAG AA, naming the mode and the pair', () => {
@@ -71,6 +72,31 @@ describe('built-in presets', () => {
     for (const preset of BUILT_IN_PRESETS) {
       expect(themeSchema.safeParse(preset.theme).success, preset.id).toBe(true);
       expect(validateTheme(preset.theme).errors, preset.id).toEqual([]);
+    }
+  });
+
+  it('blocks text that is too small or too tightly spaced, in Latin and Arabic', () => {
+    const theme = structuredClone(brandTheme);
+    theme.typography.styles.body.size = 12;
+    theme.typography.styles.small.lineHeight = 1.1;
+    theme.typography.styles.h2.arabicLineHeight = 1;
+    theme.typography.styles.h2.lineHeight = 1.2;
+    const checks = validateTheme(theme);
+    expect(checks.typography).toEqual(
+      expect.arrayContaining([
+        { style: 'body', code: 'too-small', minimum: 14 },
+        { style: 'small', code: 'line-height-too-tight', minimum: 1.3 },
+        { style: 'h2', code: 'arabic-line-height-too-tight', minimum: 1.2 },
+      ]),
+    );
+    expect(publishable(checks)).toBe(false);
+    expect(publishable(validateTheme(brandTheme))).toBe(true);
+  });
+
+  it('ships typography presets that pass every check', () => {
+    for (const preset of TYPOGRAPHY_PRESETS) {
+      const theme = { ...structuredClone(brandTheme), typography: preset.typography };
+      expect(checkTypography(theme.typography), preset.id).toEqual([]);
     }
   });
 });

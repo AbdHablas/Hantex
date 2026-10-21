@@ -40,13 +40,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-029 | AI 3D Product Studio | Confirmed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
 | D-031 | Arabic typeface (revisits D-015) | Confirmed | Cairo for Arabic on the public sites and the dashboard, paired with Poppins; self-hosted; other fonts stay in the library |
-| D-032 | Typography system | Pending | Proposed: named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
-| D-033 | Custom fonts | Pending | Proposed: Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
-| D-034 | Component system across dashboard and public sites | Pending | Proposed: shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
+| D-032 | Typography system | Confirmed | Named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
+| D-033 | Custom fonts | Confirmed | Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
+| D-034 | Component system across dashboard and public sites | Confirmed | Shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
 
-Open: D-032 to D-034 (typography and the frontend component system), asked
-one at a time. Implementation that depends on them waits until they are
-confirmed.
+All open decisions are settled. Next: the typography system (D-032).
 
 ---
 
@@ -768,7 +766,7 @@ confirmed.
 
 ## D-032 — Typography system
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-21 (owner chose text styles with presets)
 - **Requirement (owner):** a Typography & Fonts section per site: font
   families for the whole frontend; styles for headings, body text,
   navigation, buttons, product titles, labels and more; sizes, weights, line
@@ -790,7 +788,7 @@ confirmed.
 
 ## D-033 — Custom fonts
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-21 (owner chose uploads, option b)
 - **Requirement (owner):** add supported custom fonts besides the curated
   presets.
 - **Options:** (a) curated library only; new fonts added by a reviewed code
@@ -807,7 +805,7 @@ confirmed.
 
 ## D-034 — Component system across dashboard and public sites
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-21 (owner chose option a)
 - **Requirement (owner):** one consistent, reusable, premium component system
   across all websites and the dashboard; modern libraries compatible with the
   stack; no unnecessary dependencies; fast loading.

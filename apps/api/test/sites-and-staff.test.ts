@@ -584,6 +584,65 @@ describe('theme presets (D-027)', () => {
   });
 });
 
+describe('typography (D-032)', () => {
+  const themeOf = async (key: string) => {
+    const [site] = await h.db.select().from(sites).where(eq(sites.key, key));
+    return site!.id;
+  };
+
+  it('upgrades a theme draft saved in the old format when it is read', async () => {
+    const siteId = await themeOf(B);
+    const { typography: _t, ...rest } = structuredClone(brandTheme);
+    const old = {
+      ...rest,
+      version: 1,
+      typography: {
+        latin: 'inter',
+        arabic: 'tajawal',
+        baseSize: 17,
+        scale: 1.2,
+        bodyWeight: 400,
+        headingWeight: 600,
+      },
+    };
+    await h.db
+      .insert(documentDrafts)
+      .values({ siteId, kind: 'theme', data: old })
+      .onConflictDoUpdate({
+        target: [documentDrafts.siteId, documentDrafts.kind],
+        set: { data: old },
+      });
+    const doc = await json<{
+      draft: {
+        version: number;
+        typography: { fonts: { body: unknown }; styles: { body: { size: number } } };
+      };
+    }>(await h.request('GET', `/api/sites/${B}/documents/theme`, { cookie: owner }));
+    expect(doc.draft.version).toBe(2);
+    expect(doc.draft.typography.fonts.body).toEqual({ latin: 'inter', arabic: 'tajawal' });
+    expect(doc.draft.typography.styles.body.size).toBe(17);
+  });
+
+  it('refuses to publish text that is too small to read', async () => {
+    const theme = structuredClone(brandTheme);
+    theme.typography.styles.body.size = 12;
+    expect(
+      (
+        await h.request('PUT', `/api/sites/${B}/documents/theme/draft`, {
+          cookie: owner,
+          body: theme,
+        })
+      ).status,
+    ).toBe(200);
+    const publish = await h.request('POST', `/api/sites/${B}/documents/theme/publish`, {
+      cookie: owner,
+      body: {},
+    });
+    expect(publish.status).toBe(400);
+    expect(await json<{ error: string }>(publish)).toMatchObject({ error: 'theme-typography' });
+  });
+});
+
 describe('account recovery', () => {
   it('answers the same whether or not the email belongs to staff', async () => {
     const send = (email: string) =>

@@ -105,11 +105,11 @@ Next:
 - [x] Phase 2 report: [`phase-2-report.md`](phase-2-report.md)
 - [ ] Owner approval to continue, and to start the first deployment
 
-## Frontend quality and typography *(core requirement; D-031 confirmed, waiting for D-032 to D-034)*
+## Frontend quality and typography *(core requirement; D-031 to D-034 confirmed)*
 
 - [x] Arabic typeface switched to Cairo, self-hosted, on the public sites and the dashboard (D-031)
-- [ ] Typography & Fonts section per site: text styles, Arabic and Latin families, sizes, weights, line heights, letter spacing, presets, preview, publish, revert (D-032)
-- [ ] Custom font uploads, if approved (D-033; needs R2 media storage)
+- [x] Typography & Fonts section per site: heading and body fonts (Arabic and Latin each), twelve text styles with size, weight, line height, Arabic line height and letter spacing, four presets, live bilingual preview, readability checks, publish and revert (D-032); older themes upgraded automatically
+- [ ] Custom font uploads by the Owner: WOFF2, licence confirmation, validated, served from the site's domain (D-033; built with the R2 media storage in Phase 3)
 - [ ] Shared component system: tokens shared; dashboard components; public Astro components with islands; product cards, navigation, filters, search, gallery and 3D viewer for product pages (D-034, with Phase 3 catalogue)
 - [ ] Mixed Arabic/English text isolated correctly (product names, model numbers, prices, specifications); icons mirrored only where direction matters
 - [ ] Every major page checked in Arabic and English, light and dark, phone to desktop

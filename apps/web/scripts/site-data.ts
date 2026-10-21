@@ -20,7 +20,10 @@ import {
 } from '@hantex/shared';
 import {
   FONT_LIBRARY,
+  availableWeight,
   brandTheme,
+  fontsInUse,
+  publishable,
   themeSchema,
   themeToCss,
   validateTheme,
@@ -149,26 +152,20 @@ async function fonts(theme: Theme): Promise<string> {
   const out = join(root, 'public', 'fonts');
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
-  const weights = [...new Set([theme.typography.bodyWeight, 500, theme.typography.headingWeight])];
   const faces: string[] = [];
-  const uses = [
-    { id: theme.typography.latin, subset: 'latin' },
-    { id: theme.typography.arabic, subset: 'arabic' },
-  ] as const;
-  for (const { id, subset } of uses) {
+  // Only the fonts, scripts and weights the text styles use (D-032); a weight a font doesn't
+  // ship uses its nearest file. Medium (500) is always included for small interface text.
+  for (const [id, scripts] of fontsInUse(theme.typography)) {
     const font = FONT_LIBRARY[id];
     const dir = join(dirname(require.resolve(`${font.source}/package.json`)), 'files');
-    for (const weight of weights) {
-      const available = (font.weights as readonly number[]).includes(weight)
-        ? weight
-        : (font.weights as readonly number[]).reduce((best, w) =>
-            Math.abs(w - weight) < Math.abs(best - weight) ? w : best,
-          );
-      const file = `${id}-${subset}-${available}-normal.woff2`;
-      await copyFile(join(dir, file), join(out, file));
-      faces.push(
-        `@font-face {\n  font-family: "${font.family}";\n  font-style: normal;\n  font-weight: ${weight};\n  font-display: swap;\n  src: url("/fonts/${file}") format("woff2");\n}`,
-      );
+    for (const [subset, weights] of scripts) {
+      for (const weight of new Set([...weights, 500])) {
+        const file = `${id}-${subset}-${availableWeight(id, weight)}-normal.woff2`;
+        await copyFile(join(dir, file), join(out, file));
+        faces.push(
+          `@font-face {\n  font-family: "${font.family}";\n  font-style: normal;\n  font-weight: ${weight};\n  font-display: swap;\n  src: url("/fonts/${file}") format("woff2");\n}`,
+        );
+      }
     }
   }
   return faces.join('\n');
@@ -182,7 +179,7 @@ if (data.site.mode === 'live') {
   fail('this site is set to live, but only the Coming Soon and maintenance pages exist so far');
 }
 const themeCheck = validateTheme(data.theme);
-if (themeCheck.errors.length > 0) fail('the published theme fails the contrast checks');
+if (!publishable(themeCheck)) fail('the published theme fails the contrast or readability checks');
 
 const brandDir = join(root, 'public', 'brand');
 await rm(brandDir, { recursive: true, force: true });

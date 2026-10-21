@@ -1,4 +1,5 @@
 import type { Theme } from './schema';
+import { textStylesFrom } from './typography';
 
 /** Brand palette (brand guidelines, D-012). */
 export const BRAND = {
@@ -14,7 +15,7 @@ export const BRAND = {
  * (muted text, teal text on light grounds) are documented in docs/brand-guidelines.md.
  */
 export const brandTheme: Theme = {
-  version: 1,
+  version: 2,
   colors: {
     light: {
       background: BRAND.ice,
@@ -66,12 +67,11 @@ export const brandTheme: Theme = {
     },
   },
   typography: {
-    latin: 'poppins',
-    arabic: 'cairo',
-    baseSize: 16,
-    scale: 1.25,
-    bodyWeight: 400,
-    headingWeight: 700,
+    fonts: {
+      heading: { latin: 'poppins', arabic: 'cairo' },
+      body: { latin: 'poppins', arabic: 'cairo' },
+    },
+    styles: textStylesFrom({ baseSize: 16, scale: 1.25, bodyWeight: 400, headingWeight: 700 }),
   },
   shape: { radius: 14 },
   depth: { shadow: 'soft' },
@@ -85,7 +85,7 @@ export const brandTheme: Theme = {
  * logo files. Every text pair meets WCAG 2.1 AA in both modes (tested).
  */
 export const neutralTheme: Theme = {
-  version: 1,
+  version: 2,
   colors: {
     light: {
       background: '#F7F7F8',
@@ -124,12 +124,11 @@ export const neutralTheme: Theme = {
   },
   logo: brandTheme.logo,
   typography: {
-    latin: 'inter',
-    arabic: 'ibm-plex-sans-arabic',
-    baseSize: 16,
-    scale: 1.2,
-    bodyWeight: 400,
-    headingWeight: 600,
+    fonts: {
+      heading: { latin: 'inter', arabic: 'ibm-plex-sans-arabic' },
+      body: { latin: 'inter', arabic: 'ibm-plex-sans-arabic' },
+    },
+    styles: textStylesFrom({ baseSize: 16, scale: 1.2, bodyWeight: 400, headingWeight: 600 }),
   },
   shape: { radius: 8 },
   depth: { shadow: 'soft' },

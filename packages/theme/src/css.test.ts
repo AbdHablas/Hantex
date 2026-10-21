@@ -44,20 +44,53 @@ describe('themeToCss', () => {
 
   it('puts the Latin font first so Arabic falls back to the Arabic font per character', () => {
     const css = themeToCss(brandTheme);
-    expect(css).toContain(`--hx-font-family: "Poppins", "Cairo", system-ui, sans-serif;`);
+    expect(css).toContain(`--hx-font-body: "Poppins", "Cairo", system-ui, sans-serif;`);
+    expect(css).toContain('--hx-font-family: var(--hx-font-body);');
   });
 
-  it('derives a type scale, radii and motion timing from the settings', () => {
+  it('turns every text style into variables and a class, with radii and motion timing', () => {
     const theme = clone();
-    theme.typography.baseSize = 16;
-    theme.typography.scale = 1.25;
+    theme.typography.styles.body.size = 16;
+    theme.typography.styles.h1.size = 40;
+    theme.typography.styles.h1.letterSpacing = -0.01;
     theme.shape.radius = 12;
     theme.motion = 'off';
     const css = themeToCss(theme);
+    expect(css).toContain('--hx-text-body-size: 1rem;');
+    expect(css).toContain('--hx-text-h1-font: var(--hx-font-heading);');
+    expect(css).toContain('--hx-text-product-title-weight:');
     expect(css).toContain('--hx-font-size-0: 1rem;');
-    expect(css).toContain('--hx-font-size-1: 1.25rem;');
+    expect(css).toContain('.hx-text-h1 {');
     expect(css).toContain('--hx-radius: 12px;');
     expect(css).toContain('--hx-duration-base: 0ms;');
+  });
+
+  it('shrinks large text smoothly on small screens, never below a readable size', () => {
+    const theme = clone();
+    theme.typography.styles.display.size = 64;
+    const css = themeToCss(theme);
+    expect(css).toContain('--hx-text-display-size: clamp(2.75rem, 2.3333rem + 1.8519vw, 4rem);');
+  });
+
+  it('gives Arabic its own line heights and no letter spacing, restored for Latin passages', () => {
+    const theme = clone();
+    theme.typography.styles.h1.lineHeight = 1.15;
+    theme.typography.styles.h1.arabicLineHeight = 1.45;
+    theme.typography.styles.h1.letterSpacing = -0.01;
+    const css = themeToCss(theme);
+    expect(block(css, ':lang(ar)')).toContain('--hx-text-h1-line-height: 1.45;');
+    expect(block(css, ':lang(ar)')).toContain('--hx-text-h1-tracking: 0em;');
+    expect(block(css, ':lang(en)')).toContain('--hx-text-h1-tracking: -0.01em;');
+  });
+
+  it('can use different fonts for headings and body text', () => {
+    const theme = clone();
+    theme.typography.fonts.body = { latin: 'inter', arabic: 'ibm-plex-sans-arabic' };
+    const css = themeToCss(theme);
+    expect(css).toContain('--hx-font-heading: "Poppins", "Cairo", system-ui, sans-serif;');
+    expect(css).toContain(
+      '--hx-font-body: "Inter", "IBM Plex Sans Arabic", system-ui, sans-serif;',
+    );
   });
 
   it('always honours reduced-motion preferences', () => {

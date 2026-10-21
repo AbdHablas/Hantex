@@ -1,0 +1,33 @@
+/*
+ * Every font in the curated library (packages/theme/src/fonts.ts), so the typography editor can
+ * preview any pairing. Only @font-face rules: a file downloads only when a preview uses it.
+ */
+@import '@fontsource/poppins/latin-300.css';
+@import '@fontsource/poppins/latin-400.css';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-600.css';
+@import '@fontsource/poppins/latin-700.css';
+@import '@fontsource/inter/latin-300.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/cairo/arabic-300.css';
+@import '@fontsource/cairo/arabic-400.css';
+@import '@fontsource/cairo/arabic-500.css';
+@import '@fontsource/cairo/arabic-600.css';
+@import '@fontsource/cairo/arabic-700.css';
+@import '@fontsource/readex-pro/arabic-300.css';
+@import '@fontsource/readex-pro/arabic-400.css';
+@import '@fontsource/readex-pro/arabic-500.css';
+@import '@fontsource/readex-pro/arabic-600.css';
+@import '@fontsource/readex-pro/arabic-700.css';
+@import '@fontsource/tajawal/arabic-300.css';
+@import '@fontsource/tajawal/arabic-400.css';
+@import '@fontsource/tajawal/arabic-500.css';
+@import '@fontsource/tajawal/arabic-700.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-300.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-700.css';

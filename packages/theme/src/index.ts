@@ -14,10 +14,35 @@ export {
   MODES,
   hexColor,
   themeSchema,
+  upgradeTheme,
   type ColorToken,
   type LogoColors,
   type Mode,
   type Theme,
   type ThemeColors,
 } from './schema';
-export { validateTheme, type ContrastIssue, type ThemeWarning } from './validate';
+export {
+  publishable,
+  validateTheme,
+  type ContrastIssue,
+  type ThemeChecks,
+  type ThemeWarning,
+} from './validate';
+export {
+  FONT_ROLES,
+  STYLE_LIMITS,
+  TEXT_STYLES,
+  TYPOGRAPHY_PRESETS,
+  WEIGHTS,
+  availableWeight,
+  checkTypography,
+  fontsInUse,
+  textStylesFrom,
+  typographySchema,
+  type FontRole,
+  type TextStyle,
+  type TextStyleId,
+  type Typography,
+  type TypographyIssue,
+  type Weight,
+} from './typography';

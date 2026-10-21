@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { fontsForScript, type FontId } from './fonts';
+import { textStylesFrom, typographySchema, type Weight } from './typography';
 
 export const hexColor = z
   .string()
@@ -40,26 +40,14 @@ const logoSchema = z.strictObject({
   accent: hexColor,
 });
 
-const fontFor = (script: 'latin' | 'arabic') => {
-  const ids = fontsForScript(script);
-  return z.enum(ids as [FontId, ...FontId[]]);
-};
-
 export const MODES = ['light', 'dark'] as const;
 export type Mode = (typeof MODES)[number];
 
-export const themeSchema = z.strictObject({
-  version: z.literal(1),
+const themeV2 = z.strictObject({
+  version: z.literal(2),
   colors: z.strictObject({ light: colorsSchema, dark: colorsSchema }),
   logo: z.strictObject({ light: logoSchema, dark: logoSchema }),
-  typography: z.strictObject({
-    latin: fontFor('latin'),
-    arabic: fontFor('arabic'),
-    baseSize: z.number().int().min(14).max(20),
-    scale: z.number().min(1.1).max(1.5),
-    bodyWeight: z.union([z.literal(300), z.literal(400), z.literal(500)]),
-    headingWeight: z.union([z.literal(500), z.literal(600), z.literal(700)]),
-  }),
+  typography: typographySchema,
   shape: z.strictObject({ radius: z.number().int().min(0).max(32) }),
   depth: z.strictObject({ shadow: z.enum(['none', 'soft', 'strong']) }),
   motion: z.enum(['off', 'subtle', 'full']),
@@ -69,6 +57,43 @@ export const themeSchema = z.strictObject({
   }),
 });
 
-export type Theme = z.infer<typeof themeSchema>;
+/**
+ * Themes saved before text styles existed (version 1: two fonts, a base size, a ratio and two
+ * weights) are upgraded on read, so stored drafts, published versions and presets keep working.
+ */
+export function upgradeTheme(input: unknown): unknown {
+  if (typeof input !== 'object' || input === null) return input;
+  const theme = input as Record<string, unknown>;
+  if (theme['version'] !== 1) return input;
+  const t = theme['typography'] as
+    | {
+        latin?: unknown;
+        arabic?: unknown;
+        baseSize?: number;
+        scale?: number;
+        bodyWeight?: Weight;
+        headingWeight?: Weight;
+      }
+    | undefined;
+  if (!t || typeof t !== 'object') return input;
+  const pair = { latin: t.latin, arabic: t.arabic };
+  return {
+    ...theme,
+    version: 2,
+    typography: {
+      fonts: { heading: pair, body: pair },
+      styles: textStylesFrom({
+        baseSize: typeof t.baseSize === 'number' ? t.baseSize : 16,
+        scale: typeof t.scale === 'number' ? t.scale : 1.25,
+        bodyWeight: t.bodyWeight ?? 400,
+        headingWeight: t.headingWeight ?? 700,
+      }),
+    },
+  };
+}
+
+export const themeSchema = z.preprocess(upgradeTheme, themeV2);
+
+export type Theme = z.infer<typeof themeV2>;
 export type ThemeColors = Theme['colors']['light'];
 export type LogoColors = Theme['logo']['light'];

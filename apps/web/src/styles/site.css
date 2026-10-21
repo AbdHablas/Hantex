@@ -13,19 +13,16 @@
 html {
   background: var(--hx-color-background);
   color: var(--hx-color-text);
-  font-family: var(--hx-font-family);
-  font-size: 100%;
-  font-weight: var(--hx-font-weight-body);
-  line-height: 1.6;
+  /* Body text style (D-032); every other text style is set where it is used. */
+  font-family: var(--hx-text-body-font);
+  font-size: var(--hx-text-body-size);
+  font-weight: var(--hx-text-body-weight);
+  line-height: var(--hx-text-body-line-height);
+  letter-spacing: var(--hx-text-body-tracking);
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: 5.5rem;
   interpolate-size: allow-keywords;
-}
-
-/* Arabic needs more room between lines than Latin (D-031). */
-html:lang(ar) {
-  line-height: 1.75;
 }
 
 body {
@@ -152,9 +149,11 @@ p {
   border-radius: 999px;
   background: color-mix(in srgb, var(--hx-color-surface) 80%, transparent);
   color: var(--hx-color-text);
-  font: inherit;
-  font-size: var(--hx-font-size-small);
-  font-weight: var(--hx-font-weight-medium);
+  font-family: var(--hx-text-nav-font);
+  font-size: var(--hx-text-nav-size);
+  font-weight: var(--hx-text-nav-weight);
+  line-height: var(--hx-text-nav-line-height);
+  letter-spacing: var(--hx-text-nav-tracking);
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -271,9 +270,11 @@ main {
   border-radius: 999px;
   background: color-mix(in srgb, var(--hx-color-surface) 75%, transparent);
   color: var(--hx-color-accent-text);
-  font-size: var(--hx-font-size-small);
-  font-weight: var(--hx-font-weight-medium);
-  letter-spacing: 0.02em;
+  font-family: var(--hx-text-label-font);
+  font-size: var(--hx-text-label-size);
+  font-weight: var(--hx-text-label-weight);
+  line-height: var(--hx-text-label-line-height);
+  letter-spacing: var(--hx-text-label-tracking);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -288,10 +289,11 @@ main {
 .hero h1 {
   margin: 0 auto;
   max-width: 18ch;
-  font-size: clamp(var(--hx-font-size-4), 7.5vw, var(--hx-font-size-6));
-  font-weight: var(--hx-font-weight-heading);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: var(--hx-text-display-font);
+  font-size: var(--hx-text-display-size);
+  font-weight: var(--hx-text-display-weight);
+  line-height: var(--hx-text-display-line-height);
+  letter-spacing: var(--hx-text-display-tracking);
   background: linear-gradient(
     180deg,
     var(--hx-color-text) 40%,
@@ -304,8 +306,11 @@ main {
 .hero .tagline {
   margin: 1.25rem auto 0;
   max-width: 40ch;
-  font-size: clamp(var(--hx-font-size-1), 3vw, var(--hx-font-size-2));
-  font-weight: var(--hx-font-weight-medium);
+  font-family: var(--hx-text-h3-font);
+  font-size: var(--hx-text-h3-size);
+  font-weight: var(--hx-text-h3-weight);
+  line-height: var(--hx-text-h3-line-height);
+  letter-spacing: var(--hx-text-h3-tracking);
   color: var(--hx-color-accent-text);
 }
 .hero .intro {
@@ -384,7 +389,11 @@ main {
   border-radius: 999px;
   background: var(--hx-color-accent);
   color: var(--hx-color-accent-contrast);
-  font-weight: var(--hx-font-weight-heading);
+  font-family: var(--hx-text-button-font);
+  font-size: var(--hx-text-button-size);
+  font-weight: var(--hx-text-button-weight);
+  line-height: var(--hx-text-button-line-height);
+  letter-spacing: var(--hx-text-button-tracking);
   text-decoration: none;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--hx-color-accent) 60%, transparent),
@@ -406,9 +415,11 @@ main {
 }
 .section h2 {
   margin: 0 0 1.75rem;
-  font-size: clamp(var(--hx-font-size-2), 4vw, var(--hx-font-size-3));
-  font-weight: var(--hx-font-weight-heading);
-  letter-spacing: -0.01em;
+  font-family: var(--hx-text-h2-font);
+  font-size: var(--hx-text-h2-size);
+  font-weight: var(--hx-text-h2-weight);
+  line-height: var(--hx-text-h2-line-height);
+  letter-spacing: var(--hx-text-h2-tracking);
   text-align: center;
 }
 .section h2::after {
@@ -458,8 +469,11 @@ main {
 .card h3,
 .category h3 {
   margin: 0 0 0.5rem;
-  font-size: var(--hx-font-size-1);
-  font-weight: var(--hx-font-weight-heading);
+  font-family: var(--hx-text-product-title-font);
+  font-size: var(--hx-text-product-title-size);
+  font-weight: var(--hx-text-product-title-weight);
+  line-height: var(--hx-text-product-title-line-height);
+  letter-spacing: var(--hx-text-product-title-tracking);
 }
 .card p,
 .category p {
@@ -880,8 +894,11 @@ main {
   border-radius: var(--hx-radius);
   background: var(--hx-color-accent);
   color: var(--hx-color-accent-contrast);
-  font: inherit;
-  font-weight: var(--hx-font-weight-heading);
+  font-family: var(--hx-text-button-font);
+  font-size: var(--hx-text-button-size);
+  font-weight: var(--hx-text-button-weight);
+  line-height: var(--hx-text-button-line-height);
+  letter-spacing: var(--hx-text-button-tracking);
   cursor: pointer;
   box-shadow: 0 10px 24px -12px var(--hx-color-glow);
   transition:
@@ -1136,9 +1153,11 @@ main {
 }
 .maintenance h1 {
   margin: 1rem 0 0.5rem;
-  font-size: clamp(var(--hx-font-size-2), 5vw, var(--hx-font-size-4));
-  font-weight: var(--hx-font-weight-heading);
-  line-height: 1.2;
+  font-family: var(--hx-text-h1-font);
+  font-size: var(--hx-text-h1-size);
+  font-weight: var(--hx-text-h1-weight);
+  line-height: var(--hx-text-h1-line-height);
+  letter-spacing: var(--hx-text-h1-tracking);
 }
 .maintenance p {
   margin: 0;

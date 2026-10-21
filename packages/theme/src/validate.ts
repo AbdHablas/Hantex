@@ -1,6 +1,7 @@
 import { contrastRatio } from './color';
 import { brandTheme } from './defaults';
 import { MODES, type ColorToken, type Mode, type Theme } from './schema';
+import { checkTypography, type TypographyIssue } from './typography';
 
 export interface ContrastIssue {
   mode: Mode;
@@ -36,11 +37,21 @@ const RULES: { foreground: ColorToken; backgrounds: ColorToken[]; minimum: numbe
 const LOGO_MIN_VISIBILITY = 3;
 const round = (n: number) => Math.round(n * 100) / 100;
 
+export interface ThemeChecks {
+  errors: ContrastIssue[];
+  typography: TypographyIssue[];
+  warnings: ThemeWarning[];
+}
+
+/** True when nothing blocks publishing (contrast and readability). */
+export const publishable = (checks: ThemeChecks) =>
+  checks.errors.length === 0 && checks.typography.length === 0;
+
 /**
- * Checks a theme before it can be published. Errors block publishing; warnings need the
- * administrator's confirmation (logo colours, D-022).
+ * Checks a theme before it can be published. Contrast errors and typography issues block
+ * publishing; warnings need the administrator's confirmation (logo colours, D-022).
  */
-export function validateTheme(theme: Theme): { errors: ContrastIssue[]; warnings: ThemeWarning[] } {
+export function validateTheme(theme: Theme): ThemeChecks {
   const errors: ContrastIssue[] = [];
   const warnings: ThemeWarning[] = [];
 
@@ -84,5 +95,5 @@ export function validateTheme(theme: Theme): { errors: ContrastIssue[]; warnings
     }
   }
 
-  return { errors, warnings };
+  return { errors, typography: checkTypography(theme.typography), warnings };
 }

@@ -73,9 +73,14 @@ export async function currentDraft(db: Database, siteId: string, kind: DocumentK
     .select()
     .from(documentDrafts)
     .where(and(eq(documentDrafts.siteId, siteId), eq(documentDrafts.kind, kind)));
-  if (draft) return { data: draft.data, updatedAt: draft.updatedAt };
+  // Stored data written by an older format is upgraded on read (e.g. theme version 1 → 2).
+  const normalise = (data: unknown) => {
+    const parsed = DOCUMENTS[kind].schema.safeParse(data);
+    return parsed.success ? (parsed.data) : data;
+  };
+  if (draft) return { data: normalise(draft.data), updatedAt: draft.updatedAt };
   const published = await latestPublished(db, siteId, kind);
-  return { data: published?.data ?? DOCUMENTS[kind].defaults, updatedAt: null };
+  return { data: normalise(published?.data ?? DOCUMENTS[kind].defaults), updatedAt: null };
 }
 
 export async function saveDraft(

@@ -109,6 +109,13 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
     .getByRole('textbox', { name: 'النص', exact: true })
     .fill('#F4F6F8');
   await expect(page.getByRole('alert')).toContainText('النص على خلفية الصفحة');
+  // Typography: text below the readable minimum is reported before publishing (D-032).
+  await page.getByRole('tab', { name: 'النص', exact: true }).click();
+  await page
+    .getByRole('group', { name: 'النص', exact: true })
+    .getByLabel('الحجم (بكسل)')
+    .fill('12');
+  await expect(page.getByText('النص: استخدم 14 بكسل على الأقل.')).toBeVisible();
 
   // Recovery codes need a fresh sign-in, which this is.
   // Personal pages live in the account menu at the foot of the sidebar.

@@ -38,7 +38,7 @@ Typography, corner radius, elevation (shadows) and motion are tokens too.
 | Setting | Options |
 |---------|---------|
 | Colours | Palette values and the light/dark semantic mapping, with colour pickers |
-| Fonts | Latin and Arabic families from the installed font library, weights, base size and type scale |
+| Typography & fonts (D-032) | Heading and body fonts, each with a Latin and an Arabic family; twelve text styles (display, headings 1–3, body, small, navigation, buttons, labels, product titles, prices, specifications), each with size, weight, line height, Arabic line height and letter spacing; curated presets |
 | Shape | Corner radius |
 | Depth | Shadow intensity |
 | Motion | Off, subtle or full — reduced-motion preferences are always respected |
@@ -90,7 +90,8 @@ palettes are added without rebuilding the platform.
   - Fonts are uploaded as WOFF2 files together with their licence. Each file
     is checked: it must be a valid font, within the size limit, with its
     licence recorded. It then becomes available to every site.
-  - The five fonts installed today stay as the built-in set.
+  - The six fonts installed today (Poppins, Inter, Cairo, IBM Plex Sans
+    Arabic, Tajawal, Readex Pro) stay as the built-in set.
   - A site loads only the fonts and weights its theme uses.
 - **Logos and brand SVGs.** For each site, an administrator uploads an SVG
   logo, and optionally a separate mark.
@@ -113,6 +114,33 @@ palettes are added without rebuilding the platform.
 - **Done in the dashboard, with no code:** new sites, themes, palettes,
   fonts, logos, icons, categories and products. **Needs development:** new
   templates, new content block types and new kinds of features.
+
+## Typography (D-031, D-032)
+
+- **Fonts.** Two roles, *heading* and *body*, each with a Latin and an
+  Arabic family. The font stack lists the Latin family first, so Latin words
+  inside Arabic text (product names, model numbers) keep the Latin font and
+  Arabic characters fall back to the Arabic family. Hantex Ultra uses Poppins
+  with Cairo.
+- **Text styles.** Every component uses one of twelve named styles, never a
+  raw size. Each style becomes CSS variables
+  (`--hx-text-h1-font`, `-size`, `-weight`, `-line-height`, `-tracking`) and
+  a class (`.hx-text-h1`). Sizes above 24px shrink smoothly between a 1440px
+  and a 360px wide screen, never below 68% of their size.
+- **Arabic.** Arabic has its own line heights (`:lang(ar)`) and no letter
+  spacing, which would break the joins between letters; Latin passages inside
+  Arabic pages (`lang="en"`) restore the Latin values.
+- **Readability checks** block publishing like contrast failures: minimum
+  sizes per style (body 14px, small text and labels 12px), minimum line
+  heights, and an Arabic line height at least the Latin one.
+- **Presets.** Brand (Poppins + Cairo), Modern (Inter + IBM Plex Sans
+  Arabic), Bold headings (Poppins headings, Inter body), Compact (Inter +
+  Tajawal). Applying one replaces the draft's fonts and styles; publishing is
+  still a separate step.
+- **Older themes** (version 1: two fonts, a base size and a ratio) are
+  upgraded automatically when read, keeping their fonts and sizes.
+- Only the fonts, scripts and weights the styles use are shipped to the
+  site; a weight a font doesn't have uses its nearest file.
 
 ## SVG and light/dark
 

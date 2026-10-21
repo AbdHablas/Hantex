@@ -1,9 +1,7 @@
 import { siteSettingsSchema, type SiteSettings } from '@hantex/shared';
 import {
   COLOR_TOKENS,
-  FONT_LIBRARY,
   brandTheme,
-  fontsForScript,
   themeSchema,
   validateTheme,
   type Mode,
@@ -35,6 +33,7 @@ import {
 } from '../components/ui';
 import { api } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
+import { TypographyEditor } from './typography';
 import { presetsQueryKey, useThemeChoices } from '../lib/presets';
 import { useMe } from '../lib/session';
 
@@ -277,7 +276,7 @@ export function AppearanceEditor() {
   if (!editor.site) return <Navigate to="/" replace />;
   if (editor.query.isPending || !draft) return <Loading />;
 
-  const checks = editor.valid ? validateTheme(draft) : { errors: [], warnings: [] };
+  const checks = editor.valid ? validateTheme(draft) : { errors: [], typography: [], warnings: [] };
   const update = (next: Theme) => editor.update(next);
   const setColor = (mode: Mode, token: string, value: string) =>
     update({
@@ -286,8 +285,6 @@ export function AppearanceEditor() {
     });
   const setLogo = (mode: Mode, token: string, value: string) =>
     update({ ...draft, logo: { ...draft.logo, [mode]: { ...draft.logo[mode], [token]: value } } });
-  const setTypography = (patch: Partial<Theme['typography']>) =>
-    update({ ...draft, typography: { ...draft.typography, ...patch } });
 
   // Off-brand logo colours need an explicit confirmation to publish (D-022).
   const confirmLogo = async (theme: Theme) => {
@@ -394,54 +391,7 @@ export function AppearanceEditor() {
           </div>
         </Card>
 
-        <Card title={t.typography}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Choice
-              label={t.latinFont}
-              disabled={!editable}
-              value={draft.typography.latin}
-              options={fontsForScript('latin')}
-              render={(id) => FONT_LIBRARY[id].family}
-              onChange={(latin) => setTypography({ latin: latin })}
-            />
-            <Choice
-              label={t.arabicFont}
-              disabled={!editable}
-              value={draft.typography.arabic}
-              options={fontsForScript('arabic')}
-              render={(id) => FONT_LIBRARY[id].family}
-              onChange={(arabic) => setTypography({ arabic: arabic })}
-            />
-            <Choice
-              label={t.baseSize}
-              disabled={!editable}
-              value={draft.typography.baseSize}
-              options={[14, 15, 16, 17, 18, 19, 20]}
-              onChange={(baseSize) => setTypography({ baseSize })}
-            />
-            <Choice
-              label={t.scale}
-              disabled={!editable}
-              value={draft.typography.scale}
-              options={[1.125, 1.2, 1.25, 1.333, 1.414, 1.5]}
-              onChange={(scale) => setTypography({ scale })}
-            />
-            <Choice
-              label={t.bodyWeight}
-              disabled={!editable}
-              value={draft.typography.bodyWeight}
-              options={[300, 400, 500] as const}
-              onChange={(bodyWeight) => setTypography({ bodyWeight })}
-            />
-            <Choice
-              label={t.headingWeight}
-              disabled={!editable}
-              value={draft.typography.headingWeight}
-              options={[500, 600, 700] as const}
-              onChange={(headingWeight) => setTypography({ headingWeight })}
-            />
-          </div>
-        </Card>
+        <TypographyEditor draft={draft} editable={editable} update={update} />
 
         <Card title={t.style}>
           <div className="grid gap-4 sm:grid-cols-3">

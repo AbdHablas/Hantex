@@ -34,7 +34,7 @@ describe('draft preview signatures', () => {
   it('accepts a valid preview for this site', async () => {
     const fields = await sign({ site: 'hantex-ultra', data }, later());
     expect(await verifyPreview(SECRET, fields, 'hantex-ultra')).toMatchObject({
-      theme: { version: 1 },
+      theme: { version: 2 },
     });
   });
 

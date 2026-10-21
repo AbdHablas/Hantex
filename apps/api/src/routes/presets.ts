@@ -1,5 +1,5 @@
 import { sites, themePresets } from '@hantex/db/worker';
-import { BUILT_IN_PRESETS, themeSchema, validateTheme } from '@hantex/theme';
+import { BUILT_IN_PRESETS, publishable, themeSchema, validateTheme } from '@hantex/theme';
 import { desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -66,8 +66,11 @@ export const presetRoutes = new Hono<AppEnv>()
       const v = c.var;
       if (!onAnySite(v, 'appearance.publish')) throw forbidden('missing-permission');
       const body = c.req.valid('json');
-      const { errors } = validateTheme(body.theme);
-      if (errors.length > 0) throw badRequest('theme-contrast', { errors });
+      const checks = validateTheme(body.theme);
+      if (checks.errors.length > 0) throw badRequest('theme-contrast', { errors: checks.errors });
+      if (!publishable(checks)) {
+        throw badRequest('theme-typography', { issues: checks.typography });
+      }
       const [preset] = await v.db
         .insert(themePresets)
         .values({

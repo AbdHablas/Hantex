@@ -242,7 +242,19 @@ importers:
       '@fontsource/cairo':
         specifier: 5.3.0
         version: 5.3.0
+      '@fontsource/ibm-plex-sans-arabic':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/inter':
+        specifier: 5.3.0
+        version: 5.3.0
       '@fontsource/poppins':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/readex-pro':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/tajawal':
         specifier: 5.3.0
         version: 5.3.0
       '@hantex/db':
