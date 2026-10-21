@@ -2,6 +2,6 @@ packages:
   - apps/*
   - packages/*
 
-# pnpm 10 blocks dependency install scripts by default; allow only the ones we rely on.
-onlyBuiltDependencies:
-  - esbuild
+# pnpm blocks dependency install scripts by default; allow only the ones we rely on.
+allowBuilds:
+  esbuild: true

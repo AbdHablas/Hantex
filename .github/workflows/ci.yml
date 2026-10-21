@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 30
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           # Throwaway database that exists only for this CI job.
           POSTGRES_PASSWORD: postgres

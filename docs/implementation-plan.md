@@ -66,7 +66,7 @@ Next:
 - [x] Design system approved (D-027)
 - [x] Hosting approved: one Worker per site (D-028)
 - [x] 3D Studio approach approved (D-029)
-- [ ] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18, patch updates
+- [x] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18
 - [ ] Database made site-aware (D-024, D-025):
   - sites and site domains;
   - site-scoped documents, versions, publish jobs, sign-ups, rate limits and audit;

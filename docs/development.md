@@ -2,10 +2,11 @@
 
 ## Requirements
 
-- Node.js 22.22 or newer (`.nvmrc`), pnpm 10 (`corepack enable` picks the
+- Node.js 26.12 or newer (`.nvmrc`), pnpm 12 (`corepack enable` picks the
   version pinned in `package.json`).
-- PostgreSQL 16 or 17 for local development and tests — either a local
-  installation (used by `scripts/local-db.sh`) or Docker.
+- PostgreSQL 18 for local development and tests, matching Neon and CI —
+  either a local installation (used by `scripts/local-db.sh`) or Docker.
+  PostgreSQL 16 and 17 still pass the tests today, but 18 is the reference.
 
 ## First run
 
@@ -51,7 +52,7 @@ pnpm build          # every app
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same commands on every pull request
-and push to `main`, against a throwaway PostgreSQL 17 service, and runs
+and push to `main`, against a throwaway PostgreSQL 18 service, and runs
 `pnpm audit --audit-level high`. Third-party actions are pinned to commit
 SHAs.
 
@@ -77,14 +78,22 @@ Policy (D-023): the latest stable release of every platform and library,
 pinned exactly. Pre-releases are never used, and exceptions are recorded with
 their reason.
 
-- **Planned upgrade, first step when development resumes** (checked
-  2026-10-21):
-  - Node.js 22 → **26**. It becomes Active LTS on 2026-10-28.
-  - pnpm 10 → **12**. This moves `onlyBuiltDependencies` to pnpm 11+'s
-    `allowBuilds`.
-  - PostgreSQL 17 → **18** in CI and local development, matching Neon's
-    default.
-  - Patch updates for Vite, lucide-react and the Workers types.
+- **Upgraded on 2026-10-21:**
+  - **Node.js 26.12.0** (was 22). It becomes Active LTS on 2026-10-28.
+    26.12.1 was released the same day and is picked up after pnpm's one-day
+    minimum release age.
+  - **pnpm 12.14.0** (was 10). `onlyBuiltDependencies` became `allowBuilds`
+    in `pnpm-workspace.yaml`. pnpm 12 fails `pnpm -r run` when no package has
+    the script, so `pnpm build` uses `--if-present`. 12.15.0 was released the
+    same day and is picked up the same way.
+  - **PostgreSQL 18** (was 17) in CI. Verified locally with PostgreSQL 18.4:
+    format, lint, type-check and all 77 tests pass on Node.js 26.12.0.
+  - Patch updates for Vite, lucide-react and the Workers types are applied
+    when those packages are added back with the dashboard and site apps.
+- **Known audit note:** one *moderate* advisory (GHSA-67mh-4wv8-2f99) in an
+  old esbuild pulled in by drizzle-kit, a development-only tool. It affects
+  esbuild's development server, which this project doesn't run. CI blocks
+  on *high* and above. It is re-checked when drizzle-kit is updated.
 - **TypeScript 6.0.3.** TypeScript 7.0 is the latest, but typescript-eslint
   (supports below 6.1) and Astro's checker (5–6) don't support it yet.
   TypeScript 7.0 also has no stable programmatic API until 7.1. A CI check

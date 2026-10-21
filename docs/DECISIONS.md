@@ -40,8 +40,8 @@ marked **Confirmed** once the project owner has approved it.
 | D-029 | AI 3D Product Studio | Confirmed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
 
-All open decisions are settled. Next: the toolchain upgrade (D-023), then the
-site-aware database (D-024, D-025).
+All open decisions are settled. The toolchain upgrade (D-023) is done. Next:
+the site-aware database (D-024, D-025).
 
 ---
 
@@ -506,8 +506,10 @@ site-aware database (D-024, D-025).
     when the tools are ready.
   - **Drizzle ORM stays on 0.45.4,** the latest stable release; 1.0 is a
     release candidate.
-- **Consequences:** the upgrade is the first development step once this plan
-  is approved, with CI and `docs/development.md` updated at the same time.
+- **Done (2026-10-21):** Node.js 26.12.0, pnpm 12.14.0 (`allowBuilds`) and
+  PostgreSQL 18 in CI. Format, lint, type-check and all 77 tests passed
+  locally on Node.js 26.12.0 with PostgreSQL 18.4. Details in
+  `docs/development.md`.
 
 ## D-024 — Multi-website platform
 
