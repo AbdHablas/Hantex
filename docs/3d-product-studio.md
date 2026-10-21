@@ -606,6 +606,11 @@ Unreleased product photos must never pass through it.
 
    This decides between the free tools and the KIRI Engine subscription
    ([5.1](#51-capture-tools-for-measured-models)).
+   **Answer (2026-10-21): a Mac, a LiDAR iPhone or iPad, and a Windows PC
+   with an NVIDIA or AMD graphics card.** The free tools are used: Apple
+   Object Capture on the Mac as the main path, LiDAR capture for quick
+   true-scale models, and RealityScan or COLMAP on the PC. KIRI Engine isn't
+   needed. The Mac or PC can serve as the self-hosted processing runner.
 3. Is there a monthly budget for paid AI 3D services, or free methods only?
 
 **Delivery in stages:**

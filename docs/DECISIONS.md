@@ -38,7 +38,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
 | D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
-| D-030 | 3D processing location, providers and budget | Pending | Needs the owner's input: CAD files, capture equipment, budget for paid AI services |
+| D-030 | 3D processing location, providers and budget | Pending | No CAD files; Mac, LiDAR iPhone/iPad and GPU PC available (free photogrammetry). Budget for paid AI services still to answer |
 
 Next: the owner's answers to D-030, and approval of the proposed designs
 (D-024, D-026 to D-029), before development continues.
@@ -702,6 +702,15 @@ Next: the owner's answers to D-030, and approval of the proposed designs
   (photogrammetry) becomes the main path for measured models, with an artist
   and labelled AI drafts as options. CAD import stays in the Studio for any
   files that turn up later.
+- **Answer 2 (2026-10-21): a Mac, an iPhone or iPad with LiDAR, and a
+  Windows PC with an NVIDIA or AMD graphics card are all available.** Photo
+  reconstruction runs free on the owner's own hardware: Apple Object Capture
+  on the Mac (main path), LiDAR capture on the iPhone or iPad for quick
+  true-scale models, and RealityScan or COLMAP on the PC as a second option.
+  The KIRI Engine subscription isn't needed. The Mac or PC can also act as the
+  self-hosted processing runner, so unreleased product photos never leave the
+  owner's machines. The exact Mac chip and iPhone or iPad model are checked
+  when capture starts.
 - **Why it matters:** CAD gives exact models at no cost. Capture equipment
   decides whether photo reconstruction can run for free on the owner's
   hardware. The budget decides whether AI drafts are offered at all.
