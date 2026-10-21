@@ -39,7 +39,7 @@ approved by the project owner.
 - [x] Design tokens with light and dark values, contrast validation, theme → CSS (`packages/theme`, D-021)
 - [ ] Design system components (web and dashboard)
 - [x] Repository scaffolding (workspace, TypeScript, ESLint, Prettier, Vitest, local PostgreSQL, CI)
-- [ ] Database schema and migrations for the foundation
+- [x] Database schema, migrations, standard-role seed and least-privilege database users (`packages/db`, tested)
 - [ ] Passkey sign-in, invitations, sessions (Better Auth)
 - [ ] Roles and permissions: six standard roles, dynamic matrix editor, audit log
 - [ ] Coming Soon settings in the dashboard (Arabic and English) with Publish → rebuild

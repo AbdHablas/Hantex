@@ -39,7 +39,10 @@ production data is never used in development or tests.
 Branches: production, preview, development. Database users with least
 privilege: migrations (schema changes), dashboard (read/write), public site
 (insert sign-ups, read published content only), backups (read-only).
-Migrations run from CI, never from a running Worker.
+Migrations run from CI, never from a running Worker. Database users are
+`hantex_admin_app`, `hantex_public_app`, `hantex_build` and `hantex_backup`,
+created and granted by `pnpm --filter @hantex/db roles` (passwords from
+environment variables, never stored in the repository).
 
 ## CI/CD (GitHub Actions)
 
@@ -57,7 +60,8 @@ Migrations run from CI, never from a running Worker.
 | Name | Where |
 |------|-------|
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions (scoped token) |
-| Neon connection strings per database user | GitHub Actions and Hyperdrive |
+| `DATABASE_URL` (owner role, migrations only) | GitHub Actions |
+| `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD` | GitHub Actions (role setup); each user's connection string in Hyperdrive or CI |
 | `BACKUP_ENCRYPTION_KEY` | GitHub Actions; owner keeps an offline copy |
 | `BETTER_AUTH_SECRET` | Worker secret (`hantex-admin`) |
 | `RESEND_API_KEY` | Worker secret |

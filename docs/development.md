@@ -19,6 +19,27 @@ pnpm test
 local cluster uses trust authentication on the loopback interface only and
 holds development data only — never production data.
 
+## Database
+
+`packages/db` holds the Drizzle schema (`src/schema.ts`), the generated SQL
+migrations (`drizzle/`) and the least-privilege grants (`sql/grants.sql`).
+
+```bash
+# After changing src/schema.ts: generate a new migration, review the SQL, commit it.
+pnpm --filter @hantex/db generate --name <short-description>
+
+# Apply migrations, create/refresh the standard roles, and apply database users + grants.
+DATABASE_URL=… pnpm --filter @hantex/db migrate
+DATABASE_URL=… pnpm --filter @hantex/db seed
+DATABASE_URL=… HANTEX_ADMIN_APP_PASSWORD=… HANTEX_PUBLIC_APP_PASSWORD=… \
+  HANTEX_BUILD_PASSWORD=… HANTEX_BACKUP_PASSWORD=… pnpm --filter @hantex/db roles
+```
+
+Every new table must also be added to `sql/grants.sql` — nothing is granted by
+default. The database tests (`packages/db/src/db.test.ts`) create a throwaway
+database, apply migrations, seed and grants, and connect as each database user
+to prove what it can and cannot do.
+
 ## Checks (same as CI)
 
 ```bash

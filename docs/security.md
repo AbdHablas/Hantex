@@ -46,6 +46,10 @@ end.
 - Every input validated on the server with shared Zod schemas; unknown
   fields rejected; size limits on bodies.
 - Database access only through Drizzle's parameterised queries.
+- Separate database users with least privilege (`packages/db/sql/grants.sql`,
+  tested): the dashboard cannot edit or delete audit entries or published
+  versions and cannot create sign-ups; the build user reads published
+  content only; the backup user is read-only.
 - Astro and React escape output by default; rich text is stored as
   structured JSON and rendered from an allow-list — never raw HTML.
 - Exports protect against spreadsheet formula injection.
@@ -69,7 +73,8 @@ end.
 - Duplicate sign-ups answered identically to new ones (no way to probe who
   has signed up).
 - The public site's database user can only insert submissions — it cannot
-  read them.
+  read them. *Implemented in `packages/db/sql/grants.sql` and tested by
+  connecting as that user.*
 
 ### Appearance editor (D-022)
 
