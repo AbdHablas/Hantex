@@ -1,8 +1,6 @@
 # Theming — light/dark modes and dashboard-controlled appearance
 
-**Status:** requirement confirmed by the owner (D-021); design proposed
-(D-022). One open question: whether the logo's colours are adjustable
-(see D-022).
+**Status:** confirmed by the owner (D-021, D-022).
 
 ## Goals
 
@@ -38,7 +36,7 @@ Typography, corner radius, elevation (shadows) and motion are tokens too.
 | Depth | Shadow intensity |
 | Motion | Off, subtle or full — reduced-motion preferences are always respected |
 | Mode | Default mode (follow the visitor's system, light or dark) and whether visitors get a light/dark toggle |
-| Logo | Pending D-022 — locked to approved variants, or adjustable |
+| Logo | Own colour tokens per mode, defaulting to the brand colours; editable behind a warning that this departs from the brand guidelines (D-022) |
 
 Every change goes through **draft → live preview (light and dark side by
 side) → publish**, with full version history and one-click rollback to any
@@ -80,9 +78,13 @@ earlier version. **Reset to brand defaults** is always available.
   consistency.
 - **Fonts only from the curated, self-hosted library** (licence-checked,
   validated files). Adding a font to the library is a reviewed change.
-- New permissions *Appearance: edit drafts* and *Appearance: publish*,
-  controlled through the roles matrix (D-019); every publish and rollback is
-  audited.
+- **Logo colours** are separate tokens from the site colours; editing them
+  requires confirming a brand-guidelines warning, a visibility check warns
+  when the logo would be hard to see, and *Reset logo to brand colours* is
+  always available.
+- New permissions *Appearance: edit drafts*, *Appearance: publish* and
+  *Appearance: edit logo colours* (Owner only by default), controlled through
+  the roles matrix (D-019); every publish and rollback is audited.
 
 ## Limitations
 

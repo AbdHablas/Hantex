@@ -30,9 +30,9 @@ marked **Confirmed** once the project owner has approved it.
 | D-019 | Roles and permission matrix | Confirmed | Six standard roles; the matrix is editable from the dashboard (Phase 2) with escalation safeguards — see `docs/roles-and-permissions.md` |
 | D-020 | Logo update | Confirmed | Updated mark from `hantex-ultra-edited2` (indicator dots, outlet-shaped socket holes), aligned to the brand palette and grid; dots light on all backgrounds |
 | D-021 | Light and dark modes | Confirmed | Every public-facing design, including all SVGs, supports light and dark mode |
-| D-022 | Central appearance customisation | Proposed | Dashboard theme editor driving design tokens for all public sites — open question on logo colours |
+| D-022 | Central appearance customisation | Confirmed | Dashboard theme editor driving design tokens for all public sites; logo colours adjustable behind a brand warning |
 
-Open: D-022 (whether logo colours are adjustable), then the owner's approval to start Phase 2.
+Next: the owner's approval to start Phase 2.
 
 ---
 
@@ -418,7 +418,7 @@ Open: D-022 (whether logo colours are adjustable), then the owner's approval to 
 
 ## D-022 — Central appearance customisation
 
-- **Status:** Proposed — design in `docs/theming.md`; one open question
+- **Status:** Confirmed — 2026-10-21 (design in `docs/theming.md`)
 - **Requirement (owner):** a centralised customisation system in the
   dashboard to change colours, fonts and the overall frontend appearance of
   all public-facing websites, applied consistently.
@@ -429,6 +429,17 @@ Open: D-022 (whether logo colours are adjustable), then the owner's approval to 
   contrast enforced; no custom CSS; fonts from a curated self-hosted
   library; new permissions *Appearance: edit drafts* and *Appearance:
   publish* (standard roles: Owner and Administrator).
-- **Open question:** the brand guidelines say the mark must never be
-  recoloured — should the logo's colours be editable in the theme editor?
-- **Owner's choice:** —
+- **Question:** the brand guidelines say the mark must never be recoloured —
+  should the logo's colours be editable in the theme editor?
+- **Options considered:** locked to the approved variants · adjustable with a
+  warning · fully adjustable
+- **Recommended:** locked to the approved variants.
+- **Owner's choice:** adjustable with a warning.
+- **Consequences:** the logo has its own colour tokens per mode (separate from
+  the site accent, so changing the site's colours never recolours the logo by
+  accident), defaulting to the brand colours; editing them shows a warning
+  that this departs from the brand guidelines and needs confirmation; a
+  visibility check warns if the logo would be hard to see on its
+  background; every change is audited; *Reset logo to brand colours* is
+  always available; a separate permission *Appearance: edit logo colours*
+  is held by the Owner role only by default (changeable in the matrix).

@@ -29,17 +29,20 @@ approved by the project owner.
 - [x] Dashboard foundation delivered with the Coming Soon page (D-017)
 - [x] Launch-notification sign-up — email or WhatsApp (D-018)
 - [x] Roles and permission matrix — six standard roles, dynamic matrix (D-019)
+- [x] Logo update applied (D-020)
+- [x] Light/dark for every design, central appearance system (D-021, D-022)
 - [x] `docs/architecture.md` started from confirmed decisions
 - [x] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
 ## Phase 2 — Coming Soon page and dashboard foundation (D-017)
 
-- [ ] Design system from the brand reference
+- [ ] Design system from the brand reference: design tokens with light and dark values (D-021)
 - [ ] Repository scaffolding (apps, packages, CI, tests)
 - [ ] Database schema and migrations for the foundation
 - [ ] Passkey sign-in, invitations, sessions (Better Auth)
 - [ ] Roles and permissions: six standard roles, dynamic matrix editor, audit log
 - [ ] Coming Soon settings in the dashboard (Arabic and English) with Publish → rebuild
+- [ ] Appearance editor: colours, fonts, shape, motion, mode, logo colours; preview, publish, rollback (D-022)
 - [ ] Coming Soon page built and tested (desktop, tablet, mobile)
 - [ ] Launch-notification sign-up (email or WhatsApp) with consent, Turnstile, rate limits
 - [ ] SEO and social metadata for the Coming Soon state
