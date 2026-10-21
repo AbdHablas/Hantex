@@ -94,7 +94,7 @@ series pages are built from blocks: 3D hero, scroll-linked features, finish
 selector, specifications, downloads. Details:
 [`product-catalogue.md`](product-catalogue.md).
 
-## Design system and theming (D-021, D-022 confirmed; D-027 proposed)
+## Design system and theming (D-021, D-022, D-027 confirmed)
 
 - **Design tokens with light and dark values** drive every public page,
   component and SVG.
@@ -180,4 +180,4 @@ docs/               Project documentation
 
 ## Pending
 
-- Approval of the proposed designs: D-027 to D-029.
+- Approval of the proposed designs: D-028 and D-029.

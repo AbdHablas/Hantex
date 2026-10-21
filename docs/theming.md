@@ -2,8 +2,8 @@
 
 **Status:** light/dark and the dashboard appearance editor were confirmed by
 the owner (D-021, D-022). Extending them to several websites as a reusable
-design system is **Proposed** (D-027, see
-[below](#multiple-websites-and-a-reusable-design-system-d-027-proposed)).
+design system was confirmed on 2026-10-21 (D-027, see
+[below](#multiple-websites-and-a-reusable-design-system-d-027-confirmed)).
 
 ## Goals
 
@@ -63,7 +63,7 @@ earlier version. **Reset to brand defaults** is always available.
   light and dark modes) so a bad public theme can never lock administrators
   out of fixing it.
 
-## Multiple websites and a reusable design system (D-027, proposed)
+## Multiple websites and a reusable design system (D-027, confirmed)
 
 Owner's requirement (2026-10-21): the design system serves different
 public-facing websites. New websites, brands, categories, themes, fonts and
