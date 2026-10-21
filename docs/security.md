@@ -43,7 +43,7 @@ end.
 - Automated tests call every endpoint as every role, including direct API
   calls without the dashboard.
 
-### Several websites (D-024, proposed)
+### Several websites (D-024, confirmed)
 
 - **Every request is checked against its site.** Every dashboard API address
   includes the site. The server checks the user's permission for that site
