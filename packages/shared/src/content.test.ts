@@ -1,0 +1,77 @@
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_COMING_SOON,
+  DEFAULT_SITE_SETTINGS,
+  comingSoonSchema,
+  siteSettingsSchema,
+} from './content';
+
+describe('Coming Soon content', () => {
+  it('defaults to a neutral message with no dates, claims or countdown (D-016)', () => {
+    const content = comingSoonSchema.parse(DEFAULT_COMING_SOON);
+    expect(content.launchAt).toBeNull();
+    expect(content.milestones).toEqual([]);
+    expect(content.highlights).toEqual([]);
+    expect(content.headline.en).toBe('Coming soon');
+    expect(content.headline.ar).toBe('قريباً');
+  });
+
+  it('accepts a launch time with an explicit offset only', () => {
+    const ok = { ...DEFAULT_COMING_SOON, launchAt: '2026-12-20T19:00:00+03:00' };
+    expect(comingSoonSchema.safeParse(ok).success).toBe(true);
+    const noOffset = { ...DEFAULT_COMING_SOON, launchAt: '2026-12-20T19:00:00' };
+    expect(comingSoonSchema.safeParse(noOffset).success).toBe(false);
+  });
+
+  it('limits text lengths and list sizes', () => {
+    const long = { ...DEFAULT_COMING_SOON, tagline: { ar: '', en: 'x'.repeat(201) } };
+    expect(comingSoonSchema.safeParse(long).success).toBe(false);
+    const many = {
+      ...DEFAULT_COMING_SOON,
+      milestones: Array.from({ length: 13 }, () => ({
+        date: '2026-01-01',
+        title: { ar: 'م', en: 'm' },
+        done: false,
+      })),
+    };
+    expect(comingSoonSchema.safeParse(many).success).toBe(false);
+  });
+
+  it('rejects impossible milestone dates and unknown fields', () => {
+    const bad = {
+      ...DEFAULT_COMING_SOON,
+      milestones: [{ date: '2026-02-30', title: { ar: 'م', en: 'm' }, done: false }],
+    };
+    expect(comingSoonSchema.safeParse(bad).success).toBe(false);
+    expect(comingSoonSchema.safeParse({ ...DEFAULT_COMING_SOON, html: '<script>' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('site settings', () => {
+  it('starts empty', () => {
+    expect(siteSettingsSchema.parse(DEFAULT_SITE_SETTINGS).contact.email).toBe('');
+  });
+
+  it('only accepts https links, so no javascript: or http: URLs reach the page', () => {
+    const settings = (instagram: string) => ({
+      ...DEFAULT_SITE_SETTINGS,
+      social: { ...DEFAULT_SITE_SETTINGS.social, instagram },
+    });
+    expect(
+      siteSettingsSchema.safeParse(settings('https://instagram.com/hantexultra')).success,
+    ).toBe(true);
+    expect(siteSettingsSchema.safeParse(settings('javascript:alert(1)')).success).toBe(false);
+    expect(siteSettingsSchema.safeParse(settings('http://instagram.com/x')).success).toBe(false);
+  });
+
+  it('requires international phone numbers in E.164 form', () => {
+    const contact = (phone: string) => ({
+      ...DEFAULT_SITE_SETTINGS,
+      contact: { ...DEFAULT_SITE_SETTINGS.contact, phone },
+    });
+    expect(siteSettingsSchema.safeParse(contact('+963933123456')).success).toBe(true);
+    expect(siteSettingsSchema.safeParse(contact('0933123456')).success).toBe(false);
+  });
+});
