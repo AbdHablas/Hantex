@@ -55,8 +55,8 @@ the current code.
   This environment can't reach Cloudflare, so the browser test uses
   Turnstile's always-failing key and the database side is tested separately.
   It will be checked on the staging deployment.
-- **Privacy note** for the sign-up form: editable per site in Site settings;
-  hidden until the owner writes it.
+- **Privacy note** for the sign-up form: editable per site in Website
+  settings → SEO & contact; hidden until the owner writes it.
 - **Site-wide rate limit** (all visitors together): a Cloudflare rule, set up
   with the deployment.
 - **Emails** are sent from the platform's domain until each site's domain is
@@ -75,13 +75,25 @@ US$0. Everything fits the free plans: Cloudflare Workers Free, Neon free,
 Resend free, Turnstile, Cloudflare Access free, GitHub Actions on a public
 repository.
 
-## What the owner is asked to approve
+## Owner decisions
 
-1. **This phase**, so Phase 3 can start: media library, product catalogue
-   (switches and sockets first) and the 3D Studio foundation.
-2. **Starting the first deployment**, step by step as in
+1. **This phase: approved on 2026-10-21.** Phase 3 can start: media
+   library, product catalogue (switches and sockets first) and the 3D Studio
+   foundation.
+2. **First deployment: approved to start on 2026-10-21**, step by step as in
    [`deployment.md`](deployment.md#first-deployment-step-by-step). Each step,
    including every DNS change, still needs the owner's go-ahead. The public
    site stays in Coming Soon mode.
-3. **The sign-up privacy note's wording**, when convenient (it is typed in
-   the dashboard: Site settings → Privacy note).
+3. **Still open:** the sign-up privacy note's wording (typed in the
+   dashboard: Website settings → SEO & contact → Privacy note).
+
+## Added after the report
+
+- Dashboard interface rebuilt on Radix components, with a command palette,
+  charts on the overview and in-app confirmations.
+- Navigation reorganised into sections
+  ([`dashboard-navigation.md`](dashboard-navigation.md)).
+- Arabic typeface changed to Cairo (D-031); Typography & fonts section per
+  site with text styles and presets (D-032).
+- Public site: richer Coming Soon page with product categories and FAQ
+  edited in the dashboard.

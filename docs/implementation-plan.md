@@ -87,7 +87,7 @@ Next:
 - [x] Site settings editor (SEO, contact details, social links), with publish, history and preview
 - [x] Appearance editor per site (D-022, D-027): colours for light and dark, logo colours (Owner only, confirmed before publishing), fonts from the library, size and scale, corner rounding, shadows, animation, default mode and the visitor toggle; live contrast checks; preview, publish and rollback; "start again from the brand theme"
 - [x] Saved theme presets and copying a theme between sites (D-027): built-in "brand" and "neutral" starters; saving needs appearance.publish and passes the contrast checks; deleting is Owner-only; without the logo permission a preset never changes the logo colours
-- [x] Sign-up privacy note, edited per site in Site settings (empty hides it)
+- [x] Sign-up privacy note, edited per site in Website settings → SEO & contact (empty hides it)
 - [x] Nightly encrypted backup (`backup.yml`) and health check (`health.yml`) workflows, inactive until configured
 - [x] Interface upgrade: dashboard components on Radix primitives (shadcn/ui style, CSP-safe), collapsible sidebar, Ctrl/Cmd+K command palette, in-app confirmations and notifications, overview charts (daily sign-ups, email/WhatsApp split); public site with animated hero and countdown, scroll reveals (reduced-motion aware), product categories and FAQ from the dashboard, email/WhatsApp switch on the sign-up form
 - [x] Navigation restructured ([`dashboard-navigation.md`](dashboard-navigation.md)): website switcher, then Overview · Content & design · Audience · Website settings; Administration (all websites) apart; personal pages in the account menu; one config drives sidebar, mobile menu, breadcrumbs and command palette; role-based, foldable sections, icon rail on tablets, slide-in menu on phones
@@ -103,7 +103,7 @@ Next:
 - [x] Preview button in the dashboard editors
 - [x] Cloudflare deployment prepared for `hantex-admin` and `site-hantex-ultra`: workflows (`deploy.yml` waits for the owner's approval, `publish.yml`), Worker size check, step-by-step runbook. Nothing is deployed.
 - [x] Phase 2 report: [`phase-2-report.md`](phase-2-report.md)
-- [ ] Owner approval to continue, and to start the first deployment
+- [x] Owner approval to continue, and to start the first deployment (2026-10-21)
 
 ## Frontend quality and typography *(core requirement; D-031 to D-034 confirmed)*
 
