@@ -1,0 +1,83 @@
+# Publish one site (D-006, D-028): started by the dashboard's Publish button through a GitHub
+# token that may only start workflows. Builds the site from its *published* content with the
+# read-only build database user and deploys that site's Worker. Nothing else is changed.
+#
+# This repository is public, so its logs are public: the build reads no personal data (the
+# build user can't), and secrets are masked by GitHub.
+name: Publish site
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Site key, e.g. hantex-ultra
+        required: true
+        type: string
+      job_id:
+        description: Publish job id from the dashboard (to report the result)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  # One build at a time per site; a newer publish replaces a queued one.
+  group: publish-${{ inputs.site }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and deploy ${{ inputs.site }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: sites
+    env:
+      SITE: ${{ inputs.site }}
+    steps:
+      - name: Check the site key
+        run: |
+          [[ "$SITE" =~ ^[a-z0-9](-?[a-z0-9])+$ ]] || { echo "Invalid site key"; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the site from its published content
+        run: pnpm --filter @hantex/web build
+        env:
+          HANTEX_BUILD_DATABASE_URL: ${{ secrets.HANTEX_BUILD_DATABASE_URL }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+      - run: node scripts/check-worker-size.mjs apps/web/dist/server
+      - name: Deploy the site Worker
+        working-directory: apps/web
+        run: |
+          node ../../scripts/set-hyperdrive.mjs dist/server/wrangler.json "$SITE_HYPERDRIVE_ID"
+          pnpm exec wrangler deploy --name "site-$SITE"
+        env:
+          SITE_HYPERDRIVE_ID: ${{ vars.SITE_HYPERDRIVE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: 'false'
+      - name: Report the result to the dashboard
+        if: always() && inputs.job_id != ''
+        env:
+          JOB_ID: ${{ inputs.job_id }}
+          STATUS: ${{ job.status == 'success' && 'succeeded' || 'failed' }}
+          APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+          CALLBACK_SECRET: ${{ secrets.PUBLISH_CALLBACK_SECRET }}
+          # Cloudflare Access service token: lets this callback through to the dashboard.
+          ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
+          ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
+        run: |
+          [[ "$JOB_ID" =~ ^[0-9a-f-]{36}$ ]] || { echo "Invalid job id"; exit 1; }
+          curl --fail --silent --show-error -X POST "$APP_ORIGIN/api/publish/jobs/$JOB_ID/result" \
+            -H "Authorization: Bearer $CALLBACK_SECRET" \
+            -H "CF-Access-Client-Id: $ACCESS_CLIENT_ID" \
+            -H "CF-Access-Client-Secret: $ACCESS_CLIENT_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "{\"status\":\"$STATUS\",\"detail\":\"run-$GITHUB_RUN_ID\"}"

@@ -1,0 +1,114 @@
+# Production deployments, run by hand only. Every job uses the "production" environment, which
+# must be set up in GitHub to require the owner's approval before it runs (docs/deployment.md).
+# Nothing here changes DNS: domains are connected separately, each with the owner's approval.
+name: Deploy (production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to deploy
+        required: true
+        type: choice
+        options:
+          - database
+          - dashboard
+          - site
+      site:
+        description: Site key (for target "site"), e.g. hantex-ultra
+        required: false
+        type: string
+        default: hantex-ultra
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.target }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Database: migrations, least-privilege users and grants, standard roles and the first site.
+      # Migrations are backward-compatible, so the running Workers keep working (expand, then contract).
+      - name: Migrate, apply database users and seed
+        if: inputs.target == 'database'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          HANTEX_ADMIN_APP_PASSWORD: ${{ secrets.HANTEX_ADMIN_APP_PASSWORD }}
+          HANTEX_PUBLIC_APP_PASSWORD: ${{ secrets.HANTEX_PUBLIC_APP_PASSWORD }}
+          HANTEX_BUILD_PASSWORD: ${{ secrets.HANTEX_BUILD_PASSWORD }}
+          HANTEX_BACKUP_PASSWORD: ${{ secrets.HANTEX_BACKUP_PASSWORD }}
+        run: |
+          pnpm --filter @hantex/db migrate
+          pnpm --filter @hantex/db roles
+          pnpm --filter @hantex/db seed
+
+      - name: Deploy the dashboard
+        if: inputs.target == 'dashboard'
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: 'false'
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TOKEN_HASH_SECRET: ${{ secrets.TOKEN_HASH_SECRET }}
+          PREVIEW_SIGNING_SECRET: ${{ secrets.PREVIEW_SIGNING_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          PUBLISH_TRIGGER_TOKEN: ${{ secrets.PUBLISH_TRIGGER_TOKEN }}
+          PUBLISH_CALLBACK_SECRET: ${{ secrets.PUBLISH_CALLBACK_SECRET }}
+          ADMIN_HYPERDRIVE_ID: ${{ vars.ADMIN_HYPERDRIVE_ID }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+        run: |
+          pnpm --filter @hantex/admin build
+          node ../../scripts/set-hyperdrive.mjs wrangler.jsonc "$ADMIN_HYPERDRIVE_ID"
+          pnpm exec wrangler deploy \
+            --var "EMAIL_FROM:$EMAIL_FROM" \
+            --var "TURNSTILE_SITE_KEY:$TURNSTILE_SITE_KEY" \
+            --var "PUBLISH_REPOSITORY:$GITHUB_REPOSITORY" \
+            --var "PUBLISH_WORKFLOW:publish.yml" \
+            --var "PUBLISH_REF:main"
+          for name in BETTER_AUTH_SECRET TOKEN_HASH_SECRET PREVIEW_SIGNING_SECRET TURNSTILE_SECRET_KEY RESEND_API_KEY PUBLISH_TRIGGER_TOKEN PUBLISH_CALLBACK_SECRET; do
+            if [ -n "${!name}" ]; then printf '%s' "${!name}" | pnpm exec wrangler secret put "$name"; fi
+          done
+
+      # A site's first deployment, or a change to its secrets. Day-to-day content changes use
+      # the "Publish site" workflow instead.
+      - name: Deploy a site
+        if: inputs.target == 'site'
+        env:
+          SITE: ${{ inputs.site }}
+          HANTEX_BUILD_DATABASE_URL: ${{ secrets.HANTEX_BUILD_DATABASE_URL }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: 'false'
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          PREVIEW_SIGNING_SECRET: ${{ secrets.PREVIEW_SIGNING_SECRET }}
+          SITE_HYPERDRIVE_ID: ${{ vars.SITE_HYPERDRIVE_ID }}
+        run: |
+          [[ "$SITE" =~ ^[a-z0-9](-?[a-z0-9])+$ ]] || { echo "Invalid site key"; exit 1; }
+          pnpm --filter @hantex/web build
+          cd apps/web
+          node ../../scripts/set-hyperdrive.mjs dist/server/wrangler.json "$SITE_HYPERDRIVE_ID"
+          pnpm exec wrangler deploy --name "site-$SITE"
+          for name in TURNSTILE_SECRET_KEY PREVIEW_SIGNING_SECRET; do
+            printf '%s' "${!name}" | pnpm exec wrangler secret put "$name" --name "site-$SITE"
+          done

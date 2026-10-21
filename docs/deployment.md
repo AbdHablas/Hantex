@@ -1,6 +1,6 @@
 # Deployment
 
-**Status:** plan from the confirmed decisions. Nothing is deployed and no
+**Status:** workflows and runbook ready (2026-10-21). Nothing is deployed and no
 Cloudflare, DNS or database change is made without the owner's explicit
 approval.
 
@@ -57,36 +57,52 @@ environment variables, never stored in the repository).
 
 ## CI/CD (GitHub Actions)
 
-- **Every pull request:** lint, type check, unit and integration tests, build,
-  Worker bundle-size check against the free plan's limit, dependency scan.
-  Runs on Node.js 26 and pnpm 12 (D-023).
-- **Merge to main:** deploy to preview; production deploy requires manual
-  approval.
-- **Publish in the dashboard:** triggers a rebuild and deploy of **that site
-  only** (D-006, D-028), using a narrowly scoped token.
-- **Nightly:** encrypted database export to R2 (D-010) and health checks
-  with email alerts (D-011).
+| Workflow | When | What it does |
+|----------|------|--------------|
+| `ci.yml` | Every pull request and push to `main` | Format, lint, type check, unit, database and API tests, build, Worker size check against the Free plan limit, browser tests (dashboard passkeys, public site), dependency audit. Node.js 26, pnpm 12, PostgreSQL 18 (D-023). |
+| `deploy.yml` | **By hand only**, in the `production` environment, which must require the owner's approval | `database`: migrations, database users and grants, standard roles, the first site. `dashboard`: builds and deploys `hantex-admin` and sets its secrets. `site`: a site's first deployment, or new secrets for it. |
+| `publish.yml` | Started by the dashboard's Publish button (D-006) | Builds **one site** from its published content with the read-only build user and deploys that site's Worker, then reports the result to the dashboard. |
+
+- No workflow changes DNS. Each domain is connected separately, after the
+  owner approves it.
+- The dashboard's GitHub token (`PUBLISH_TRIGGER_TOKEN`) can only start
+  workflows in this repository. It could start `deploy.yml`, but that
+  workflow waits for the owner's approval, so the token alone can't change
+  production.
+- This repository is public, so workflow logs are public: builds read no
+  personal data (the build user can't), secrets are masked, and nothing
+  sensitive is uploaded as an artifact.
+- **Nightly (planned):** encrypted database export to R2 (D-010) and health
+  checks with email alerts (D-011).
 - **3D Studio processing (D-030, confirmed):** photo reconstruction,
   optimisation, validation and poster rendering run on a *processing runner*
   on the owner's own Mac or PC. It never runs in this public repository,
   whose logs and artifacts anyone can read. No paid AI providers are called.
 
-## Secrets (names only — values are never written here)
+## Configuration (names only; values are never written here)
 
-| Name | Where |
-|------|-------|
-| `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions (scoped token) |
-| `DATABASE_URL` (owner role, migrations only) | GitHub Actions |
-| `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD` | GitHub Actions (role setup); each user's connection string in Hyperdrive or CI |
-| `BACKUP_ENCRYPTION_KEY` | GitHub Actions; owner keeps an offline copy |
-| `BETTER_AUTH_SECRET` | Worker secret (`hantex-admin`) |
-| `RESEND_API_KEY` | Worker secret |
-| `TURNSTILE_SECRET_KEY` | Worker secret |
-| `PUBLISH_TRIGGER_TOKEN` | Worker secret (can only start the site build) |
-| `R2_STUDIO_ACCESS_KEY_ID`, `R2_STUDIO_SECRET_ACCESS_KEY` | Worker secret (signed upload and download links, limited to the `studio` bucket) and processing runner |
-| `STUDIO_DISPATCH_TOKEN` | Worker secret (can only start processing jobs in the private runner repository) |
-| `STUDIO_CALLBACK_SECRET` | Worker secret and processing runner (signs job results) |
-| One API key per approved 3D provider, for example `MESHY_API_KEY` | Processing runner only, added only after the owner approves that provider (D-005) |
+**GitHub secrets** (Settings → Secrets and variables → Actions):
+
+| Name | Used by | What it is |
+|------|---------|------------|
+| `CLOUDFLARE_API_TOKEN` | deploy, publish | Cloudflare token limited to editing Workers on this account |
+| `DATABASE_URL` | deploy (database) | Neon owner connection, for migrations only |
+| `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD` | deploy (database) | Passwords for the four least-privilege database users |
+| `HANTEX_BUILD_DATABASE_URL` | deploy (site), publish | Connection as the read-only build user |
+| `BETTER_AUTH_SECRET`, `TOKEN_HASH_SECRET`, `PREVIEW_SIGNING_SECRET` | deploy | Random secrets (32 bytes or more) |
+| `TURNSTILE_SECRET_KEY` | deploy | Turnstile secret key |
+| `RESEND_API_KEY` | deploy (dashboard) | Email sending (D-009) |
+| `PUBLISH_TRIGGER_TOKEN` | deploy (dashboard) | GitHub fine-grained token for this repository with Actions: read and write only |
+| `PUBLISH_CALLBACK_SECRET` | deploy, publish | Random secret the publish workflow uses to report results |
+| `ACCESS_CLIENT_ID`, `ACCESS_CLIENT_SECRET` | publish | Cloudflare Access service token, so the result report can reach the dashboard |
+
+**GitHub variables** (not secret): `CLOUDFLARE_ACCOUNT_ID`, `APP_ORIGIN`
+(`https://admin.hantexultra.com`), `ADMIN_HYPERDRIVE_ID`,
+`SITE_HYPERDRIVE_ID`, `TURNSTILE_SITE_KEY`, `EMAIL_FROM`.
+
+**Later phases:** `BACKUP_ENCRYPTION_KEY` (D-010; the owner keeps an offline
+copy); R2 and processing-runner credentials for the 3D Studio; one API key
+per 3D provider only after the owner approves it (D-005, D-030).
 
 ## Rollback
 
@@ -94,20 +110,49 @@ environment variables, never stored in the repository).
 - Database: migrations are backward-compatible (expand, then contract);
   restore from Neon point-in-time or the nightly backup if needed.
 
-## Owner actions needed before the first deployment
+## First deployment, step by step
 
-I'll guide each step when we reach it:
+Each step needs the owner. I'll guide each one when we get there; nothing is
+deployed before the owner says so.
 
-- create a free Neon account and project;
-- create a free Resend account;
-- enable Cloudflare Zero Trust (free) for Access;
-- create a scoped Cloudflare API token;
-- add secrets to GitHub;
-- approve each DNS change;
-- receive the first-Owner setup link. It is created after the first
-  deployment with `pnpm --filter @hantex/db setup-owner <your email>`. It
-  works once, expires after 24 hours, and stops working as soon as an Owner
-  exists. It is sent to you privately and never stored.
+1. **Neon** (free): create a project with PostgreSQL 18 in a region near the
+   visitors. Copy the owner connection string into `DATABASE_URL`.
+2. **Passwords and secrets:** generate the four database passwords and the
+   random secrets, and add them to GitHub secrets.
+3. **GitHub environments:** create `production` with the owner as required
+   reviewer, and `sites` (no reviewer: publishing from the dashboard runs
+   unattended).
+4. **Run `Deploy (production)` → `database`** and approve it. This creates the
+   tables, the database users, the standard roles and the Hantex Ultra site
+   (Coming Soon, domains pending).
+5. **Cloudflare Hyperdrive:** two configurations: the dashboard user with
+   caching off, and the public-site user. Put their ids in
+   `ADMIN_HYPERDRIVE_ID` and `SITE_HYPERDRIVE_ID`.
+6. **Turnstile:** create a widget for `hantexultra.com` and
+   `admin.hantexultra.com`; add the keys.
+7. **Resend** (free): verify the sending domain (DNS records, approved by the
+   owner); add the API key and `EMAIL_FROM`.
+8. **Cloudflare Access** (Zero Trust free): an application for
+   `admin.hantexultra.com` allowing the owner's email, plus a service token
+   for the publish callback (`/api/publish/jobs/*`).
+9. **Run `Deploy (production)` → `dashboard`**, then connect
+   `admin.hantexultra.com` to the `hantex-admin` Worker (DNS change, approved
+   by the owner).
+10. **First Owner:** run `setup-owner` with the production database (step
+    below) and open the link on your phone or computer to create your
+    passkey.
+11. **Run `Deploy (production)` → `site`** for `hantex-ultra`, then connect
+    `www.hantexultra.com` (and redirect `hantexultra.com`) to
+    `site-hantex-ultra` (DNS changes, approved by the owner). The site stays
+    in Coming Soon mode.
+12. **GitHub token for publishing:** create the fine-grained token
+    (`PUBLISH_TRIGGER_TOKEN`) and re-run the dashboard deployment so the
+    Publish button can rebuild the site.
+
+First-Owner link: `DATABASE_URL=… APP_ORIGIN=https://admin.hantexultra.com
+pnpm --filter @hantex/db setup-owner <your email>`. It works once, expires
+after 24 hours, stops working as soon as an Owner exists, and is never
+stored.
 
 **For the 3D Studio (Phase 3, D-030):** create a private repository for the
 processing runner, or set up the runner on your own computer. Approve any

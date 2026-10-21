@@ -96,8 +96,9 @@ Next:
 - [x] SEO and social metadata for the Coming Soon state: title and description from site settings, canonical address, `hreflang`, Open Graph
 - [x] Draft previews: signed per site by the dashboard, rendered by the site Worker, never cached or indexed
 - [x] Preview button in the dashboard editors
-- [ ] Cloudflare deployment prepared for `hantex-admin` and `site-hantex-ultra`. Nothing is deployed without approval.
-- [ ] Phase 2 report and owner approval to continue
+- [x] Cloudflare deployment prepared for `hantex-admin` and `site-hantex-ultra`: workflows (`deploy.yml` waits for the owner's approval, `publish.yml`), Worker size check, step-by-step runbook. Nothing is deployed.
+- [x] Phase 2 report: [`phase-2-report.md`](phase-2-report.md)
+- [ ] Owner approval to continue, and to start the first deployment
 
 ## Phase 3: Content, catalogue, media and 3D Studio foundation (dashboard)
 

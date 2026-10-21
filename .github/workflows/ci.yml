@@ -47,6 +47,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: node scripts/check-worker-size.mjs apps/api/dist apps/web/dist/server
 
   e2e:
     name: End-to-end (dashboard, passkeys)
