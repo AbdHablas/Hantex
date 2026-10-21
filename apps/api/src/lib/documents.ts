@@ -76,7 +76,7 @@ export async function currentDraft(db: Database, siteId: string, kind: DocumentK
   // Stored data written by an older format is upgraded on read (e.g. theme version 1 → 2).
   const normalise = (data: unknown) => {
     const parsed = DOCUMENTS[kind].schema.safeParse(data);
-    return parsed.success ? (parsed.data) : data;
+    return parsed.success ? parsed.data : data;
   };
   if (draft) return { data: normalise(draft.data), updatedAt: draft.updatedAt };
   const published = await latestPublished(db, siteId, kind);
