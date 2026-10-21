@@ -1,7 +1,7 @@
 # Roles and permissions
 
-**Status:** Proposed (D-019) — awaiting the owner's approval. Nothing here is
-implemented until it is approved.
+**Status:** Confirmed (D-019, 2026-10-20). The six roles below are the
+**standard roles**; the whole matrix is **editable from the dashboard**.
 
 Sized for the owner plus about 2–5 staff (owner's answer, 2026-10-20). Roles
 are stored in the database as bundles of permissions, so they can be changed
@@ -70,8 +70,33 @@ also added to the Cloudflare Access policy in front of the dashboard.
 A second Owner (a trusted person) is recommended later so that access can be
 recovered if one Owner loses all their devices.
 
-## Custom roles
+## Dynamic matrix (owner's requirement)
 
-Phase 2 creates the six roles above. The screen for creating custom roles
-from these permissions (Owner only, within the rules above) follows in
-Phase 3.
+The matrix is managed from the dashboard, not fixed in code:
+
+- **Roles are data.** The six roles above are created as the standard set.
+  The Owner can edit which permissions each role has, create new roles
+  (from scratch or by copying a standard one), rename them, and delete
+  custom roles that no one is assigned to.
+- **Permissions are defined in code.** Each permission matches a check the
+  server performs (for example "publish Coming Soon content" or "export
+  sign-ups"), so new permissions arrive with new features; the dashboard
+  assigns them to roles but cannot invent permissions the server does not
+  enforce.
+- **The Owner role is locked** to all permissions, so the site can never be
+  left without someone able to manage it.
+- **Owner-only permissions** — managing Owners and Administrators, editing
+  roles, site mode (Coming Soon ↔ live), security settings — can only ever be
+  held by the Owner role; the matrix shows them greyed out for other roles.
+- **Reset to standard** restores any of the five editable standard roles to
+  the permissions in the table above.
+- **Changes take effect immediately** — permissions are checked against the
+  current matrix on every request.
+- **Every change is audited** (who, when, before and after) and emailed to
+  all Owners. Sensitive permissions (customer personal data, export,
+  delete) are labelled as such in the matrix, and changes that affect
+  people already assigned to a role ask for confirmation.
+- The rules above (no self-changes, no granting what you do not hold, last
+  Owner protected) apply to the matrix too.
+
+The matrix editor is part of the Phase 2 dashboard foundation.

@@ -5,7 +5,7 @@ approved by the project owner.
 
 **Legend:** [x] done · [ ] pending · [!] blocked
 
-## Phase 1 — Discovery and architecture *(current)*
+## Phase 1 — Discovery and architecture *(complete — awaiting approval to start Phase 2)*
 
 - [x] Repository created and push access confirmed
 - [x] Development tooling configured (D-001, D-002)
@@ -28,9 +28,9 @@ approved by the project owner.
 - [x] Previous Coming Soon project — never deployed; content set from the dashboard (D-016)
 - [x] Dashboard foundation delivered with the Coming Soon page (D-017)
 - [x] Launch-notification sign-up — email or WhatsApp (D-018)
-- [ ] Initial roles and permission matrix approved (D-019 — proposed in `docs/roles-and-permissions.md`)
+- [x] Roles and permission matrix — six standard roles, dynamic matrix (D-019)
 - [x] `docs/architecture.md` started from confirmed decisions
-- [ ] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
+- [x] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
 ## Phase 2 — Coming Soon page and dashboard foundation (D-017)
 
@@ -38,7 +38,7 @@ approved by the project owner.
 - [ ] Repository scaffolding (apps, packages, CI, tests)
 - [ ] Database schema and migrations for the foundation
 - [ ] Passkey sign-in, invitations, sessions (Better Auth)
-- [ ] Roles and permissions foundation, audit log
+- [ ] Roles and permissions: six standard roles, dynamic matrix editor, audit log
 - [ ] Coming Soon settings in the dashboard (Arabic and English) with Publish → rebuild
 - [ ] Coming Soon page built and tested (desktop, tablet, mobile)
 - [ ] Launch-notification sign-up (email or WhatsApp) with consent, Turnstile, rate limits

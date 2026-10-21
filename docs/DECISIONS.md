@@ -27,10 +27,9 @@ marked **Confirmed** once the project owner has approved it.
 | D-016 | Previous Coming Soon project | Confirmed | Never deployed; no subscribers to migrate; D1 database left untouched. Its content is not reused as fixed text — the owner sets it from the dashboard |
 | D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
 | D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
-| D-019 | Roles and permission matrix | Proposed | Six roles for the owner plus 2–5 staff — see `docs/roles-and-permissions.md`; awaiting approval |
+| D-019 | Roles and permission matrix | Confirmed | Six standard roles; the matrix is editable from the dashboard (Phase 2) with escalation safeguards — see `docs/roles-and-permissions.md` |
 
-Upcoming decisions (asked one at a time): roles and permission matrix —
-the last Phase 1 decision.
+All Phase 1 decisions are made. Next: the owner's approval to start Phase 2.
 
 ---
 
@@ -366,7 +365,7 @@ the last Phase 1 decision.
 
 ## D-019 — Roles and permission matrix
 
-- **Status:** Proposed — awaiting the owner's approval
+- **Status:** Confirmed — 2026-10-20
 - **Input:** the owner plus about 2–5 staff will use the dashboard in the
   first year.
 - **Proposal:** six roles — Owner, Administrator, Content Manager, Sales &
@@ -374,4 +373,10 @@ the last Phase 1 decision.
   `docs/roles-and-permissions.md` (server-side checks on every request, no
   self-promotion, no granting permissions one does not hold, last Owner
   protected, audited changes, owner-only site mode).
-- **Owner's choice:** —
+- **Owner's choice:** use the six roles as the standard set, and make the
+  roles and permission matrix dynamic — editable from the dashboard.
+- **Consequences:** roles are database records seeded with the six standard
+  roles; permissions stay defined in code (each is a server-side check); the
+  Owner role is locked; owner-only permissions cannot be given to other
+  roles; every matrix change is audited and emailed to Owners; the matrix
+  editor is built in Phase 2.

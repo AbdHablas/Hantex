@@ -38,11 +38,12 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 
 | Layer | Choice |
 |-------|--------|
-| Public website | Astro, Tailwind CSS, shared design tokens, custom components |
+| Public website | Astro, Tailwind CSS, shared design tokens, custom components; Arabic (default, RTL) and English |
+| Typefaces | Poppins (Latin) and Readex Pro (Arabic), self-hosted |
 | Admin dashboard | React + Vite + TypeScript, Tailwind CSS, shadcn/ui, Lucide |
 | API | Hono on Cloudflare Workers |
 | Authentication | Better Auth — passwordless: passkeys (`@better-auth/passkey`), emailed one-time codes plus recovery codes for new devices and recovery; invite-only |
-| Authorisation | Own roles and permissions tables, enforced by Hono middleware on every request |
+| Authorisation | Six standard roles in a dashboard-editable matrix; permissions enforced by Hono middleware on every request |
 | Audit log | Own table |
 | Database | PostgreSQL on Neon, via Cloudflare Hyperdrive, standard Postgres driver |
 | Data access | Drizzle ORM with versioned migrations |
@@ -89,7 +90,12 @@ packages/ui     Design tokens and shared components
 docs/           Project documentation
 ```
 
+## Related documents
+
+[`roles-and-permissions.md`](roles-and-permissions.md) ·
+[`security.md`](security.md) · [`deployment.md`](deployment.md) ·
+[`brand-guidelines.md`](brand-guidelines.md)
+
 ## Pending
 
-Brand typeface (D-013), website languages, design system, roles and
-permission matrix.
+Design system (Phase 2).
