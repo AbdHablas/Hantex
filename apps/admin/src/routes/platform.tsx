@@ -590,13 +590,19 @@ export function Roles() {
                           </Button>
                         )}
                         {role.isStandard ? (
-                          <Button size="sm" variant="ghost" onClick={() => reset.mutate(role.id)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-auto min-h-8 py-1"
+                            onClick={() => reset.mutate(role.id)}
+                          >
                             {m.roles.reset}
                           </Button>
                         ) : (
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="h-auto min-h-8 py-1"
                             disabled={role.members > 0}
                             onClick={() => {
                               if (confirmAction(m.roles.deleteRole)) remove.mutate(role.id);

@@ -213,6 +213,10 @@ function Choice<T extends string | number>({
   disabled: boolean;
   render?: (value: T) => ReactNode;
 }) {
+  // A value set elsewhere (for example the brand theme) is always listed, never silently replaced.
+  const choices = options.includes(value)
+    ? options
+    : [...options, value].sort((x, y) => (x < y ? -1 : 1));
   return (
     <Field label={label}>
       {(props) => (
@@ -221,11 +225,11 @@ function Choice<T extends string | number>({
           disabled={disabled}
           value={String(value)}
           onChange={(e) => {
-            const next = options.find((o) => String(o) === e.target.value);
+            const next = choices.find((o) => String(o) === e.target.value);
             if (next !== undefined) onChange(next);
           }}
         >
-          {options.map((o) => (
+          {choices.map((o) => (
             <option key={String(o)} value={String(o)}>
               {render ? render(o) : String(o)}
             </option>

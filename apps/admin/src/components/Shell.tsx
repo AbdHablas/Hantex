@@ -190,7 +190,78 @@ export function Shell() {
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[14rem_1fr]">
-        <nav aria-label={m.appName} className="flex flex-col gap-4">
+        {/* On phones the menu folds away so the page comes first. */}
+        <details className="rounded-lg border border-border bg-surface md:hidden">
+          <summary className="cursor-pointer px-4 py-3 font-medium">{m.nav.menu}</summary>
+          <nav aria-label={m.appName} className="flex flex-col gap-4 px-1 pb-3">
+            {site && (
+              <div className="flex flex-col gap-1">
+                <p className="px-3 text-xs font-medium text-muted">{bi(site.name)}</p>
+                <NavItem to={`/s/${site.key}`} end icon={<LayoutDashboard />}>
+                  {m.nav.overview}
+                </NavItem>
+                {siteCan('comingSoon.view') && (
+                  <NavItem to={`/s/${site.key}/coming-soon`} icon={<FileText />}>
+                    {m.nav.comingSoon}
+                  </NavItem>
+                )}
+                {siteCan('settings.view') && (
+                  <NavItem to={`/s/${site.key}/site-settings`} icon={<Settings2 />}>
+                    {m.nav.settings}
+                  </NavItem>
+                )}
+                {siteCan('appearance.edit') && (
+                  <NavItem to={`/s/${site.key}/appearance`} icon={<Palette />}>
+                    {m.nav.appearance}
+                  </NavItem>
+                )}
+                {siteCan('subscribers.view') && (
+                  <NavItem to={`/s/${site.key}/subscribers`} icon={<Mail />}>
+                    {m.nav.subscribers}
+                  </NavItem>
+                )}
+                {siteCan('staff.view') && (
+                  <NavItem to={`/s/${site.key}/staff`} icon={<Users />}>
+                    {m.nav.staff}
+                  </NavItem>
+                )}
+                {siteCan('audit.view') && (
+                  <NavItem to={`/s/${site.key}/audit`} icon={<History />}>
+                    {m.nav.audit}
+                  </NavItem>
+                )}
+                <NavItem to={`/s/${site.key}/settings`} icon={<Globe />}>
+                  {m.nav.siteSettings}
+                </NavItem>
+              </div>
+            )}
+            <div className="flex flex-col gap-1">
+              <p className="px-3 text-xs font-medium text-muted">{m.nav.platform}</p>
+              <NavItem to="/sites" icon={<Building2 />}>
+                {m.nav.sites}
+              </NavItem>
+              {platformCan('staff.view') && (
+                <NavItem to="/staff" icon={<Users />}>
+                  {m.nav.allStaff}
+                </NavItem>
+              )}
+              {(managesStaffSomewhere || platformCan('roles.manage')) && (
+                <NavItem to="/roles" icon={<ShieldCheck />}>
+                  {m.nav.roles}
+                </NavItem>
+              )}
+              {platformCan('audit.view') && (
+                <NavItem to="/audit" icon={<ScrollText />}>
+                  {m.nav.fullAudit}
+                </NavItem>
+              )}
+              <NavItem to="/account" icon={<UserRound />}>
+                {m.nav.account}
+              </NavItem>
+            </div>
+          </nav>
+        </details>
+        <nav aria-label={m.appName} className="hidden flex-col gap-4 md:flex">
           {site && (
             <div className="flex flex-col gap-1">
               <p className="px-3 text-xs font-medium text-muted">{bi(site.name)}</p>
