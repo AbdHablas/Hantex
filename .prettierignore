@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+brand/logo/*.svg
+**/drizzle/**
+# Documentation is formatted by hand (wrapped prose, readable tables).
+*.md

@@ -102,8 +102,10 @@ Next: the owner's approval to start Phase 2.
      it as a second lock.
   6. Neon branches for development, preview and production; production plan
      and restore window decided in the backups step.
-  7. Vitest 4.x: Cloudflare's Workers test pool (`@cloudflare/vitest-pool-workers`
-     0.23) supports Vitest ^4.1, not Vitest 5. Add axe accessibility checks,
+  7. Vitest: *updated 2026-10-21* — Cloudflare renamed its Workers test
+     integration to `@cloudflare/vitest-plugin` (1.x), which supports Vitest 5,
+     so Vitest 5 is used (the earlier Vitest 4 pin applied to the old
+     `@cloudflare/vitest-pool-workers` 0.23). Add axe accessibility checks,
      Lighthouse performance checks, dependency scanning, and role-matrix tests
      for every API endpoint.
   8. shadcn/ui for the dashboard; the public site shares the Tailwind design

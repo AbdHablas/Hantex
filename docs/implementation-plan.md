@@ -5,7 +5,7 @@ approved by the project owner.
 
 **Legend:** [x] done · [ ] pending · [!] blocked
 
-## Phase 1 — Discovery and architecture *(complete — awaiting approval to start Phase 2)*
+## Phase 1 — Discovery and architecture *(complete)*
 
 - [x] Repository created and push access confirmed
 - [x] Development tooling configured (D-001, D-002)
@@ -34,10 +34,10 @@ approved by the project owner.
 - [x] `docs/architecture.md` started from confirmed decisions
 - [x] `docs/security.md`, `docs/deployment.md` written from confirmed decisions
 
-## Phase 2 — Coming Soon page and dashboard foundation (D-017)
+## Phase 2 — Coming Soon page and dashboard foundation (D-017) *(in progress — approved 2026-10-21)*
 
 - [ ] Design system from the brand reference: design tokens with light and dark values (D-021)
-- [ ] Repository scaffolding (apps, packages, CI, tests)
+- [x] Repository scaffolding (workspace, TypeScript, ESLint, Prettier, Vitest, local PostgreSQL, CI)
 - [ ] Database schema and migrations for the foundation
 - [ ] Passkey sign-in, invitations, sessions (Better Auth)
 - [ ] Roles and permissions: six standard roles, dynamic matrix editor, audit log

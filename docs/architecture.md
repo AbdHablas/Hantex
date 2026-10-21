@@ -52,7 +52,7 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 | Email sending | Resend (free tier) |
 | Backups | Neon built-in restore, plus nightly encrypted exports to a private R2 bucket (30 daily, 12 monthly) |
 | Monitoring | Cloudflare Workers Logs, scheduled health and backup checks with email alerts |
-| Testing | Vitest 4.x (with Cloudflare's Workers test pool), Playwright, axe accessibility checks, Lighthouse |
+| Testing | Vitest 5 (with `@cloudflare/vitest-plugin` for Workers), Playwright, axe accessibility checks, Lighthouse |
 
 ## Security boundaries (confirmed)
 

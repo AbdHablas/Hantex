@@ -3,8 +3,9 @@
 Website platform for [Hantex Ultra](https://www.hantexultra.com) — electrical
 switches and accessories.
 
-The project has completed **Phase 1 — Discovery and architecture**.
+The project is in **Phase 2 — Coming Soon page and dashboard foundation**.
 
+- [`docs/development.md`](docs/development.md) — local setup, checks, layout
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) — decision log
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) — phases and checklist
 - [`docs/architecture.md`](docs/architecture.md) — architecture
