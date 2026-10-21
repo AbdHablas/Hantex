@@ -89,6 +89,7 @@ Next:
 - [x] Saved theme presets and copying a theme between sites (D-027): built-in "brand" and "neutral" starters; saving needs appearance.publish and passes the contrast checks; deleting is Owner-only; without the logo permission a preset never changes the logo colours
 - [x] Sign-up privacy note, edited per site in Site settings (empty hides it)
 - [x] Nightly encrypted backup (`backup.yml`) and health check (`health.yml`) workflows, inactive until configured
+- [x] Interface upgrade: dashboard components on Radix primitives (shadcn/ui style, CSP-safe), collapsible sidebar, Ctrl/Cmd+K command palette, in-app confirmations and notifications, overview charts (daily sign-ups, email/WhatsApp split); public site with animated hero and countdown, scroll reveals (reduced-motion aware), product categories and FAQ from the dashboard, email/WhatsApp switch on the sign-up form
 - [x] Browser test of the whole publish chain: dashboard publish → the site build reads it from the database
 - [x] Site engine (`apps/web`, Astro on a site Worker):
   - builds any one site from its published content with the read-only build user (`SITE=<key>`), or from fact-free defaults without a database;

@@ -28,7 +28,7 @@ test('the Arabic page is the default, right-to-left, and shows only published co
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('شيء جديد قادم');
-  await expect(page.getByText('مفاتيح ومقابس')).toBeVisible();
+  await expect(page.locator('.hero').getByText('مفاتيح ومقابس')).toBeVisible();
   await expect(page.getByText('التصميم')).toBeVisible();
   await expect(page.getByRole('link', { name: 'hello@example.test' })).toBeVisible();
   // The privacy note the dashboard published sits under the sign-up form.
@@ -81,9 +81,7 @@ test('a sign-up reaches the server and is refused without a passed security chec
     }),
   );
   await page.goto('/en/');
-  await page
-    .getByLabel('Your email, or WhatsApp number with country code')
-    .fill('visitor@example.test');
+  await page.getByLabel('Your email address').fill('visitor@example.test');
   await page.getByLabel(/I agree that/).check();
   await page.waitForFunction(() => 'turnstile' in window);
   await page.getByRole('button', { name: 'Notify me' }).click();
@@ -95,6 +93,52 @@ test('a sign-up reaches the server and is refused without a passed security chec
   await client.end();
   expect(rows.rowCount).toBe(0);
 });
+
+test('product categories and FAQ come from the published content', async ({ page }) => {
+  await page.goto('/en/');
+  const categories = page.getByRole('region', { name: 'What we’re working on' });
+  await expect(categories.getByRole('heading', { level: 3 })).toHaveText(['Switches', 'Sockets']);
+  const faq = page.getByRole('region', { name: 'Frequently asked questions' });
+  await expect(faq.getByText('A test answer.')).toBeHidden();
+  await faq.getByText('A test question?').click();
+  await expect(faq.getByText('A test answer.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
+    'href',
+    'https://instagram.com/example',
+  );
+});
+
+test('the sign-up switches between email and WhatsApp hints', async ({ page }) => {
+  await page.goto('/en/');
+  await page.getByText('WhatsApp', { exact: true }).click();
+  const field = page.getByLabel('WhatsApp number with country code');
+  await expect(field).toHaveAttribute('inputmode', 'tel');
+  await page.getByText('Email', { exact: true }).click();
+  await expect(page.getByLabel('Your email address')).toHaveAttribute('inputmode', 'email');
+});
+
+for (const [path, scheme] of [
+  ['/', 'light'],
+  ['/en/', 'dark'],
+] as const) {
+  test(`fits a 360px phone without sideways scrolling or CSP errors (${path}, ${scheme})`, async ({
+    page,
+  }) => {
+    const cspErrors: string[] = [];
+    page.on('console', (message) => {
+      if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+    });
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto(path);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBe(0);
+    expect(cspErrors).toEqual([]);
+  });
+}
 
 test('the sign-up endpoint refuses other origins', async ({ request }) => {
   const response = await request.post('/api/signup', {

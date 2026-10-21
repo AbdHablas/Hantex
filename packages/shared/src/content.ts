@@ -41,6 +41,17 @@ export const optionalEmail = z
   .max(254)
   .refine((v) => v === '' || EMAIL.test(v), 'Not a valid email address');
 
+/** Icons the site can draw for a product category card. */
+export const CATEGORY_ICONS = [
+  'switch',
+  'socket',
+  'lighting',
+  'lamp',
+  'accessory',
+  'other',
+] as const;
+export type CategoryIcon = (typeof CATEGORY_ICONS)[number];
+
 /**
  * Coming Soon page content, set from the dashboard (D-016). Every text is bilingual; empty text
  * hides that element in that language. Nothing factual is pre-filled.
@@ -59,6 +70,22 @@ export const comingSoonSchema = z.strictObject({
     .max(8),
   highlights: z.array(z.strictObject({ title: bilingual(60), text: bilingual(200) })).max(6),
   signup: z.strictObject({ enabled: z.boolean() }),
+  /** Product categories shown as cards; the icon is one of a fixed set drawn by the site. */
+  categories: z
+    .array(
+      z.strictObject({
+        icon: z.enum(CATEGORY_ICONS),
+        title: bilingual(60),
+        text: bilingual(200),
+      }),
+    )
+    .max(8)
+    .default([]),
+  /** Frequently asked questions, shown as an accordion. Content saved before this existed reads as empty. */
+  faq: z
+    .array(z.strictObject({ question: bilingual(160), answer: bilingual(800) }))
+    .max(12)
+    .default([]),
 });
 
 export type ComingSoonContent = z.infer<typeof comingSoonSchema>;
@@ -73,6 +100,15 @@ export const DEFAULT_COMING_SOON: ComingSoonContent = {
   readiness: [],
   highlights: [],
   signup: { enabled: true },
+  // The owner's stated product range (switches and sockets first); titles only, no claims.
+  categories: [
+    { icon: 'switch', title: { ar: 'مفاتيح', en: 'Switches' }, text: { ar: '', en: '' } },
+    { icon: 'socket', title: { ar: 'مقابس', en: 'Sockets' }, text: { ar: '', en: '' } },
+    { icon: 'lighting', title: { ar: 'إضاءة', en: 'Lighting' }, text: { ar: '', en: '' } },
+    { icon: 'lamp', title: { ar: 'مصابيح', en: 'Lamps' }, text: { ar: '', en: '' } },
+    { icon: 'accessory', title: { ar: 'إكسسوارات', en: 'Accessories' }, text: { ar: '', en: '' } },
+  ],
+  faq: [],
 };
 
 /** Site-wide settings (contact details, social links, SEO defaults). */

@@ -66,8 +66,9 @@ the current code.
   `health.yml`) but stay inactive until their configuration is added with the
   deployment (D-010, D-011); a restore rehearsal follows the first backup.
 - **Preview environment**: set up with the deployment.
-- The dashboard's JavaScript is one 570 kB file (173 kB compressed); it can
-  be split later if loading feels slow.
+- The dashboard's main JavaScript file is 744 kB (227 kB compressed); the
+  overview charts load separately (382 kB, 110 kB compressed) only when that
+  page opens.
 
 ## Cost
 

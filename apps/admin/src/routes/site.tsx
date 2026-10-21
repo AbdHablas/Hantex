@@ -1,6 +1,6 @@
-import { comingSoonSchema, type ComingSoonContent } from '@hantex/shared';
+import { CATEGORY_ICONS, comingSoonSchema, type ComingSoonContent } from '@hantex/shared';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Download, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import {
@@ -12,6 +12,7 @@ import {
   Input,
   Loading,
   PageHeader,
+  Select,
   Table,
   confirmAction,
   later,
@@ -60,7 +61,8 @@ export function ComingSoonEditor() {
   if (editor.query.isPending || !draft) return <Loading />;
 
   const update = (patch: Partial<ComingSoonContent>) => editor.update({ ...draft, ...patch });
-  const updateItem = <K extends 'milestones' | 'readiness' | 'highlights'>(
+  type List = 'milestones' | 'readiness' | 'highlights' | 'categories' | 'faq';
+  const updateItem = <K extends List>(
     list: K,
     index: number,
     patch: Partial<ComingSoonContent[K][number]>,
@@ -68,8 +70,47 @@ export function ComingSoonEditor() {
     update({
       [list]: draft[list].map((item, i) => (i === index ? { ...item, ...patch } : item)),
     });
-  const removeItem = (list: 'milestones' | 'readiness' | 'highlights', index: number) =>
+  const removeItem = (list: List, index: number) =>
     update({ [list]: draft[list].filter((_, i) => i !== index) });
+  const moveItem = (list: List, index: number, by: -1 | 1) => {
+    const items = [...draft[list]];
+    const [item] = items.splice(index, 1);
+    if (!item) return;
+    items.splice(index + by, 0, item);
+    update({ [list]: items });
+  };
+  /** Up, down and remove buttons for one row of a list. */
+  const rowTools = (list: List, i: number, className = 'ms-auto') =>
+    editable && (
+      <div className={`flex gap-1 ${className}`}>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={i === 0}
+          onClick={() => moveItem(list, i, -1)}
+          aria-label={m.comingSoon.moveUp}
+        >
+          <ArrowUp className="size-4" aria-hidden />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={i === draft[list].length - 1}
+          onClick={() => moveItem(list, i, 1)}
+          aria-label={m.comingSoon.moveDown}
+        >
+          <ArrowDown className="size-4" aria-hidden />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => removeItem(list, i)}
+          aria-label={m.comingSoon.remove}
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </Button>
+      </div>
+    );
 
   return (
     <>
@@ -274,6 +315,128 @@ export function ComingSoonEditor() {
                   disabled={!editable}
                   value={item.text}
                   onChange={(text) => updateItem('highlights', i, { text })}
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card
+          title={m.comingSoon.categories}
+          actions={
+            editable && draft.categories.length < 8 ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  update({
+                    categories: [
+                      ...draft.categories,
+                      { icon: 'other', title: { ar: '', en: '' }, text: { ar: '', en: '' } },
+                    ],
+                  })
+                }
+              >
+                <Plus className="size-4" aria-hidden />
+                {m.comingSoon.addCategory}
+              </Button>
+            ) : undefined
+          }
+        >
+          <p className="mb-4 text-sm text-muted">{m.comingSoon.categoriesHelp}</p>
+          <div className="flex flex-col gap-5">
+            {draft.categories.map((item, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-3 border-t border-border pt-4 first:border-0 first:pt-0"
+              >
+                <div className="flex flex-wrap items-end gap-4">
+                  <Field label={m.comingSoon.categoryIcon}>
+                    {(props) => (
+                      <Select
+                        {...props}
+                        disabled={!editable}
+                        value={item.icon}
+                        onChange={(e) =>
+                          updateItem('categories', i, {
+                            icon: e.target.value as (typeof CATEGORY_ICONS)[number],
+                          })
+                        }
+                      >
+                        {CATEGORY_ICONS.map((icon) => (
+                          <option key={icon} value={icon}>
+                            {m.comingSoon.icons[icon]}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </Field>
+                  {rowTools('categories', i)}
+                </div>
+                <BilingualField
+                  label={m.comingSoon.categoryTitle}
+                  max={60}
+                  disabled={!editable}
+                  value={item.title}
+                  onChange={(title) => updateItem('categories', i, { title })}
+                />
+                <BilingualField
+                  label={m.comingSoon.categoryText}
+                  max={200}
+                  multiline
+                  disabled={!editable}
+                  value={item.text}
+                  onChange={(text) => updateItem('categories', i, { text })}
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card
+          title={m.comingSoon.faq}
+          actions={
+            editable && draft.faq.length < 12 ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  update({
+                    faq: [
+                      ...draft.faq,
+                      { question: { ar: '', en: '' }, answer: { ar: '', en: '' } },
+                    ],
+                  })
+                }
+              >
+                <Plus className="size-4" aria-hidden />
+                {m.comingSoon.addFaq}
+              </Button>
+            ) : undefined
+          }
+        >
+          <p className="mb-4 text-sm text-muted">{m.comingSoon.faqHelp}</p>
+          <div className="flex flex-col gap-5">
+            {draft.faq.map((item, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-3 border-t border-border pt-4 first:border-0 first:pt-0"
+              >
+                {rowTools('faq', i, 'self-end')}
+                <BilingualField
+                  label={m.comingSoon.faqQuestion}
+                  max={160}
+                  disabled={!editable}
+                  value={item.question}
+                  onChange={(question) => updateItem('faq', i, { question })}
+                />
+                <BilingualField
+                  label={m.comingSoon.faqAnswer}
+                  max={800}
+                  multiline
+                  disabled={!editable}
+                  value={item.answer}
+                  onChange={(answer) => updateItem('faq', i, { answer })}
                 />
               </div>
             ))}

@@ -3,6 +3,7 @@ import type { ComingSoonContent, Locale, SiteSettings } from '@hantex/shared';
 import type { Theme } from '@hantex/theme';
 import { TEXT, dirOf } from '../i18n';
 import { SITE, pathFor } from '../site-data';
+import Icon, { type IconName } from './Icon.astro';
 import '../styles/site.css';
 
 /**
@@ -28,6 +29,7 @@ const siteName = site.name[locale] || site.name.ar || site.name.en;
 const pick = (value: { ar: string; en: string }) => value[locale].trim();
 const otherLocales = site.locales.filter((l) => l !== locale);
 const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+const intlLocale = locale === 'ar' ? 'ar' : 'en-GB';
 
 const title = pick(settings.seo.title) || siteName;
 const description = pick(settings.seo.description) || pick(content.tagline) || pick(content.intro);
@@ -37,10 +39,19 @@ const intro = pick(content.intro);
 const milestones = content.milestones.filter((m) => pick(m.title));
 const highlights = content.highlights.filter((h) => pick(h.title) || pick(h.text));
 const readiness = content.readiness.filter((r) => pick(r.label));
+const categories = content.categories.filter((c) => pick(c.title));
+const faq = content.faq.filter((f) => pick(f.question) && pick(f.answer));
 const launchAt = content.launchAt && content.showCountdown ? content.launchAt : null;
-const dateFormat = new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en-GB', { dateStyle: 'medium', timeZone: 'UTC' });
-const social = Object.entries(settings.social).filter(([, url]) => url);
+const launchDate = launchAt
+  ? new Intl.DateTimeFormat(intlLocale, { dateStyle: 'long', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(launchAt))
+  : null;
+const dateFormat = new Intl.DateTimeFormat(intlLocale, { dateStyle: 'medium', timeZone: 'UTC' });
+const social = Object.entries(settings.social).filter(([, url]) => url) as [IconName, string][];
+const socialName = (network: string) => (network === 'x' ? 'X' : network.charAt(0).toUpperCase() + network.slice(1));
 const contact = settings.contact;
+const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp || pick(contact.address) || pick(contact.hours));
+const units = ['days', 'hours', 'minutes', 'seconds'] as const;
+const year = new Date().getUTCFullYear();
 ---
 
 <!doctype html>
@@ -72,27 +83,28 @@ const contact = settings.contact;
     <script src="../scripts/theme.ts"></script>
   </head>
   <body>
+    <a class="skip-link" href="#main">{t.skip}</a>
     {preview && <div class="preview-banner" role="status">{t.preview}</div>}
-    <header class="site-header">
-      <div class="container">
+    <header class="site-header" id="top">
+      <div class="container header-inner">
         <a class="logo" href={pathFor(locale)} aria-label={siteName}>
           {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <span>{siteName}</span>}
         </a>
         <div class="tools">
           {
             otherLocales.map((l) => (
-              <a class="tool" href={pathFor(l)} hreflang={l} lang={l}>
-                {TEXT[l].languageName}
+              <a class="tool tool-text" href={pathFor(l)} hreflang={l} lang={l}>
+                <Icon name="globe" />
+                <span>{TEXT[l].languageName}</span>
               </a>
             ))
           }
           {
             theme.mode.allowToggle && (
-          <button class="tool" type="button" data-theme-toggle aria-label={t.themeToggle} title={t.themeToggle}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"></path>
-            </svg>
-          </button>
+              <button class="tool" type="button" data-theme-toggle aria-label={t.themeToggle} title={t.themeToggle}>
+                <Icon name="moon" class="icon-moon" />
+                <Icon name="sun" class="icon-sun" />
+              </button>
             )
           }
         </div>
@@ -100,32 +112,56 @@ const contact = settings.contact;
     </header>
 
     <main id="main">
-      <section class="hero container reveal">
-        {headline && <h1>{headline}</h1>}
-        {tagline && <p class="tagline">{tagline}</p>}
-        {intro && <p class="intro">{intro}</p>}
-        <div class="glow-line" aria-hidden="true"></div>
-        {
-          launchAt && (
-            <ol class="countdown" data-countdown={launchAt} aria-label={t.countdown.label} role="timer">
-              {(['days', 'hours', 'minutes', 'seconds'] as const).map((unit) => (
-                <li>
-                  <strong data-unit={unit}>–</strong>
-                  <span>{t.countdown[unit]}</span>
-                </li>
-              ))}
-            </ol>
-          )
-        }
+      <section class="hero">
+        <div class="hero-bg" aria-hidden="true">
+          <span class="hero-lines"></span>
+          <span class="orb orb-a"></span>
+          <span class="orb orb-b"></span>
+        </div>
+        <div class="container hero-inner">
+          <p class="eyebrow rise"><span class="pulse" aria-hidden="true"></span>{t.comingSoon}</p>
+          {headline && <h1 class="rise rise-2">{headline}</h1>}
+          {tagline && <p class="tagline rise rise-3">{tagline}</p>}
+          {intro && <p class="intro rise rise-4">{intro}</p>}
+          {
+            launchAt && (
+              <div class="countdown-wrap rise rise-5">
+                <ol class="countdown" data-countdown={launchAt} aria-label={t.countdown.label} role="timer">
+                  {units.map((unit) => (
+                    <li>
+                      <strong data-unit={unit}>–</strong>
+                      <span>{t.countdown[unit]}</span>
+                    </li>
+                  ))}
+                </ol>
+                {launchDate && (
+                  <p class="launch-date">
+                    <Icon name="clock" />
+                    <time datetime={launchAt}>{t.launchOn.replace('{date}', launchDate)}</time>
+                  </p>
+                )}
+              </div>
+            )
+          }
+          {
+            content.signup.enabled && (
+              <a class="cta rise rise-6" href="#signup">
+                <Icon name="bell" />
+                <span>{t.signupTitle}</span>
+              </a>
+            )
+          }
+        </div>
       </section>
 
       {
         highlights.length > 0 && (
-          <section class="section container" aria-labelledby="highlights">
+          <section class="section container reveal" aria-labelledby="highlights">
             <h2 id="highlights" class="sr-only">{headline || siteName}</h2>
             <div class="cards">
-              {highlights.map((h) => (
+              {highlights.map((h, i) => (
                 <article class="card">
+                  <span class="card-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                   {pick(h.title) && <h3>{pick(h.title)}</h3>}
                   {pick(h.text) && <p>{pick(h.text)}</p>}
                 </article>
@@ -136,14 +172,35 @@ const contact = settings.contact;
       }
 
       {
+        categories.length > 0 && (
+          <section class="section container reveal" aria-labelledby="categories">
+            <h2 id="categories">{t.categories}</h2>
+            <ul class="categories">
+              {categories.map((c) => (
+                <li class="category">
+                  <span class="category-icon">
+                    <Icon name={c.icon} />
+                  </span>
+                  <h3>{pick(c.title)}</h3>
+                  {pick(c.text) && <p>{pick(c.text)}</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
         milestones.length > 0 && (
-          <section class="section container" aria-labelledby="milestones">
+          <section class="section container reveal" aria-labelledby="milestones">
             <h2 id="milestones">{t.milestones}</h2>
             <ol class="timeline">
               {milestones.map((m) => (
                 <li class={m.done ? 'done' : undefined}>
-                  <span class="dot" aria-hidden="true" />
-                  <span>{pick(m.title)}</span>
+                  <span class="dot" aria-hidden="true">
+                    {m.done && <Icon name="check" />}
+                  </span>
+                  <span class="timeline-title">{pick(m.title)}</span>
                   <time datetime={m.date}>{dateFormat.format(new Date(`${m.date}T00:00:00Z`))}</time>
                   {m.done && <span class="state">{t.done}</span>}
                 </li>
@@ -155,14 +212,14 @@ const contact = settings.contact;
 
       {
         readiness.length > 0 && (
-          <section class="section container" aria-labelledby="progress">
+          <section class="section container reveal" aria-labelledby="progress">
             <h2 id="progress">{t.progress}</h2>
             <div class="bars">
               {readiness.map((r, i) => (
                 <div class="bar">
                   <label for={`bar-${i}`}>
                     <span>{pick(r.label)}</span>
-                    <span>{r.percent}%</span>
+                    <span class="bar-value">{r.percent}%</span>
                   </label>
                   <progress id={`bar-${i}`} max="100" value={r.percent}>
                     {r.percent}%
@@ -175,53 +232,173 @@ const contact = settings.contact;
       }
 
       {
+        faq.length > 0 && (
+          <section class="section container reveal" aria-labelledby="faq">
+            <h2 id="faq">{t.faq}</h2>
+            <div class="faq">
+              {faq.map((f) => (
+                <details name="faq">
+                  <summary>
+                    <span>{pick(f.question)}</span>
+                    <Icon name="chevron" class="faq-chevron" />
+                  </summary>
+                  <div class="faq-answer">
+                    <p>{pick(f.answer)}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
         content.signup.enabled && (
-          <section class="section container" aria-labelledby="signup-title">
-            <form class="signup" data-signup data-turnstile-key={SITE.turnstileSiteKey} data-locale={locale} novalidate>
-              <h2 id="signup-title">{t.signupTitle}</h2>
-              <label for="contact">{t.signupLabel}</label>
-              <input id="contact" name="contact" type="text" dir="ltr" inputmode="email" autocomplete="email" required maxlength="254" placeholder={t.signupPlaceholder} aria-describedby="signup-message" />
-              <div class="honeypot" aria-hidden="true">
-                <label for="website">Website</label>
-                <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          <section class="section container reveal" id="signup" aria-labelledby="signup-title">
+            <div class="signup-layout">
+              <div class="signup-copy">
+                <span class="signup-badge" aria-hidden="true">
+                  <Icon name="bell" />
+                </span>
+                <h2 id="signup-title">{t.signupTitle}</h2>
+                <p>{t.signupIntro}</p>
               </div>
-              <label class="consent">
-                <input name="consent" type="checkbox" required />
-                <span>{t.consent.replace('{site}', siteName)}</span>
-              </label>
-              {
-                (pick(settings.privacy.note) || settings.privacy.url) && (
-                  <p class="privacy">
-                    {pick(settings.privacy.note)}{' '}
-                    {settings.privacy.url && (
-                      <a href={settings.privacy.url} rel="noopener" target="_blank">
-                        {t.privacyLink}
-                      </a>
-                    )}
-                  </p>
-                )
-              }
-              <div data-turnstile></div>
-              <button type="submit" data-label={t.submit} data-sending={t.sending} disabled={preview}>
-                {t.submit}
-              </button>
-              <p id="signup-message" class="message" role="status" aria-live="polite" data-messages={JSON.stringify({ thanks: t.thanks, ...t.errors })}></p>
-            </form>
+              <form class="signup" data-signup data-method="email" data-turnstile-key={SITE.turnstileSiteKey} data-locale={locale} novalidate>
+                <div class="signup-fields">
+                  <fieldset class="segmented">
+                    <legend class="sr-only">{t.method}</legend>
+                    <label>
+                      <input type="radio" name="method" value="email" checked data-label={t.emailLabel} data-placeholder={t.emailPlaceholder} />
+                      <Icon name="mail" />
+                      <span>{t.methodEmail}</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="method" value="whatsapp" data-label={t.whatsappLabel} data-placeholder={t.whatsappPlaceholder} />
+                      <Icon name="whatsapp" />
+                      <span>{t.methodWhatsapp}</span>
+                    </label>
+                  </fieldset>
+                  <label for="contact" class="field-label" data-contact-label>{t.emailLabel}</label>
+                  <div class="input-wrap">
+                    <Icon name="mail" class="input-icon icon-email" />
+                    <Icon name="whatsapp" class="input-icon icon-whatsapp" />
+                    <input id="contact" name="contact" type="text" dir="ltr" inputmode="email" autocomplete="email" required maxlength="254" placeholder={t.emailPlaceholder} aria-describedby="signup-message" />
+                  </div>
+                  <div class="honeypot" aria-hidden="true">
+                    <label for="website">Website</label>
+                    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+                  </div>
+                  <label class="consent">
+                    <input name="consent" type="checkbox" required />
+                    <span>{t.consent.replace('{site}', siteName)}</span>
+                  </label>
+                  {
+                    (pick(settings.privacy.note) || settings.privacy.url) && (
+                      <p class="privacy">
+                        {pick(settings.privacy.note)}{' '}
+                        {settings.privacy.url && (
+                          <a href={settings.privacy.url} rel="noopener" target="_blank">
+                            {t.privacyLink}
+                          </a>
+                        )}
+                      </p>
+                    )
+                  }
+                  <div data-turnstile></div>
+                  <button type="submit" data-label={t.submit} data-sending={t.sending} disabled={preview}>
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span data-button-label>{t.submit}</span>
+                  </button>
+                </div>
+                <div class="signup-done" aria-hidden="true">
+                  <span class="done-check">
+                    <Icon name="check" />
+                  </span>
+                  <p class="done-title">{t.thanksTitle}</p>
+                </div>
+                <p id="signup-message" class="message" role="status" aria-live="polite" data-messages={JSON.stringify({ thanks: t.thanks, ...t.errors })}></p>
+              </form>
+            </div>
           </section>
         )
       }
     </main>
 
     <footer class="site-footer">
-      <div class="container">
-        <p>© {siteName}</p>
-        <ul aria-label={t.contact}>
-          {contact.email && <li><a href={`mailto:${contact.email}`} dir="ltr">{contact.email}</a></li>}
-          {contact.phone && <li><a href={`tel:${contact.phone}`} dir="ltr">{contact.phone}</a></li>}
-          {contact.whatsapp && <li><a href={`https://wa.me/${contact.whatsapp.replace('+', '')}`} dir="ltr">WhatsApp</a></li>}
-          {pick(contact.address) && <li>{pick(contact.address)}</li>}
-          {social.map(([network, url]) => <li><a href={url} rel="noopener" target="_blank">{network === 'x' ? 'X' : network.charAt(0).toUpperCase() + network.slice(1)}</a></li>)}
-        </ul>
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          {SITE.logo ? <img src={SITE.logo.lockup} alt="" width="180" height="46" /> : <p class="footer-name">{siteName}</p>}
+          {tagline && <p>{tagline}</p>}
+        </div>
+        {
+          hasContact && (
+            <div>
+              <h2 class="footer-title">{t.contact}</h2>
+              <ul class="footer-list">
+                {contact.email && (
+                  <li>
+                    <Icon name="mail" />
+                    <a href={`mailto:${contact.email}`} dir="ltr">{contact.email}</a>
+                  </li>
+                )}
+                {contact.phone && (
+                  <li>
+                    <Icon name="phone" />
+                    <a href={`tel:${contact.phone}`} dir="ltr">{contact.phone}</a>
+                  </li>
+                )}
+                {contact.whatsapp && (
+                  <li>
+                    <Icon name="whatsapp" />
+                    <a href={`https://wa.me/${contact.whatsapp.replace('+', '')}`} dir="ltr">WhatsApp</a>
+                  </li>
+                )}
+                {pick(contact.address) && (
+                  <li>
+                    <Icon name="pin" />
+                    {contact.mapUrl ? (
+                      <a href={contact.mapUrl} rel="noopener" target="_blank">{pick(contact.address)}</a>
+                    ) : (
+                      <span>{pick(contact.address)}</span>
+                    )}
+                  </li>
+                )}
+                {pick(contact.hours) && (
+                  <li>
+                    <Icon name="clock" />
+                    <span>{pick(contact.hours)}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )
+        }
+        {
+          social.length > 0 && (
+            <div>
+              <h2 class="footer-title">{t.followUs}</h2>
+              <ul class="social">
+                {social.map(([network, url]) => (
+                  <li>
+                    <a href={url} rel="noopener" target="_blank" aria-label={socialName(network)} title={socialName(network)}>
+                      <Icon name={network} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+      <div class="container footer-bottom">
+        <p>© {year} {siteName}. {t.rights}</p>
+        <div class="footer-links">
+          {settings.privacy.url && <a href={settings.privacy.url} rel="noopener" target="_blank">{t.privacyLink}</a>}
+          <a class="to-top" href="#top">
+            <Icon name="arrow-up" />
+            <span>{t.backToTop}</span>
+          </a>
+        </div>
       </div>
     </footer>
     <script src="../scripts/page.ts"></script>
