@@ -6,7 +6,18 @@ import type { ZodType } from 'zod';
 import { api, sitePath } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useCurrentSite } from '../lib/session';
-import { Alert, Button, Card, ErrorText, Field, Input, Table, Textarea, confirmAction } from './ui';
+import {
+  Alert,
+  Button,
+  Card,
+  ErrorText,
+  Field,
+  Input,
+  Table,
+  Textarea,
+  confirmAction,
+  later,
+} from './ui';
 
 /**
  * Shared editing for one site's versioned documents (Coming Soon content, site settings, theme):
@@ -148,7 +159,7 @@ export function DocumentActions<T>({
 }: {
   editor: DocumentEditor<T>;
   /** Extra fields for publishing, e.g. a confirmed logo change. */
-  publishBody?: () => Record<string, unknown> | null;
+  publishBody?: () => Promise<Record<string, unknown> | null> | Record<string, unknown> | null;
 }) {
   const { m } = useI18n();
   return (
@@ -175,16 +186,16 @@ export function DocumentActions<T>({
         <Button
           busy={editor.publish.isPending}
           disabled={!editor.valid}
-          onClick={() => {
-            const body = publishBody ? publishBody() : {};
+          onClick={later(async () => {
+            const body = publishBody ? await publishBody() : {};
             if (body === null) return;
-            if (confirmAction(m.comingSoon.publishConfirm)) {
+            if (await confirmAction(m.comingSoon.publishConfirm)) {
               editor.publish.mutate({
                 data: editor.dirty && editor.editable ? editor.draft : null,
                 body,
               });
             }
-          }}
+          })}
         >
           {m.comingSoon.publish}
         </Button>
@@ -235,15 +246,17 @@ export function VersionHistory<T>({
                       size="sm"
                       variant="secondary"
                       busy={editor.rollback.isPending}
-                      onClick={() => {
+                      onClick={later(async () => {
                         const body = rollbackBody ? rollbackBody() : {};
                         if (body === null) return;
                         if (
-                          confirmAction(format(m.comingSoon.restoreConfirm, { version: v.version }))
+                          await confirmAction(
+                            format(m.comingSoon.restoreConfirm, { version: v.version }),
+                          )
                         ) {
                           editor.rollback.mutate({ version: v.version, body });
                         }
-                      }}
+                      })}
                     >
                       {m.comingSoon.restore}
                     </Button>

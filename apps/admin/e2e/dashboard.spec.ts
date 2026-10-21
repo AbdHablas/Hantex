@@ -27,13 +27,30 @@ async function addAuthenticator(context: BrowserContext, page: Page) {
 
 test.describe.configure({ mode: 'serial' });
 
+/** Answers the dashboard's confirmation dialog; `ifAsked` when it only sometimes appears. */
+async function confirm(page: Page, ifAsked = false) {
+  const dialog = page.getByRole('alertdialog');
+  if (ifAsked) {
+    const shown = await dialog
+      .waitFor({ state: 'visible', timeout: 1500 })
+      .then(() => true)
+      .catch(() => false);
+    if (!shown) return;
+  }
+  await dialog.getByRole('button', { name: /^(تأكيد|Confirm)$/ }).click();
+  await expect(dialog).toBeHidden();
+}
+
 test('the first Owner sets up a passkey, publishes the Coming Soon page and signs in again', async ({
   browser,
 }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await addAuthenticator(context, page);
-  page.on('dialog', (dialog) => void dialog.accept());
+  const cspErrors: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+  });
 
   // Arabic and right-to-left by default.
   await page.goto(process.env['E2E_SETUP_LINK'] ?? '');
@@ -45,15 +62,18 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
 
   await page.getByRole('button', { name: 'إنشاء مفتاح مرور' }).click();
   await expect(page).toHaveURL(/\/s\/hantex-ultra$/);
-  await expect(page.getByRole('heading', { name: 'Hantex Ultra' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'نظرة عامة' })).toBeVisible();
+  // No CSP violations from the interface components (menus, tooltips, charts).
+  expect(cspErrors).toEqual([]);
 
   // Edit and publish the Coming Soon page.
-  await page.getByRole('link', { name: 'صفحة «قريبًا»' }).click();
+  await page.getByRole('link', { name: 'صفحة «قريبًا»', exact: true }).click();
   const headline = page.getByRole('group', { name: 'العنوان الرئيسي' });
   await headline.getByLabel('الإنجليزية').fill('Coming soon to your walls');
   await page.getByRole('button', { name: 'حفظ المسودة' }).click();
   await expect(page.getByRole('status').getByText('تم الحفظ')).toBeVisible();
   await page.getByRole('button', { name: 'نشر', exact: true }).click();
+  await confirm(page);
   // Locally no build pipeline is configured, so the version is saved but no rebuild starts.
   await expect(page.getByText(/كنسخة 1/)).toBeVisible();
   await expect(page.getByRole('cell', { name: '#1' })).toBeVisible();
@@ -74,13 +94,14 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await popup.close();
 
   // Site settings: publish a contact email.
-  await page.getByRole('link', { name: 'إعدادات الموقع' }).click();
+  await page.getByRole('link', { name: 'إعدادات الموقع', exact: true }).click();
   await page.getByLabel('البريد الإلكتروني').fill('hello@example.test');
   await page.getByRole('button', { name: 'نشر', exact: true }).click();
+  await confirm(page);
   await expect(page.getByText(/كنسخة 1/)).toBeVisible();
 
   // Appearance: unreadable colours are reported before publishing.
-  await page.getByRole('link', { name: 'المظهر' }).click();
+  await page.getByRole('link', { name: 'المظهر', exact: true }).click();
   await expect(page.getByText('كل النصوص مقروءة في الوضعين.')).toBeVisible();
   await page
     .getByRole('group', { name: 'الوضع الفاتح' })
@@ -90,8 +111,9 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByRole('alert')).toContainText('النص على خلفية الصفحة');
 
   // Recovery codes need a fresh sign-in, which this is.
-  await page.getByRole('link', { name: 'حسابي' }).click();
+  await page.getByRole('link', { name: 'حسابي', exact: true }).click();
   await page.getByRole('button', { name: 'إنشاء رموز استرداد جديدة' }).click();
+  await confirm(page, true);
   await expect(page.getByText('دوّن هذه الرموز الآن')).toBeVisible();
   await expect(page.locator('ul[dir="ltr"] li')).toHaveCount(10);
 
@@ -107,7 +129,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page).toHaveURL(/\/s\/hantex-ultra$/);
 
   // The published content is what the site will build from.
-  await page.getByRole('link', { name: 'Coming Soon page' }).click();
+  await page.getByRole('link', { name: 'Coming Soon page', exact: true }).click();
   await expect(page.getByRole('group', { name: 'Headline' }).getByLabel('English')).toHaveValue(
     'Coming soon to your walls',
   );
@@ -129,6 +151,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   };
   expect(built.source).toBe('database');
   expect(built.comingSoon.headline.en).toBe('Coming soon to your walls');
+  expect(cspErrors).toEqual([]);
 
   await context.close();
 });

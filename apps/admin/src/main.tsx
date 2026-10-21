@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
+import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { Shell } from './components/Shell';
@@ -9,9 +9,15 @@ import { ThemeProvider } from './lib/theme';
 import { AcceptInvitation, Recover, SignIn } from './routes/auth';
 import { Account, AuditLog, Home, Roles, SiteSettings, Sites } from './routes/platform';
 import { AppearanceEditor, SiteSettingsEditor } from './routes/editors';
-import { ComingSoonEditor, SiteOverview, SitePage, Subscribers } from './routes/site';
+import { ComingSoonEditor, SitePage, Subscribers } from './routes/site';
 import { PlatformStaff, SiteStaff } from './routes/staff';
+import { Loading } from './components/ui';
 import './styles.css';
+
+// The overview's charts are the largest dependency; they load only when the page is opened.
+const SiteOverview = lazy(() =>
+  import('./routes/overview').then((module) => ({ default: module.SiteOverview })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +44,9 @@ const router = createBrowserRouter([
             index: true,
             element: (
               <SitePage>
-                <SiteOverview />
+                <Suspense fallback={<Loading />}>
+                  <SiteOverview />
+                </Suspense>
               </SitePage>
             ),
           },

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { KeyRound } from 'lucide-react';
+import { Fingerprint, History, KeyRound, Languages, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { Alert, Button, ErrorText, Field, Input, Loading } from '../components/ui';
@@ -10,23 +10,65 @@ import { meQueryKey, useMe } from '../lib/session';
 
 function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
   const { dir, m, locale, setLocale } = useI18n();
+  const points = [
+    { icon: <Fingerprint />, text: m.auth.pointPasskeys },
+    { icon: <ShieldCheck />, text: m.auth.pointRoles },
+    { icon: <History />, text: m.auth.pointAudit },
+  ];
   return (
-    <div dir={dir} className="flex min-h-dvh items-center justify-center p-4">
-      <main className="w-full max-w-md rounded-2xl border border-border bg-surface p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <img src="/favicon.svg" alt="Hantex Ultra" className="size-10" />
+    <div dir={dir} className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
+      <aside className="relative hidden overflow-hidden bg-ink p-12 text-ink-text lg:flex lg:flex-col lg:justify-between">
+        <div
+          aria-hidden
+          className="absolute -top-32 -end-32 size-[28rem] rounded-full bg-accent/25 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-40 -start-24 size-[24rem] rounded-full bg-accent/10 blur-3xl"
+        />
+        <div className="relative flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-xl bg-ink-text p-1.5">
+            <img src="/favicon.svg" alt="" className="size-full" />
+          </span>
+          <span className="text-lg font-semibold">Hantex Ultra</span>
+        </div>
+        <div className="relative max-w-md">
+          <h2 className="text-3xl leading-tight font-semibold">{m.appName}</h2>
+          <p className="mt-3 text-ink-muted">{m.auth.tagline}</p>
+          <ul className="mt-8 space-y-4">
+            {points.map((point) => (
+              <li key={point.text} className="flex items-center gap-3 text-sm">
+                <span
+                  aria-hidden
+                  className="grid size-9 place-items-center rounded-xl bg-white/10 text-accent [&>svg]:size-4.5"
+                >
+                  {point.icon}
+                </span>
+                {point.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="relative text-xs text-ink-muted">hantexultra.com</p>
+      </aside>
+      <div className="flex flex-col p-4 sm:p-8">
+        <div className="flex items-center justify-between">
+          <img src="/favicon.svg" alt="Hantex Ultra" className="size-9 lg:invisible" />
           <button
             type="button"
-            className="text-sm text-accent-text underline-offset-4 hover:underline"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-text"
             onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
             lang={locale === 'ar' ? 'en' : 'ar'}
           >
+            <Languages className="size-4" aria-hidden />
             {locale === 'ar' ? m.english : m.arabic}
           </button>
         </div>
-        <h1 className="mb-2 text-2xl font-semibold">{title}</h1>
-        {children}
-      </main>
+        <main className="m-auto w-full max-w-sm animate-pop-in py-10">
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight">{title}</h1>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

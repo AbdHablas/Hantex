@@ -31,6 +31,7 @@ import {
   PageHeader,
   Select,
   confirmAction,
+  later,
 } from '../components/ui';
 import { api } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
@@ -289,9 +290,9 @@ export function AppearanceEditor() {
     update({ ...draft, typography: { ...draft.typography, ...patch } });
 
   // Off-brand logo colours need an explicit confirmation to publish (D-022).
-  const confirmLogo = (theme: Theme) => {
+  const confirmLogo = async (theme: Theme) => {
     if (sameLogo(theme, brandTheme)) return {};
-    return confirmAction(t.logoConfirm) ? { confirmLogoChange: true } : null;
+    return (await confirmAction(t.logoConfirm)) ? { confirmLogoChange: true } : null;
   };
   const tokenName = (token: string) => t.token[token] ?? token;
 
@@ -305,11 +306,11 @@ export function AppearanceEditor() {
             {editable && (
               <Button
                 variant="ghost"
-                onClick={() => {
-                  if (confirmAction(t.resetConfirm)) {
+                onClick={later(async () => {
+                  if (await confirmAction(t.resetConfirm)) {
                     update(canEditLogo ? brandTheme : { ...brandTheme, logo: draft.logo });
                   }
-                }}
+                })}
               >
                 <RotateCcw className="size-4" aria-hidden />
                 {t.resetBrand}
@@ -577,9 +578,9 @@ function ThemeLibrary({
           <Button
             variant="secondary"
             disabled={!editable || !choice}
-            onClick={() => {
-              if (choice && confirmAction(t.presetApplyConfirm)) apply(choice.theme);
-            }}
+            onClick={later(async () => {
+              if (choice && (await confirmAction(t.presetApplyConfirm))) apply(choice.theme);
+            })}
           >
             {t.presetApply}
           </Button>
@@ -587,11 +588,11 @@ function ThemeLibrary({
             <Button
               variant="ghost"
               busy={remove.isPending}
-              onClick={() => {
-                if (choice.savedId && confirmAction(t.presetDeleteConfirm)) {
+              onClick={later(async () => {
+                if (choice.savedId && (await confirmAction(t.presetDeleteConfirm))) {
                   remove.mutate(choice.savedId);
                 }
-              }}
+              })}
             >
               <Trash2 className="size-4" aria-hidden />
               {m.delete}

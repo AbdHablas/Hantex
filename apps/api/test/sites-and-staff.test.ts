@@ -111,6 +111,33 @@ describe('cross-site isolation', () => {
     );
   });
 
+  it('counts only its own sign-ups on the overview, by day and by channel', async () => {
+    await h.db.insert(subscribers).values({
+      siteId: h.sites.b,
+      contactType: 'whatsapp',
+      contactValue: '+963900000001',
+      locale: 'ar',
+      consentVersion: 'v1',
+    });
+    const ofA = await h.db.select().from(subscribers).where(eq(subscribers.siteId, h.sites.a));
+    const overview = await json<{
+      subscribers: {
+        total: number;
+        daily: { day: string; n: number }[];
+        byType: Record<string, number>;
+      };
+    }>(await h.request('GET', `/api/sites/${A}/overview`, { cookie: adminA }));
+    expect(overview.subscribers.total).toBe(ofA.length);
+    const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+    expect(sum(overview.subscribers.daily.map((d) => d.n))).toBe(ofA.length);
+    expect(sum(Object.values(overview.subscribers.byType))).toBe(ofA.length);
+    expect(overview.subscribers.byType['whatsapp'] ?? 0).toBe(
+      ofA.filter((s) => s.contactType === 'whatsapp').length,
+    );
+    const today = new Date().toISOString().slice(0, 10);
+    if (ofA.length > 0) expect(overview.subscribers.daily.at(-1)?.day).toBe(today);
+  });
+
   it('keeps drafts separate per site', async () => {
     const draft = await json<{ draft: { seo: { title: { en: string } } } }>(
       await h.request('GET', `/api/sites/${B}/documents/site-settings`, { cookie: owner }),

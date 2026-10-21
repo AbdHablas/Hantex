@@ -16,6 +16,7 @@ import {
   Select,
   Table,
   confirmAction,
+  later,
 } from '../components/ui';
 import { api, sitePath } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
@@ -316,12 +317,14 @@ export function SiteStaff() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
+                            onClick={later(async () => {
                               if (
-                                confirmAction(format(m.staff.removeConfirm, { name: person.name }))
+                                await confirmAction(
+                                  format(m.staff.removeConfirm, { name: person.name }),
+                                )
                               )
                                 removeAccess.mutate(person.id);
-                            }}
+                            })}
                           >
                             {m.remove}
                           </Button>
@@ -481,15 +484,17 @@ export function PlatformStaff() {
                           <Button
                             size="sm"
                             variant={person.status === 'active' ? 'danger' : 'secondary'}
-                            onClick={() => {
+                            onClick={later(async () => {
                               const enable = person.status !== 'active';
                               if (
                                 enable ||
-                                confirmAction(format(m.staff.disableConfirm, { name: person.name }))
+                                (await confirmAction(
+                                  format(m.staff.disableConfirm, { name: person.name }),
+                                ))
                               ) {
                                 toggle.mutate({ userId: person.id, enable });
                               }
-                            }}
+                            })}
                           >
                             {person.status === 'active' ? m.staff.disable : m.staff.enable}
                           </Button>

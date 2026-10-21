@@ -30,3 +30,6 @@ apps/web/src/data/site.json
 apps/web/public/theme.css
 apps/web/public/fonts/
 apps/web/public/brand/
+
+# Local agent worktrees
+.claude/worktrees/

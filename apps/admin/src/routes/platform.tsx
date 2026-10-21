@@ -1,6 +1,6 @@
 import { LOCALES, SITE_MODES, SITE_TEMPLATES, newSiteSchema } from '@hantex/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Plus, Trash2 } from 'lucide-react';
+import { ArrowRight, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { useRefreshMe } from '../components/Shell';
@@ -18,6 +18,7 @@ import {
   Select,
   Table,
   confirmAction,
+  later,
 } from '../components/ui';
 import { ApiError, api, sitePath } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
@@ -217,30 +218,65 @@ export function Sites() {
           )
         }
       />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {me.sites.map((site) => (
-          <Card
+          <Link
             key={site.key}
-            title={bi(site.name)}
-            actions={
-              <Badge tone={site.mode === 'live' ? 'success' : 'warning'}>
-                {m.mode[site.mode] ?? site.mode}
-              </Badge>
-            }
+            to={`/s/${site.key}`}
+            aria-label={`${m.sites['open'] ?? ''}: ${bi(site.name)}`}
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md"
           >
-            <p dir="ltr" className="text-start text-sm text-muted">
-              {site.key}
-            </p>
-            {site.role && <p className="mt-1 text-sm">{bi(site.role.name)}</p>}
-            {site.archived && <Badge tone="danger">{m.sites['archived']}</Badge>}
-            <Link
-              to={`/s/${site.key}`}
-              className="mt-4 inline-block text-accent-text underline-offset-4 hover:underline"
-            >
-              {m.sites['open']}
-            </Link>
-          </Card>
+            <div className="relative h-20 bg-gradient-to-br from-accent/30 via-accent-soft to-surface">
+              <span
+                aria-hidden
+                className="absolute -bottom-6 start-5 grid size-12 place-items-center rounded-xl border-4 border-surface bg-accent text-lg font-semibold text-accent-contrast"
+              >
+                {bi(site.name).slice(0, 1).toUpperCase()}
+              </span>
+              <span className="absolute end-4 top-4">
+                <Badge
+                  tone={
+                    site.mode === 'live'
+                      ? 'success'
+                      : site.mode === 'maintenance'
+                        ? 'danger'
+                        : 'warning'
+                  }
+                  dot
+                >
+                  {m.mode[site.mode] ?? site.mode}
+                </Badge>
+              </span>
+            </div>
+            <div className="flex flex-1 flex-col gap-1 p-5 pt-9">
+              <p className="font-semibold">{bi(site.name)}</p>
+              <p dir="ltr" className="text-start text-xs text-muted">
+                {site.key}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {site.role && <Badge>{bi(site.role.name)}</Badge>}
+                {site.archived && <Badge tone="danger">{m.sites['archived']}</Badge>}
+              </div>
+              <span className="mt-auto flex items-center gap-1 pt-4 text-sm font-medium text-accent-text">
+                {m.sites['open']}
+                <ArrowRight
+                  aria-hidden
+                  className="size-4 transition group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
+                />
+              </span>
+            </div>
+          </Link>
         ))}
+        {can('sites.manage') && (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-muted transition hover:border-accent hover:text-accent-text"
+          >
+            <Plus className="size-6" aria-hidden />
+            <span className="font-medium">{m.sites['create']}</span>
+          </button>
+        )}
       </div>
       {can('sites.manage') && (
         <CreateSiteDialog open={creating} onClose={() => setCreating(false)} />
@@ -348,14 +384,14 @@ export function SiteSettings() {
                 aria-pressed={c.mode === mode}
                 disabled={!can('siteMode.manage') || c.archived || c.mode === mode}
                 busy={setMode.isPending && setMode.variables === mode}
-                onClick={() => {
+                onClick={later(async () => {
                   if (
-                    confirmAction(
+                    await confirmAction(
                       format(m.site['modeConfirm'] ?? '', { mode: m.mode[mode] ?? mode }),
                     )
                   )
                     setMode.mutate(mode);
-                }}
+                })}
               >
                 {m.mode[mode] ?? mode}
               </Button>
@@ -450,9 +486,9 @@ export function SiteSettings() {
               <Button
                 variant="danger"
                 busy={archive.isPending}
-                onClick={() => {
-                  if (confirmAction(m.site['archiveConfirm'] ?? '')) archive.mutate(false);
-                }}
+                onClick={later(async () => {
+                  if (await confirmAction(m.site['archiveConfirm'] ?? '')) archive.mutate(false);
+                })}
               >
                 {m.site['archive']}
               </Button>
@@ -628,9 +664,9 @@ export function Roles() {
                             variant="ghost"
                             className="h-auto min-h-8 py-1"
                             disabled={role.members > 0}
-                            onClick={() => {
-                              if (confirmAction(m.roles.deleteRole)) remove.mutate(role.id);
-                            }}
+                            onClick={later(async () => {
+                              if (await confirmAction(m.roles.deleteRole)) remove.mutate(role.id);
+                            })}
                           >
                             {m.roles.deleteRole}
                           </Button>
@@ -878,10 +914,10 @@ export function Account() {
           <Button
             variant="secondary"
             busy={newCodes.isPending}
-            onClick={() => {
-              if (me.recoveryCodesLeft === 0 || confirmAction(m.account.newCodesConfirm))
+            onClick={later(async () => {
+              if (me.recoveryCodesLeft === 0 || (await confirmAction(m.account.newCodesConfirm)))
                 newCodes.mutate();
-            }}
+            })}
           >
             {m.account.newCodes}
           </Button>

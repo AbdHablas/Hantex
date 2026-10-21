@@ -1,11 +1,10 @@
 import { comingSoonSchema, type ComingSoonContent } from '@hantex/shared';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Plus, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import {
   Alert,
-  Badge,
   Button,
   Card,
   ErrorText,
@@ -15,6 +14,7 @@ import {
   PageHeader,
   Table,
   confirmAction,
+  later,
 } from '../components/ui';
 import {
   BilingualField,
@@ -24,7 +24,7 @@ import {
   useDocumentEditor,
 } from '../components/document';
 import { api, sitePath } from '../lib/api';
-import { useBilingual, useI18n } from '../lib/i18n';
+import { useI18n } from '../lib/i18n';
 import { useCurrentSite } from '../lib/session';
 
 /** Guards every site page: a site the person can't open is "not found", like on the server. */
@@ -33,95 +33,6 @@ export function SitePage({ children }: { children: ReactNode }) {
   const { m } = useI18n();
   if (!site) return <Alert tone="warning">{m.errors['not-found']}</Alert>;
   return <>{children}</>;
-}
-
-interface Overview {
-  site: { key: string; mode: string; archived: boolean };
-  subscribers: { total: number; last7Days: number };
-  documents: Record<
-    string,
-    { draftUpdatedAt: string | null; published: { version: number; publishedAt: string } | null }
-  >;
-  jobs: { id: string; status: string; requestedAt: string }[];
-}
-
-export function SiteOverview() {
-  const { site, siteKey } = useCurrentSite();
-  const { m, format, date } = useI18n();
-  const bi = useBilingual();
-  const query = useQuery({
-    queryKey: ['site', siteKey, 'overview'],
-    queryFn: () => api<Overview>(sitePath(siteKey, '/overview')),
-    enabled: site !== null,
-  });
-  if (!site) return <Navigate to="/" replace />;
-  return (
-    <>
-      <PageHeader title={bi(site.name)} intro={m.overview.title} />
-      {query.isPending && <Loading />}
-      <ErrorText error={query.error} />
-      {query.data && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {query.data.site.archived && (
-            <div className="lg:col-span-2">
-              <Alert tone="warning">{m.overview.archived}</Alert>
-            </div>
-          )}
-          <Card title={m.overview.signups}>
-            <p className="text-4xl font-semibold">{query.data.subscribers.total}</p>
-            <p className="text-muted">
-              +{query.data.subscribers.last7Days} {m.overview.last7Days}
-            </p>
-          </Card>
-          <Card title={m.overview.documents}>
-            <ul className="flex flex-col gap-3">
-              {Object.entries(query.data.documents).map(([kind, doc]) => (
-                <li key={kind}>
-                  <p className="font-medium">{m.docs[kind] ?? kind}</p>
-                  <p className="text-sm text-muted">
-                    {doc.published
-                      ? format(m.overview.published, {
-                          version: doc.published.version,
-                          date: date(doc.published.publishedAt, true),
-                        })
-                      : m.overview.notPublished}
-                    {' · '}
-                    {doc.draftUpdatedAt
-                      ? format(m.overview.draftSaved, { date: date(doc.draftUpdatedAt, true) })
-                      : m.overview.noDraft}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card title={m.overview.jobs} className="lg:col-span-2">
-            {query.data.jobs.length === 0 ? (
-              <p className="text-muted">{m.overview.noJobs}</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {query.data.jobs.map((job) => (
-                  <li key={job.id} className="flex items-center gap-3 text-sm">
-                    <Badge
-                      tone={
-                        job.status === 'succeeded'
-                          ? 'success'
-                          : job.status === 'failed'
-                            ? 'danger'
-                            : 'accent'
-                      }
-                    >
-                      {m.job[job.status] ?? job.status}
-                    </Badge>
-                    {date(job.requestedAt, true)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </div>
-      )}
-    </>
-  );
 }
 
 /* --------------------------------- Coming Soon editor --------------------------------- */
@@ -546,9 +457,9 @@ export function Subscribers() {
                         size="sm"
                         variant="ghost"
                         aria-label={m.delete}
-                        onClick={() => {
-                          if (confirmAction(m.subscribers.deleteConfirm)) remove.mutate(s.id);
-                        }}
+                        onClick={later(async () => {
+                          if (await confirmAction(m.subscribers.deleteConfirm)) remove.mutate(s.id);
+                        })}
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
