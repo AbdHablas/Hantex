@@ -105,6 +105,15 @@ Next:
 - [x] Phase 2 report: [`phase-2-report.md`](phase-2-report.md)
 - [ ] Owner approval to continue, and to start the first deployment
 
+## Frontend quality and typography *(core requirement; waiting for D-031 to D-034)*
+
+- [ ] Arabic typeface switched to the confirmed choice, on the public sites and the dashboard (D-031)
+- [ ] Typography & Fonts section per site: text styles, Arabic and Latin families, sizes, weights, line heights, letter spacing, presets, preview, publish, revert (D-032)
+- [ ] Custom font uploads, if approved (D-033; needs R2 media storage)
+- [ ] Shared component system: tokens shared; dashboard components; public Astro components with islands; product cards, navigation, filters, search, gallery and 3D viewer for product pages (D-034, with Phase 3 catalogue)
+- [ ] Mixed Arabic/English text isolated correctly (product names, model numbers, prices, specifications); icons mirrored only where direction matters
+- [ ] Every major page checked in Arabic and English, light and dark, phone to desktop
+
 ## Phase 3: Content, catalogue, media and 3D Studio foundation (dashboard)
 
 - [ ] Media library on R2:

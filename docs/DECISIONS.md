@@ -39,9 +39,14 @@ marked **Confirmed** once the project owner has approved it.
 | D-028 | Hosting of multiple websites | Confirmed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
+| D-031 | Arabic typeface (revisits D-015) | Pending | Proposed: IBM Plex Sans Arabic for the public sites and the dashboard; Readex Pro stays in the library |
+| D-032 | Typography system | Pending | Proposed: named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
+| D-033 | Custom fonts | Pending | Proposed: Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
+| D-034 | Component system across dashboard and public sites | Pending | Proposed: shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
 
-All open decisions are settled. The toolchain upgrade (D-023) is done. Next:
-the site-aware database (D-024, D-025).
+Open: D-031 to D-034 (typography and the frontend component system), asked
+one at a time. Implementation that depends on them waits until they are
+confirmed.
 
 ---
 
@@ -730,3 +735,85 @@ the site-aware database (D-024, D-025).
 - **Why it matters:** CAD gives exact models at no cost. Capture equipment
   decides whether photo reconstruction can run for free on the owner's
   hardware. The budget decides whether AI drafts are offered at all.
+
+## D-031 — Arabic typeface (revisits D-015)
+
+- **Status:** Pending — asked 2026-10-21
+- **Requirement (owner):** replace the current Arabic font with a more
+  modern, professional typeface with excellent readability and full support
+  for diacritics; Arabic and Latin fonts configurable separately per site.
+- **Options considered (rendered side by side on product-card content, with
+  Poppins for Latin):** IBM Plex Sans Arabic · Noto Sans Arabic · Tajawal ·
+  Readex Pro (current).
+- **Findings:** IBM Plex Sans Arabic has the most even body text, matches
+  Poppins' letter heights best and sets compactly; Noto Sans Arabic is very
+  clear but has much taller lines, which push layouts down; Tajawal looks
+  small and light at the same size and is weaker in body text; Readex Pro is
+  wide and heavy in body text.
+- **Recommended:** IBM Plex Sans Arabic (SIL OFL 1.1, self-hosted, five
+  weights) as the default Arabic font for the public sites and the dashboard.
+  Readex Pro and the others stay in the library, so a site can still choose
+  them.
+- **Consequences:** the brand theme, the dashboard and the default presets
+  switch font; existing sites keep their published theme until a new one is
+  published; D-015 is marked superseded.
+
+## D-032 — Typography system
+
+- **Status:** Pending
+- **Requirement (owner):** a Typography & Fonts section per site: font
+  families for the whole frontend; styles for headings, body text,
+  navigation, buttons, product titles, labels and more; sizes, weights, line
+  heights and letter spacing; curated presets; preview, publish and revert
+  without code.
+- **Proposed:** the theme gains named *text styles* (display, heading 1–3,
+  body, small, navigation, button, label, product title, price and
+  specifications). Each style sets a font role (heading or body), size,
+  weight, line height and letter spacing, with separate values for Arabic
+  where they differ (Arabic needs more line height and no letter spacing).
+  Two font roles, heading and body, each have an Arabic and a Latin family.
+  Everything becomes CSS variables used by every component. Curated
+  typography presets come with the existing theme presets (D-027). Editing
+  uses the existing draft, side-by-side preview, publish, history and
+  rollback. Limits keep text readable (minimum sizes, no letter spacing on
+  Arabic, contrast checks unchanged).
+- **Consequences:** a theme schema version 2, with automatic migration of
+  existing themes.
+
+## D-033 — Custom fonts
+
+- **Status:** Pending
+- **Requirement (owner):** add supported custom fonts besides the curated
+  presets.
+- **Options:** (a) curated library only; new fonts added by a reviewed code
+  change · (b) the Owner uploads WOFF2 files in the dashboard, confirming the
+  licence permits web use; files are validated, stored in R2 and served from
+  the site's own domain · (c) pick any Google Font by name, loaded from
+  Google.
+- **Recommended:** (b), limited to the Owner (a new permission *Fonts:
+  upload*), WOFF2 only, a size limit, checked to be a real font and to cover
+  the script it is uploaded for. (c) is not recommended: it sends visitors'
+  addresses to Google and loosens the security policy.
+- **Depends on:** the R2 media storage arriving with the media library
+  (Phase 3). Until then, option (a) applies.
+
+## D-034 — Component system across dashboard and public sites
+
+- **Status:** Pending
+- **Requirement (owner):** one consistent, reusable, premium component system
+  across all websites and the dashboard; modern libraries compatible with the
+  stack; no unnecessary dependencies; fast loading.
+- **Options:** (a) shared design tokens; dashboard on Radix primitives with
+  shadcn-style React components (as now); public sites as Astro components
+  that ship no JavaScript by default, with small islands only for interactive
+  parts (product filters, gallery, 3D viewer) · (b) React everywhere,
+  including the public sites · (c) a single web-components library used by
+  both.
+- **Recommended:** (a). The public sites stay fastest (static HTML, scripts
+  only where needed). Look and behaviour stay consistent through the shared
+  tokens and matching component designs. The 3D viewer is the
+  `<model-viewer>` web component, loaded only on product pages.
+- **Consequences:** each public component has a matching dashboard preview
+  using the same tokens; the strict security policy stays (no inline scripts
+  or styles).
+
