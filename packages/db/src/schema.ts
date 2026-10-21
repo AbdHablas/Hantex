@@ -206,6 +206,44 @@ export const recoveryCodes = pgTable(
 );
 
 /**
+ * Short-lived, single-use tickets that allow registering a passkey without a session:
+ * accepting an invitation, or recovering access. The ticket (not the invitation token) is what
+ * travels in the WebAuthn options request, and only its SHA-256 hash is stored.
+ */
+export const enrolmentTickets = pgTable(
+  'enrolment_tickets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    purpose: text('purpose').notNull(),
+    ticketHash: text('ticket_hash').notNull().unique(),
+    /** For invitations: the id the new staff account will get once the passkey is verified. */
+    userId: text('user_id').notNull(),
+    invitationId: uuid('invitation_id').references(() => invitations.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [check('enrolment_tickets_purpose_check', sql`${t.purpose} in ('invitation', 'recovery')`)],
+);
+
+/** Emailed one-time codes for account recovery (stored as keyed hashes, limited attempts). */
+export const emailChallenges = pgTable(
+  'email_challenges',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('email_challenges_user_id_idx').on(t.userId)],
+);
+
+/**
  * Append-only audit log. The dashboard's database user may only INSERT and SELECT here
  * (sql/roles.sql), so entries cannot be edited or deleted from the application.
  */

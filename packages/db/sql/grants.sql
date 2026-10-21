@@ -9,8 +9,10 @@ GRANT USAGE ON SCHEMA public TO hantex_admin_app, hantex_public_app, hantex_buil
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   users, sessions, accounts, verifications, passkeys, auth_rate_limits,
   roles, role_permissions, user_roles, invitations, recovery_codes,
-  document_drafts, publish_jobs
+  enrolment_tickets, email_challenges, document_drafts, publish_jobs
 TO hantex_admin_app;
+-- Rate limits for the dashboard's public steps (invitation and recovery).
+GRANT SELECT, INSERT, UPDATE ON form_rate_limits TO hantex_admin_app;
 -- Published versions are immutable; the audit log is append-only.
 GRANT SELECT, INSERT ON document_versions, audit_log TO hantex_admin_app;
 -- Sign-ups: view, export and delete only — sign-ups arrive through the public site.

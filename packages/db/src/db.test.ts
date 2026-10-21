@@ -58,6 +58,8 @@ describe('migrations', () => {
       'auth_rate_limits',
       'document_drafts',
       'document_versions',
+      'email_challenges',
+      'enrolment_tickets',
       'form_rate_limits',
       'invitations',
       'passkeys',
