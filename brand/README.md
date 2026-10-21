@@ -1,9 +1,10 @@
 # Brand assets
 
-Official Hantex Ultra logo files, taken from the vector artwork in the brand
-guidelines (2026) — the mark geometry and the Poppins lettering (converted to
-outlines) come straight from the guidelines PDF and were checked pixel by
-pixel against it. Do not edit the geometry or colours — see
+Official Hantex Ultra logo files. The mark comes from the owner's updated
+Illustrator artwork (*hantex-ultra-edited2*, October 2026) with the agreed
+clean-up (socket in Ice, switch on the grid); the Poppins lettering
+(converted to outlines) comes from the brand guidelines PDF. Both were checked
+pixel by pixel against the source PDFs. Do not edit the geometry or colours — see
 [`docs/brand-guidelines.md`](../docs/brand-guidelines.md).
 
 | Variant | Lockup (default) | Icon mark | Wordmark |
@@ -15,6 +16,6 @@ pixel against it. Do not edit the geometry or colours — see
 
 - The full lockup is the default; the icon mark or wordmark alone only once
   the brand is established in context (guidelines, page 4).
-- The lockup on light grounds, and the mono lockups and wordmarks, apply the
-  guidelines' colour rules to the documented lockup; only the on-dark lockup
-  and wordmark are shown as such in the guidelines.
+- The on-dark mark is the supplied artwork. The on-light and mono versions
+  apply the guidelines' colour rules; the indicator dots stay light (Ice) on
+  every background (owner's choice, D-020) and are omitted in mono versions.

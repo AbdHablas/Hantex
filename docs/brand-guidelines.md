@@ -5,6 +5,9 @@ repository because it is public:
 
 - *Hantex Ultra — Brand Guidelines, Version 1, 2026* (9 pages)
 - *Hantex Ultra — Trademark Reference Sheet, Version 1, 2026* (2 pages)
+- *hantex-ultra-edited2* — updated mark on the cover artwork (Adobe
+  Illustrator, 12 October 2026), supplied 2026-10-21. **This is the current
+  mark** (D-020); it supersedes the mark in the two documents above.
 
 Everything below is taken from those documents. Where they disagree, the
 disagreement is listed under [Discrepancies](#discrepancies) and the open
@@ -16,15 +19,16 @@ choice is tracked in [`DECISIONS.md`](DECISIONS.md).
 - **Tagline (guidelines):** *Power. Connected.*
 - **Mark concept:** a letter H built from the two controls found on almost
   every wall — the left leg is a lit rocker switch, the right leg a socket
-  with two holes, pinned to the wall by two screws.
+  with two outlets, pinned to the wall by two screws. Nine shapes in all.
 
 ## Logo files
 
-Taken directly from the vector artwork inside the brand guidelines PDF — not
-redrawn. The mark geometry comes from the PDF's vector paths; the lettering
-uses the Poppins glyphs embedded in the PDF, converted to outlines, at their
-exact positions. Each file was rendered and compared pixel by pixel with the
-PDF (differences limited to anti-aliasing).
+Taken directly from the owner's vector artwork — not redrawn. The mark
+geometry comes from the updated Illustrator file's vector paths (D-020); the
+lettering uses the Poppins glyphs embedded in the brand guidelines PDF,
+converted to outlines, at their exact positions. An exact rebuild of the
+updated mark was compared pixel by pixel with the owner's PDF (differences
+limited to anti-aliasing) before the agreed clean-up was applied.
 
 See [`brand/README.md`](../brand/README.md) for the full list: lockup
 (default), icon mark and wordmark, each on dark, on light, mono light and
@@ -34,21 +38,29 @@ mono dark.
   Medium, tracked, in Circuit Teal (Ice on dark, Graphite on light).
 - **Wordmark:** "Hantex" centred above "ULTRA".
 
-## Mark construction (from the original artwork)
+## Mark construction (current mark, D-020)
 
-Drawing grid: `viewBox="0 0 120 120"`.
+Drawing grid: `viewBox="0 0 120 120"` — the Illustrator artboard is exactly
+this grid (1 unit = 0.875 pt).
 
 | Element | Geometry | On dark | On light |
 |---------|----------|---------|----------|
 | Frame | rect 8, 8, 104 × 104, radius 23, stroke 3, no fill | Ice | Graphite |
 | Screws | circles at (60, 17) and (60, 103), radius 2.2, 50 % opacity | Ice | Graphite |
 | Switch (left leg) | rect 27, 25, 24 × 70, radius 5.4 | Circuit Teal | Circuit Teal |
-| Indicator | circle at (39, 36), radius 2.6 | Volt | Volt |
-| Base line | line (30, 85) → (48, 85), width 1.5, round caps, 85 % opacity | Ice | Graphite |
+| Indicator dots | three circles on the switch centre line x = 39, at y 31.58 / 34.30 / 37.76, radii 0.89 / 1.20 / 1.62 (growing downwards) | Ice | Ice |
 | Connecting bar | rect 51, 57, 18 × 6, radius 1.3 | Ice | Graphite |
-| Socket (right leg) | rect 69, 25, 24 × 70, radius 5.4, holes at (81, 46) and (81, 74), radius 4, cut out | Ice | Graphite |
+| Socket (right leg) | rect 69, 25, 24 × 70, radius 5.4, with two outlet cut-outs centred on x = 81: upper — round hole (radius 3.65, centre y 46.22) on a flat bar 9.7 × 3.3; lower — the same shape mirrored (bar on top, hole centre y 73.78) | Ice | Graphite |
 
-Mono versions use one colour for every element.
+- Mono versions use one colour for every element; the indicator dots are then
+  the same colour as the switch and are omitted.
+- **Agreed clean-up of the supplied file (D-020):** the socket is set in Ice
+  (the file had pure white `#FFFFFF`), and the switch and its dots sit on the
+  27-unit grid line (the file had them 0.1 pt to the right, overlapping the
+  connecting bar slightly).
+- **Changes from the previous mark:** the Volt indicator dot and the bright
+  base line on the switch are replaced by the three indicator dots; the
+  socket's two round holes are replaced by the two outlet shapes.
 
 ### Usage rules (guidelines, page 5)
 
@@ -64,7 +76,7 @@ Mono versions use one colour for every element.
 | Circuit Teal | `#1FB6C9` | 31, 182, 201 | Switch accent, live state |
 | Ice | `#F4F6F8` | 244, 246, 248 | Light ground, reversed mark |
 | Steel | `#7B818C` | 123, 129, 140 | Body copy, muted labels |
-| Volt | `#6EE7F0` | 110, 231, 240 | Indicator glow only — never a background or text colour |
+| Volt | `#6EE7F0` | 110, 231, 240 | Indicator glow only — never a background or text colour. No longer used in the current mark; kept for live-state glows in the interface |
 
 Gradients observed in the guidelines' applications (sampled from rendered
 pages, approximate): teal panel `#3BCCDC → #138592` (top-left to
@@ -105,10 +117,12 @@ owner from rendered samples. Both fonts are SIL Open Font Licence 1.1.
 
 ## Discrepancies
 
-1. **Trademark sheet, colour description** — says the left stroke is a
-   neutral tone and only the small circle is cyan. The specimens and all
-   artwork show the left stroke in Circuit Teal and the circle in Volt.
-   Worth correcting before any filing.
+1. **Trademark sheet is out of date** — it describes and shows the previous
+   mark (two round socket holes, Volt indicator circle, base line). Its
+   specimens, written description and construction table need updating to
+   the current mark before any filing. Its colour description also
+   contradicted its own specimens (left stroke described as neutral, shown in
+   Circuit Teal).
 2. **Connecting bar** — the sheet says it touches neither stroke; in the
    artwork it exactly fills the 18-unit gap (touches both, overlaps
    neither, as the guidelines say).
@@ -119,7 +133,10 @@ owner from rendered samples. Both fonts are SIL Open Font Licence 1.1.
 5. **Wordmark case** — the cover sets "HANTEX"; the logo system and
    trademark sheet set "Hantex" with "ULTRA" below. The logo system page
    (the default lockup) is followed.
-6. **Previous Coming Soon page** (see
+6. **Brand guidelines pages 2–8** still show the previous mark; only the
+   cover was supplied in updated form. The current mark (this document and
+   `brand/logo/`) takes precedence.
+7. **Previous Coming Soon page** (see
    [`previous-coming-soon-review.md`](previous-coming-soon-review.md)) uses
    an off-spec mark (shifted switch, shorter bar, no base line) and
    off-palette colours (`#2BD0DF`, `#EEF0F3`, `#111317`). It is not used as

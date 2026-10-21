@@ -28,6 +28,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-017 | Dashboard timing for the Coming Soon page | Confirmed | Phase 2 delivers the Coming Soon page together with the dashboard foundation |
 | D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
 | D-019 | Roles and permission matrix | Confirmed | Six standard roles; the matrix is editable from the dashboard (Phase 2) with escalation safeguards — see `docs/roles-and-permissions.md` |
+| D-020 | Logo update | Confirmed | Updated mark from `hantex-ultra-edited2` (indicator dots, outlet-shaped socket holes), aligned to the brand palette and grid; dots light on all backgrounds |
 
 All Phase 1 decisions are made. Next: the owner's approval to start Phase 2.
 
@@ -380,3 +381,23 @@ All Phase 1 decisions are made. Next: the owner's approval to start Phase 2.
   Owner role is locked; owner-only permissions cannot be given to other
   roles; every matrix change is audited and emailed to Owners; the matrix
   editor is built in Phase 2.
+
+## D-020 — Logo update
+
+- **Status:** Confirmed — 2026-10-21
+- **Source:** `hantex-ultra-edited2.pdf` from the owner (Adobe Illustrator,
+  12 October 2026), cover artwork only; not stored in the repository.
+- **What changed in the mark:** the switch's Volt indicator dot and base line
+  are replaced by three light indicator dots; the socket's two round holes
+  are replaced by two mirrored outlet shapes (round hole on a flat bar).
+  Frame, screws, bar, proportions and lettering are unchanged.
+- **Owner's choices:**
+  - align the file to the brand spec — socket in Ice instead of pure white,
+    switch and dots back on the 27-unit grid (they were 0.1 pt off);
+  - indicator dots stay light (Ice) on light backgrounds too.
+- **Verification:** an exact rebuild of the supplied mark matched the PDF
+  render pixel by pixel (differences only in anti-aliasing) before the
+  clean-up was applied.
+- **Consequences:** all twelve logo files regenerated; the trademark sheet and
+  brand guidelines pages 2–8 show the previous mark and should be updated by
+  the owner's designer; Volt no longer appears in the mark.
