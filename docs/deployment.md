@@ -66,11 +66,10 @@ environment variables, never stored in the repository).
   only** (D-006, D-028), using a narrowly scoped token.
 - **Nightly:** encrypted database export to R2 (D-010) and health checks
   with email alerts (D-011).
-- **3D Studio processing (D-030, pending):** optimisation, validation,
-  poster rendering and provider calls run on a *processing runner*. This is
-  either a workflow in a separate **private** repository or the owner's own
-  computer, never in this public repository, whose logs and artifacts anyone
-  can read.
+- **3D Studio processing (D-030, confirmed):** photo reconstruction,
+  optimisation, validation and poster rendering run on a *processing runner*
+  on the owner's own Mac or PC. It never runs in this public repository,
+  whose logs and artifacts anyone can read. No paid AI providers are called.
 
 ## Secrets (names only — values are never written here)
 
