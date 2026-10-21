@@ -596,6 +596,8 @@ Unreleased product photos must never pass through it.
 
 1. Are 3D design files (CAD) available from the factory or supplier for the
    switches and sockets?
+   **Answer (2026-10-21): no.** Photogrammetry from a full capture is the
+   main path; CAD import is kept for files that may come later.
 2. Which equipment is available for capture?
    - a Mac (Apple silicon is best);
    - an iPhone 12 Pro or iPad Pro (2021) or newer, with LiDAR;

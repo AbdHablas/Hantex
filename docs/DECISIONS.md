@@ -698,6 +698,10 @@ Next: the owner's answers to D-030, and approval of the proposed designs
      iPhone or iPad with LiDAR, a Windows PC with an NVIDIA graphics card?
   3. Is there a monthly budget for paid AI 3D services, or free methods
      only?
+- **Answer 1 (2026-10-21): no CAD files are available.** Photo capture
+  (photogrammetry) becomes the main path for measured models, with an artist
+  and labelled AI drafts as options. CAD import stays in the Studio for any
+  files that turn up later.
 - **Why it matters:** CAD gives exact models at no cost. Capture equipment
   decides whether photo reconstruction can run for free on the owner's
   hardware. The budget decides whether AI drafts are offered at all.
