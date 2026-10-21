@@ -1,0 +1,59 @@
+---
+import { TEXT, dirOf } from '../i18n';
+import { SITE, pathFor } from '../site-data';
+import '../styles/site.css';
+
+/**
+ * Shown for any address that doesn't exist. The visitor's language isn't known from a wrong
+ * address, so the message is given in every language the site has, default language first.
+ */
+const locale = SITE.site.defaultLocale;
+const others = SITE.site.locales.filter((l) => l !== locale);
+const siteName = SITE.site.name[locale] || SITE.site.name.ar || SITE.site.name.en;
+---
+
+<!doctype html>
+<html lang={locale} dir={dirOf(locale)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex" />
+    <title>{siteName} — {TEXT[locale].notFoundTitle}</title>
+    {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    <link rel="stylesheet" href="/theme.css" />
+    <script src="../scripts/theme.ts"></script>
+  </head>
+  <body>
+    <main class="maintenance">
+      <div class="hero-bg" aria-hidden="true">
+        <span class="hero-lines"></span>
+        <span class="orb orb-a"></span>
+      </div>
+      <div class="maintenance-card rise">
+        <a href="/" aria-label={siteName}>
+          {
+            SITE.logo ? (
+              <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" />
+            ) : (
+              <span class="footer-name">{siteName}</span>
+            )
+          }
+        </a>
+        <p class="not-found-code" aria-hidden="true">404</p>
+        <h1>{TEXT[locale].notFoundTitle}</h1>
+        <p>{TEXT[locale].notFoundText}</p>
+        <a class="cta" href={pathFor(locale)}>{TEXT[locale].notFoundHome}</a>
+        {
+          others.map((l) => (
+            <div class="not-found-other" lang={l} dir={dirOf(l)}>
+              <h2>{TEXT[l].notFoundTitle}</h2>
+              <p>{TEXT[l].notFoundText}</p>
+              <a href={pathFor(l)}>{TEXT[l].notFoundHome}</a>
+            </div>
+          ))
+        }
+      </div>
+    </main>
+  </body>
+</html>

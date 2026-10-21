@@ -44,6 +44,7 @@ async function confirm(page: Page, ifAsked = false) {
 test('the first Owner sets up a passkey, publishes the Coming Soon page and signs in again', async ({
   browser,
 }) => {
+  test.setTimeout(60_000);
   const context = await browser.newContext();
   const page = await context.newPage();
   await addAuthenticator(context, page);
@@ -125,6 +126,36 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await confirm(page, true);
   await expect(page.getByText('دوّن هذه الرموز الآن')).toBeVisible();
   await expect(page.locator('ul[dir="ltr"] li')).toHaveCount(10);
+
+  // Phones: every main page fits without sideways scrolling, and the menu slides in.
+  await page.setViewportSize({ width: 360, height: 780 });
+  for (const path of [
+    '/s/hantex-ultra',
+    '/s/hantex-ultra/coming-soon',
+    '/s/hantex-ultra/appearance',
+    '/s/hantex-ultra/subscribers',
+    '/s/hantex-ultra/settings',
+    '/sites',
+    '/roles',
+    '/account',
+  ]) {
+    await page.goto(path);
+    await page.getByRole('heading', { level: 1 }).first().waitFor();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, path).toBeLessThanOrEqual(0);
+  }
+  await page.goto('/s/hantex-ultra');
+  await page.getByRole('button', { name: 'القائمة' }).click();
+  await page
+    .getByRole('dialog', { name: 'القائمة' })
+    .getByRole('link', { name: 'المظهر', exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/appearance$/);
+  await expect(page.getByRole('dialog', { name: 'القائمة' })).toBeHidden();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/account');
 
   // English, left-to-right.
   await page.getByRole('button', { name: 'اللغة' }).click();

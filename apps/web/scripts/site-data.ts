@@ -122,7 +122,14 @@ const turnstileSiteKey = () => process.env['TURNSTILE_SITE_KEY'] ?? '1x000000000
  * logos in Phase 3 (D-027); until then their name is shown as text.
  */
 const brandLogo = (siteKey: string) =>
-  siteKey === FIRST_SITE.key ? { mark: '/brand/mark.svg', lockup: '/brand/lockup.svg' } : null;
+  siteKey === FIRST_SITE.key
+    ? {
+        mark: '/brand/mark.svg',
+        lockup: '/brand/lockup.svg',
+        share: '/brand/share-card.png',
+        touchIcon: '/brand/touch-icon.png',
+      }
+    : null;
 
 function defaults(): SiteData {
   const first = siteKey === FIRST_SITE.key;
@@ -188,6 +195,40 @@ if (data.logo) {
   for (const file of ['mark.svg', 'lockup.svg']) {
     await copyFile(join(root, '..', '..', 'brand', 'logo', file), join(brandDir, file));
   }
+  for (const file of ['share-card.png', 'touch-icon.png']) {
+    await copyFile(join(root, '..', '..', 'brand', 'raster', file), join(brandDir, file));
+  }
+}
+
+// Search engines: the pages in every language, with their alternates. Draft previews and the
+// form endpoint are never crawled. Without a connected domain there are no absolute addresses,
+// so no sitemap is written.
+const origin = data.site.primaryDomain ? `https://${data.site.primaryDomain}` : null;
+const pagePath = (locale: string) => (locale === data.site.defaultLocale ? '/' : `/${locale}/`);
+const indexable = data.site.mode !== 'maintenance';
+await writeFile(
+  join(root, 'public', 'robots.txt'),
+  [
+    'User-agent: *',
+    indexable ? 'Disallow: /preview' : 'Disallow: /',
+    ...(indexable ? ['Disallow: /api/'] : []),
+    ...(origin && indexable ? [`Sitemap: ${origin}/sitemap.xml`] : []),
+    '',
+  ].join('\n'),
+);
+const sitemapFile = join(root, 'public', 'sitemap.xml');
+await rm(sitemapFile, { force: true });
+if (origin && indexable) {
+  const alternates = data.site.locales
+    .map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${origin}${pagePath(l)}"/>`)
+    .join('\n');
+  const urls = data.site.locales
+    .map((l) => `  <url>\n    <loc>${origin}${pagePath(l)}</loc>\n${alternates}\n  </url>`)
+    .join('\n');
+  await writeFile(
+    sitemapFile,
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`,
+  );
 }
 
 await mkdir(join(root, 'src', 'data'), { recursive: true });

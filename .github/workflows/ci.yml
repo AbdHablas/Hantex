@@ -48,6 +48,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: node scripts/check-worker-size.mjs apps/api/dist apps/web/dist/server
+      - run: node scripts/check-page-weight.mjs apps/web/dist/client
 
   e2e:
     name: End-to-end (dashboard, passkeys)

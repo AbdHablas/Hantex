@@ -183,3 +183,43 @@ function databaseUrl() {
   url.pathname = `/${process.env['E2E_DATABASE']}`;
   return url.toString();
 }
+
+test('links shared on social apps show the brand picture, and phones get an icon', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    'https://www.hantexultra.com/brand/share-card.png',
+  );
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  );
+  for (const path of ['/brand/share-card.png', '/brand/touch-icon.png']) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(200);
+    expect(response.headers()['content-type'], path).toContain('image/png');
+  }
+});
+
+test('search engines get robots.txt and a sitemap with every language, not previews', async ({
+  request,
+}) => {
+  const robots = await (await request.get('/robots.txt')).text();
+  expect(robots).toContain('Disallow: /preview');
+  expect(robots).toContain('Sitemap: https://www.hantexultra.com/sitemap.xml');
+  const sitemap = await (await request.get('/sitemap.xml')).text();
+  expect(sitemap).toContain('<loc>https://www.hantexultra.com/</loc>');
+  expect(sitemap).toContain('<loc>https://www.hantexultra.com/en/</loc>');
+  expect(sitemap).toContain('hreflang="en"');
+});
+
+test('an unknown address shows a bilingual "not found" page with status 404', async ({ page }) => {
+  const response = await page.goto('/no-such-page');
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('الصفحة غير موجودة');
+  await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+});

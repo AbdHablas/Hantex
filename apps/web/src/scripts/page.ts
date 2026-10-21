@@ -1,4 +1,4 @@
-import { normalizeContact } from '@hantex/shared';
+import { normalizeContact } from '@hantex/shared/contact';
 
 /* Countdown to the launch date entered in the dashboard. */
 const countdown = document.querySelector<HTMLElement>('[data-countdown]');

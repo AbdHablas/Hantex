@@ -26,7 +26,14 @@ export interface SiteData {
   /** Cloudflare Turnstile's public site key for the sign-up form. */
   turnstileSiteKey: string;
   /** Adaptive logo files, or null to show the site's name as text. */
-  logo: { mark: string; lockup: string } | null;
+  logo: {
+    mark: string;
+    lockup: string;
+    /** 1200×630 picture shown when a link to the site is shared (Open Graph). */
+    share: string;
+    /** 180×180 icon for phone home screens. */
+    touchIcon: string;
+  } | null;
   versions: { comingSoon: number | null; settings: number | null; theme: number | null };
   comingSoon: ComingSoonContent;
   settings: SiteSettings;

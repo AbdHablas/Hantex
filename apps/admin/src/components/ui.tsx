@@ -191,7 +191,7 @@ export function Card({
   return (
     <section
       className={cn(
-        'flex flex-col rounded-2xl border border-border bg-surface shadow-sm transition-shadow',
+        'flex min-w-0 flex-col rounded-2xl border border-border bg-surface shadow-sm transition-shadow',
         className,
       )}
     >
