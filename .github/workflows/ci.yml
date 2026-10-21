@@ -80,6 +80,7 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter @hantex/admin exec playwright install --with-deps chromium
       - run: pnpm --filter @hantex/admin e2e
+      - run: pnpm --filter @hantex/web e2e
 
   audit:
     name: Dependency audit

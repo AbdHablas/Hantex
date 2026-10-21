@@ -24,3 +24,9 @@ test-results/
 # Tool output
 strix_runs/
 graphify-out/
+
+# Site engine build data (generated per site from published content; never committed)
+apps/web/src/data/site.json
+apps/web/public/theme.css
+apps/web/public/fonts/
+apps/web/public/brand/

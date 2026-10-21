@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["@cloudflare/workers-types", "node"],
+    "jsx": "preserve"
+  },
+  "include": [
+    "src",
+    "scripts",
+    "e2e",
+    ".astro/types.d.ts",
+    "astro.config.mjs",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": ["dist"]
+}

@@ -99,9 +99,18 @@ end.
 
 ### Public forms (D-018)
 
-- Turnstile, per-IP and global rate limits, honeypot field.
-- Consent checkbox and privacy note; consent text version stored with each
-  sign-up.
+- **Built (2026-10-21, `apps/web/src/server/signup.ts`):**
+  - Turnstile, checked on the server; if Cloudflare can't be reached the
+    check fails (fails closed);
+  - a rate limit per visitor (5 attempts per 10 minutes per site), keyed by a
+    hash of the visitor's address, which itself is never stored;
+  - a honeypot field; only the site's own pages may post (Origin check);
+    small JSON bodies only;
+  - the site comes from the site's build data, never from the request.
+- Consent checkbox; the consent text version is stored with each sign-up.
+- **Pending:** a site-wide limit across all visitors (Cloudflare rate-limiting
+  rule, set up with deployment), and a privacy note. The privacy note's
+  wording must come from the owner; it is not written for them.
 - Duplicate sign-ups answered identically to new ones (no way to probe who
   has signed up).
 - The public site's database user can only insert submissions — it cannot

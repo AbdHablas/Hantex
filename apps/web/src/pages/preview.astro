@@ -1,0 +1,55 @@
+---
+import { themeToCss } from '@hantex/theme';
+import { env } from 'cloudflare:workers';
+import ComingSoonPage from '../components/ComingSoonPage.astro';
+import { verifyPreview } from '../server/preview';
+import { SITE } from '../site-data';
+
+/**
+ * Draft preview, posted by the dashboard as a signed form. Never cached or indexed; the draft
+ * theme's stylesheet is inlined with a per-response nonce.
+ */
+export const prerender = false;
+
+let data = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  data = await verifyPreview(
+    env.PREVIEW_SIGNING_SECRET,
+    {
+      payload: String(form.get('payload') ?? ''),
+      expires: String(form.get('expires') ?? ''),
+      signature: String(form.get('signature') ?? ''),
+    },
+    SITE.site.key,
+  );
+}
+const lang = new URL(Astro.request.url).searchParams.get('lang');
+const locale = SITE.site.locales.find((l) => l === lang) ?? SITE.site.defaultLocale;
+const nonce = crypto.randomUUID().replace(/-/g, '');
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+if (data) {
+  Astro.response.headers.set(
+    'Content-Security-Policy',
+    `default-src 'self'; style-src 'self' 'nonce-${nonce}'; script-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
+  );
+} else {
+  Astro.response.status = 403;
+}
+---
+
+{
+  data ? (
+    <ComingSoonPage
+      locale={locale}
+      content={data['coming-soon']}
+      settings={data['site-settings']}
+      preview
+      themeCss={{ css: themeToCss(data.theme), nonce }}
+    />
+  ) : (
+    <p>Preview link expired or invalid.</p>
+  )
+}

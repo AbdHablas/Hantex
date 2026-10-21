@@ -1,0 +1,32 @@
+---
+import type { Locale } from '@hantex/shared';
+import { TEXT, dirOf } from '../i18n';
+import { SITE } from '../site-data';
+import '../styles/site.css';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = TEXT[locale];
+const siteName = SITE.site.name[locale] || SITE.site.name.ar;
+---
+
+<!doctype html>
+<html lang={locale} dir={dirOf(locale)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{siteName} — {t.maintenanceTitle}</title>
+    {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body>
+    <main class="hero container">
+      {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p>{siteName}</p>}
+      <h1>{t.maintenanceTitle}</h1>
+      <p class="intro">{t.maintenanceText}</p>
+    </main>
+  </body>
+</html>

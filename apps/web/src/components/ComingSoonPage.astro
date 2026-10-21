@@ -1,0 +1,210 @@
+---
+import type { ComingSoonContent, Locale, SiteSettings } from '@hantex/shared';
+import { TEXT, dirOf } from '../i18n';
+import { SITE, pathFor } from '../site-data';
+import '../styles/site.css';
+
+/**
+ * The Coming Soon template (D-016). Every text comes from the dashboard; an empty text hides its
+ * element in that language, so nothing factual appears unless someone entered it.
+ */
+interface Props {
+  locale: Locale;
+  content: ComingSoonContent;
+  settings: SiteSettings;
+  /** Draft previews are never indexed or cached and show a banner. */
+  preview?: boolean;
+  /** A draft theme's stylesheet, inlined with a nonce (previews only). */
+  themeCss?: { css: string; nonce: string };
+}
+
+const { locale, content, settings, preview = false, themeCss } = Astro.props;
+const t = TEXT[locale];
+const site = SITE.site;
+const siteName = site.name[locale] || site.name.ar || site.name.en;
+const pick = (value: { ar: string; en: string }) => value[locale].trim();
+const otherLocales = site.locales.filter((l) => l !== locale);
+const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+
+const title = pick(settings.seo.title) || siteName;
+const description = pick(settings.seo.description) || pick(content.tagline) || pick(content.intro);
+const headline = pick(content.headline);
+const tagline = pick(content.tagline);
+const intro = pick(content.intro);
+const milestones = content.milestones.filter((m) => pick(m.title));
+const highlights = content.highlights.filter((h) => pick(h.title) || pick(h.text));
+const readiness = content.readiness.filter((r) => pick(r.label));
+const launchAt = content.launchAt && content.showCountdown ? content.launchAt : null;
+const dateFormat = new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en-GB', { dateStyle: 'medium', timeZone: 'UTC' });
+const social = Object.entries(settings.social).filter(([, url]) => url);
+const contact = settings.contact;
+---
+
+<!doctype html>
+<html lang={locale} dir={dirOf(locale)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {preview ? <meta name="robots" content="noindex, nofollow" /> : null}
+    {!preview && origin && <link rel="canonical" href={`${origin}${pathFor(locale)}`} />}
+    {
+      !preview &&
+        origin &&
+        site.locales.map((l) => <link rel="alternate" hreflang={l} href={`${origin}${pathFor(l)}`} />)
+    }
+    {!preview && origin && <link rel="alternate" hreflang="x-default" href={`${origin}/`} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content={locale === 'ar' ? 'ar_AR' : 'en_US'} />
+    {origin && <meta property="og:url" content={`${origin}${pathFor(locale)}`} />}
+    <meta name="twitter:card" content="summary" />
+    {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    <link rel="stylesheet" href="/theme.css" />
+    {themeCss && <style is:inline nonce={themeCss.nonce} set:html={themeCss.css} />}
+    <script src="../scripts/theme.ts"></script>
+  </head>
+  <body>
+    {preview && <div class="preview-banner" role="status">{t.preview}</div>}
+    <header class="site-header">
+      <div class="container">
+        <a class="logo" href={pathFor(locale)} aria-label={siteName}>
+          {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <span>{siteName}</span>}
+        </a>
+        <div class="tools">
+          {
+            otherLocales.map((l) => (
+              <a class="tool" href={pathFor(l)} hreflang={l} lang={l}>
+                {TEXT[l].languageName}
+              </a>
+            ))
+          }
+          <button class="tool" type="button" data-theme-toggle aria-label={t.themeToggle} title={t.themeToggle}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero container reveal">
+        {headline && <h1>{headline}</h1>}
+        {tagline && <p class="tagline">{tagline}</p>}
+        {intro && <p class="intro">{intro}</p>}
+        <div class="glow-line" aria-hidden="true"></div>
+        {
+          launchAt && (
+            <ol class="countdown" data-countdown={launchAt} aria-label={t.countdown.label} role="timer">
+              {(['days', 'hours', 'minutes', 'seconds'] as const).map((unit) => (
+                <li>
+                  <strong data-unit={unit}>–</strong>
+                  <span>{t.countdown[unit]}</span>
+                </li>
+              ))}
+            </ol>
+          )
+        }
+      </section>
+
+      {
+        highlights.length > 0 && (
+          <section class="section container" aria-labelledby="highlights">
+            <h2 id="highlights" class="sr-only">{headline || siteName}</h2>
+            <div class="cards">
+              {highlights.map((h) => (
+                <article class="card">
+                  {pick(h.title) && <h3>{pick(h.title)}</h3>}
+                  {pick(h.text) && <p>{pick(h.text)}</p>}
+                </article>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        milestones.length > 0 && (
+          <section class="section container" aria-labelledby="milestones">
+            <h2 id="milestones">{t.milestones}</h2>
+            <ol class="timeline">
+              {milestones.map((m) => (
+                <li class={m.done ? 'done' : undefined}>
+                  <span class="dot" aria-hidden="true" />
+                  <span>{pick(m.title)}</span>
+                  <time datetime={m.date}>{dateFormat.format(new Date(`${m.date}T00:00:00Z`))}</time>
+                  {m.done && <span class="state">{t.done}</span>}
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
+
+      {
+        readiness.length > 0 && (
+          <section class="section container" aria-labelledby="progress">
+            <h2 id="progress">{t.progress}</h2>
+            <div class="bars">
+              {readiness.map((r, i) => (
+                <div class="bar">
+                  <label for={`bar-${i}`}>
+                    <span>{pick(r.label)}</span>
+                    <span>{r.percent}%</span>
+                  </label>
+                  <progress id={`bar-${i}`} max="100" value={r.percent}>
+                    {r.percent}%
+                  </progress>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      {
+        content.signup.enabled && (
+          <section class="section container" aria-labelledby="signup-title">
+            <form class="signup" data-signup data-turnstile-key={SITE.turnstileSiteKey} data-locale={locale} novalidate>
+              <h2 id="signup-title">{t.signupTitle}</h2>
+              <label for="contact">{t.signupLabel}</label>
+              <input id="contact" name="contact" type="text" dir="ltr" inputmode="email" autocomplete="email" required maxlength="254" placeholder={t.signupPlaceholder} aria-describedby="signup-message" />
+              <div class="honeypot" aria-hidden="true">
+                <label for="website">Website</label>
+                <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+              </div>
+              <label class="consent">
+                <input name="consent" type="checkbox" required />
+                <span>{t.consent.replace('{site}', siteName)}</span>
+              </label>
+              <div data-turnstile></div>
+              <button type="submit" data-label={t.submit} data-sending={t.sending} disabled={preview}>
+                {t.submit}
+              </button>
+              <p id="signup-message" class="message" role="status" aria-live="polite" data-messages={JSON.stringify({ thanks: t.thanks, ...t.errors })}></p>
+            </form>
+          </section>
+        )
+      }
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>© {siteName}</p>
+        <ul aria-label={t.contact}>
+          {contact.email && <li><a href={`mailto:${contact.email}`} dir="ltr">{contact.email}</a></li>}
+          {contact.phone && <li><a href={`tel:${contact.phone}`} dir="ltr">{contact.phone}</a></li>}
+          {contact.whatsapp && <li><a href={`https://wa.me/${contact.whatsapp.replace('+', '')}`} dir="ltr">WhatsApp</a></li>}
+          {pick(contact.address) && <li>{pick(contact.address)}</li>}
+          {social.map(([network, url]) => <li><a href={url} rel="noopener" target="_blank">{network === 'x' ? 'X' : network.charAt(0).toUpperCase() + network.slice(1)}</a></li>)}
+        </ul>
+      </div>
+    </footer>
+    <script src="../scripts/page.ts"></script>
+  </body>
+</html>

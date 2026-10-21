@@ -66,6 +66,25 @@ passkey, dashboard, edit and publish the Coming Soon page, sign out, sign in
 again. They need a PostgreSQL server at `HANTEX_TEST_DATABASE_URL`. If
 Playwright's own Chromium isn't installed, set `PLAYWRIGHT_CHROMIUM_PATH`.
 
+### The public site engine
+
+`apps/web` builds one site at a time. `pnpm --filter @hantex/web data` writes the
+site's build data (`src/data/site.json`, `public/theme.css`, `public/fonts/`,
+all git-ignored); `build` runs it first.
+
+- Without `HANTEX_BUILD_DATABASE_URL`, it uses fact-free defaults (the
+  Hantex Ultra name and logo, default Coming Soon text, the brand theme), and
+  sign-ups answer "unavailable".
+- With it (the read-only `hantex_build` user) and `SITE=<key>`, it builds
+  from that site's published content, and fails rather than publish anything
+  the content schemas or contrast checks reject. A site set to *live* fails
+  the build until the product templates exist and the owner approves launch.
+- `pnpm --filter @hantex/web e2e` builds the site from a throwaway database
+  with published test content and tests it in Chromium. Turnstile's
+  always-failing test key is used, so the test checks that a sign-up without
+  a passed security check is refused; the database side of sign-ups is
+  covered by `src/server/store.test.ts` as the public database user.
+
 ### Running the dashboard locally
 
 1. `pnpm db:local start`, then migrate, apply the database users and seed

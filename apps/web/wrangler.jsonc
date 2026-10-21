@@ -1,0 +1,22 @@
+// A public site's Worker, "site-<key>" (D-028). The publish workflow builds one site and deploys
+// it under that site's name. Not deployed: domains and deployment need the owner's approval.
+// Secrets (PREVIEW_SIGNING_SECRET, TURNSTILE_SECRET_KEY) are Worker secrets, never here.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "site-hantex-ultra",
+  "compatibility_date": "2026-10-01",
+  // node-postgres (sign-ups) needs Node.js APIs on Workers.
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "hyperdrive": [
+    {
+      // The insert-only public database user (hantex_public_app), caching disabled.
+      "binding": "HYPERDRIVE",
+      "id": "00000000000000000000000000000000",
+      // Local development only; override with CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.
+      "localConnectionString": "postgres://hantex_public_app:local-only@127.0.0.1:54329/postgres",
+    },
+  ],
+}

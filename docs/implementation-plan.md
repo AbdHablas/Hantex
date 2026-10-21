@@ -89,11 +89,15 @@ Next:
   - colours, fonts, shape, motion, mode and logo colours;
   - presets;
   - preview, publish and rollback.
-- [ ] Site engine (`apps/web`):
-  - builds any site, with the Coming Soon template and Hantex Ultra first;
-  - tested on desktop, tablet and mobile, in light and dark, RTL and LTR.
-- [ ] Launch-notification sign-up per site (email or WhatsApp), with consent, Turnstile and rate limits
-- [ ] SEO and social metadata for the Coming Soon state
+- [x] Site engine (`apps/web`, Astro on a site Worker):
+  - builds any one site from its published content with the read-only build user (`SITE=<key>`), or from fact-free defaults without a database;
+  - Coming Soon and maintenance templates; Arabic at `/`, English at `/en/` (per site languages); light/dark with a visitor toggle;
+  - the site's theme, logo and only the fonts it uses; no inline scripts or styles (strict CSP);
+  - browser tests in CI on desktop and mobile sizes, light and dark, RTL and LTR.
+- [x] Launch-notification sign-up per site (email or WhatsApp): consent, Turnstile (fails closed), honeypot, rate limit by hashed address, insert-only database user, same answer for repeats
+- [x] SEO and social metadata for the Coming Soon state: title and description from site settings, canonical address, `hreflang`, Open Graph
+- [x] Draft previews: signed per site by the dashboard, rendered by the site Worker, never cached or indexed
+- [ ] Preview button in the dashboard editors (the API and the site side are done)
 - [ ] Cloudflare deployment prepared for `hantex-admin` and `site-hantex-ultra`. Nothing is deployed without approval.
 - [ ] Phase 2 report and owner approval to continue
 
