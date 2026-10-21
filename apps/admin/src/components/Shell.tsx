@@ -1,36 +1,43 @@
-import type { Permission } from '@hantex/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Command } from 'cmdk';
 import {
   Building2,
   Check,
+  ChevronDown,
   ChevronRight,
   ChevronsUpDown,
-  FileText,
   Globe,
-  History,
   Languages,
-  LayoutDashboard,
   LogOut,
-  Mail,
   Menu as MenuIcon,
   Monitor,
   Moon,
-  Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  ScrollText,
   Search,
-  Settings2,
-  ShieldCheck,
   Sun,
-  UserRound,
-  Users,
 } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Navigate, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  useLocation,
+  useMatch,
+  useNavigate,
+  useParams,
+} from 'react-router';
 import { api } from '../lib/api';
 import { useBilingual, useI18n } from '../lib/i18n';
+import {
+  accountItems,
+  buildNavigation,
+  flatten,
+  locate,
+  type NavItem,
+  type NavSection,
+} from '../lib/navigation';
 import { meQueryKey, useMe, type Me, type MySite } from '../lib/session';
 import { useTheme } from '../lib/theme';
 import {
@@ -52,88 +59,74 @@ import {
   cn,
 } from './ui';
 
-interface NavEntry {
-  to: string;
-  label: string;
-  icon: ReactNode;
-  end?: boolean;
+/* ------------------------------------ Preferences ------------------------------------ */
+
+function stored<T>(key: string, fallback: T): T {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : (JSON.parse(value) as T);
+  } catch {
+    return fallback;
+  }
 }
 
-/** The pages this person may open: the current site's, then the platform's. */
-function useNavigation(me: Me | undefined, site: MySite | undefined) {
-  const { m } = useI18n();
-  const siteCan = (p: Permission) => site?.permissions.includes(p) === true;
-  const platformCan = (p: Permission) => me?.permissions.includes(p) === true;
-  const managesStaffSomewhere =
-    me?.sites.some((s) => s.permissions.includes('staff.view')) === true;
-  const base = site ? `/s/${site.key}` : '';
-  const siteEntries: NavEntry[] = site
-    ? [
-        { to: base, label: m.nav.overview, icon: <LayoutDashboard />, end: true },
-        ...(siteCan('comingSoon.view')
-          ? [{ to: `${base}/coming-soon`, label: m.nav.comingSoon, icon: <FileText /> }]
-          : []),
-        ...(siteCan('settings.view')
-          ? [{ to: `${base}/site-settings`, label: m.nav.settings, icon: <Settings2 /> }]
-          : []),
-        ...(siteCan('appearance.edit')
-          ? [{ to: `${base}/appearance`, label: m.nav.appearance, icon: <Palette /> }]
-          : []),
-        ...(siteCan('subscribers.view')
-          ? [{ to: `${base}/subscribers`, label: m.nav.subscribers, icon: <Mail /> }]
-          : []),
-        ...(siteCan('staff.view')
-          ? [{ to: `${base}/staff`, label: m.nav.staff, icon: <Users /> }]
-          : []),
-        ...(siteCan('audit.view')
-          ? [{ to: `${base}/audit`, label: m.nav.audit, icon: <History /> }]
-          : []),
-        { to: `${base}/settings`, label: m.nav.siteSettings, icon: <Globe /> },
-      ]
-    : [];
-  const platformEntries: NavEntry[] = [
-    { to: '/sites', label: m.nav.sites, icon: <Building2 /> },
-    ...(platformCan('staff.view')
-      ? [{ to: '/staff', label: m.nav.allStaff, icon: <Users /> }]
-      : []),
-    ...(managesStaffSomewhere || platformCan('roles.manage')
-      ? [{ to: '/roles', label: m.nav.roles, icon: <ShieldCheck /> }]
-      : []),
-    ...(platformCan('audit.view')
-      ? [{ to: '/audit', label: m.nav.fullAudit, icon: <ScrollText /> }]
-      : []),
-    { to: '/account', label: m.nav.account, icon: <UserRound /> },
-  ];
-  return { siteEntries, platformEntries };
+function store(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage may be unavailable (private mode); the choice then lasts for this visit.
+  }
 }
 
-function NavItem({ entry, collapsed }: { entry: NavEntry; collapsed: boolean }) {
+/* ---------------------------------------- Items ---------------------------------------- */
+
+/** The side facing the page from the sidebar: right in English, left in Arabic. */
+function useInward() {
+  return useI18n().dir === 'rtl' ? ('left' as const) : ('right' as const);
+}
+
+const itemClass = (active: boolean, collapsed: boolean) =>
+  cn(
+    'flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
+    collapsed && 'justify-center px-0',
+    active
+      ? 'bg-accent-soft font-medium text-accent-text'
+      : 'text-muted hover:bg-surface-2 hover:text-text',
+  );
+
+function ItemIcon({ children }: { children: ReactNode }) {
+  return (
+    <span aria-hidden className="flex shrink-0 [&>svg]:size-4.5">
+      {children}
+    </span>
+  );
+}
+
+function NavLinkItem({
+  item,
+  collapsed,
+  nested,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  nested?: boolean;
+}) {
+  const inward = useInward();
+  // The active state is worked out here (not with NavLink's class function) so the link keeps
+  // its classes when the tooltip wraps it.
+  const active = useMatch({ path: item.to, end: item.end ?? false }) !== null;
   const link = (
-    <NavLink
-      to={entry.to}
-      end={entry.end ?? false}
-      className={({ isActive }) =>
-        cn(
-          'group relative flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors',
-          collapsed && 'justify-center px-0',
-          isActive
-            ? 'bg-accent-soft font-medium text-accent-text'
-            : 'text-muted hover:bg-surface-2 hover:text-text',
-        )
-      }
+    <Link
+      to={item.to}
+      aria-current={active ? 'page' : undefined}
+      className={cn(itemClass(active, collapsed), nested && 'h-8 ps-9')}
     >
-      {() => (
-        <>
-          <span aria-hidden className="[&>svg]:size-4.5">
-            {entry.icon}
-          </span>
-          <span className={cn('truncate', collapsed && 'sr-only')}>{entry.label}</span>
-        </>
-      )}
-    </NavLink>
+      {!nested && <ItemIcon>{item.icon}</ItemIcon>}
+      <span className={cn('truncate', collapsed && 'sr-only')}>{item.label}</span>
+    </Link>
   );
   return collapsed ? (
-    <Tooltip content={entry.label} side="right">
+    <Tooltip content={item.label} side={inward}>
       {link}
     </Tooltip>
   ) : (
@@ -141,32 +134,150 @@ function NavItem({ entry, collapsed }: { entry: NavEntry; collapsed: boolean }) 
   );
 }
 
-function NavSection({
-  title,
-  entries,
-  collapsed,
-}: {
-  title: string;
-  entries: NavEntry[];
-  collapsed: boolean;
-}) {
-  if (entries.length === 0) return null;
+/** An item with sub-pages: expands in place, or opens a menu beside the collapsed rail. */
+function NavGroupItem({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+  const inward = useInward();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const children = item.children ?? [];
+  const active = children.some(
+    (child) => location.pathname === child.to || location.pathname.startsWith(`${child.to}/`),
+  );
+  const [open, setOpen] = useState(active);
+  const panelId = useId();
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
+
+  if (collapsed) {
+    return (
+      <DropdownMenu
+        side={inward}
+        align="start"
+        label={item.label}
+        trigger={
+          <button type="button" aria-label={item.label} className={itemClass(active, true)}>
+            <ItemIcon>{item.icon}</ItemIcon>
+          </button>
+        }
+      >
+        <MenuLabel>{item.label}</MenuLabel>
+        {children.map((child) => (
+          <MenuItem key={child.id} onSelect={() => void navigate(child.to)}>
+            {child.icon}
+            {child.label}
+          </MenuItem>
+        ))}
+      </DropdownMenu>
+    );
+  }
   return (
-    <div className="flex flex-col gap-0.5">
-      <p
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((o) => !o)}
+        className={cn(itemClass(false, false), active && 'font-medium text-text')}
+      >
+        <ItemIcon>{item.icon}</ItemIcon>
+        <span className="flex-1 truncate text-start">{item.label}</span>
+        <ChevronDown
+          aria-hidden
+          className={cn('size-4 transition-transform', !open && '-rotate-90 rtl:rotate-90')}
+        />
+      </button>
+      <div
+        id={panelId}
+        inert={!open}
         className={cn(
-          'mb-1 px-2.5 text-[0.7rem] font-semibold tracking-wider text-muted uppercase',
-          collapsed && 'sr-only',
+          'grid transition-[grid-template-rows] duration-200',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
-        {title}
-      </p>
-      {entries.map((entry) => (
-        <NavItem key={entry.to} entry={entry} collapsed={collapsed} />
-      ))}
+        <div className="flex flex-col gap-0.5 overflow-hidden pt-0.5">
+          {children.map((child) => (
+            <NavLinkItem key={child.id} item={child} collapsed={false} nested />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+/** A labelled group of items; its heading folds it away (remembered per section). */
+function NavSectionBlock({
+  section,
+  collapsed,
+  folded,
+  onToggle,
+}: {
+  section: NavSection;
+  collapsed: boolean;
+  folded: boolean;
+  onToggle: () => void;
+}) {
+  const { m, format } = useI18n();
+  const headingId = useId();
+  const panelId = useId();
+  const items = section.items.map((item) =>
+    item.children ? (
+      <NavGroupItem key={item.id} item={item} collapsed={collapsed} />
+    ) : (
+      <NavLinkItem key={item.id} item={item} collapsed={collapsed} />
+    ),
+  );
+  if (!section.label) return <div className="flex flex-col gap-0.5">{items}</div>;
+  if (collapsed) {
+    return (
+      <div role="group" aria-label={section.label} className="flex flex-col gap-0.5">
+        <span aria-hidden className="mx-2 mb-1 h-px bg-border" />
+        {items}
+      </div>
+    );
+  }
+  return (
+    <div role="group" aria-labelledby={headingId} className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        aria-expanded={!folded}
+        aria-controls={panelId}
+        aria-label={format(m.nav.toggleSection, { section: section.label })}
+        onClick={onToggle}
+        className="group flex items-center gap-1 rounded-md px-2.5 py-1 text-start"
+      >
+        <span
+          id={headingId}
+          className="flex-1 truncate text-[0.7rem] font-semibold tracking-wider text-muted uppercase group-hover:text-text"
+        >
+          {section.label}
+          {section.hint && (
+            <span className="ms-1.5 font-normal tracking-normal normal-case">· {section.hint}</span>
+          )}
+        </span>
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            'size-3.5 text-muted opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100',
+            folded && '-rotate-90 opacity-100 rtl:rotate-90',
+          )}
+        />
+      </button>
+      <div
+        id={panelId}
+        inert={folded}
+        className={cn(
+          'grid transition-[grid-template-rows] duration-200',
+          folded ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]',
+        )}
+      >
+        <div className="flex flex-col gap-0.5 overflow-hidden">{items}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------ Website switcher ------------------------------------ */
 
 const modeTone = (mode: string) =>
   mode === 'live' ? 'success' : mode === 'maintenance' ? 'danger' : 'warning';
@@ -186,21 +297,35 @@ function SiteMark({ site, className }: { site: MySite; className?: string }) {
   );
 }
 
-/** The website switcher: a menu of the person's websites with their mode. */
+/**
+ * Chooses the website the Website sections apply to. Switching keeps the current page when
+ * the other website has it (e.g. Appearance → Appearance), otherwise opens its overview.
+ */
 function SiteSwitcher({ me, collapsed }: { me: Me; collapsed: boolean }) {
+  const inward = useInward();
   const { m } = useI18n();
   const bi = useBilingual();
   const { siteKey } = useParams();
   const navigate = useNavigate();
+  const sub = useMatch('/s/:siteKey/*')?.params['*'] ?? '';
   const current = me.sites.find((s) => s.key === siteKey);
   if (me.sites.length === 0) return null;
+  const switchTo = (site: MySite) => {
+    const target = `/s/${site.key}${sub ? `/${sub}` : ''}`;
+    const available = flatten(
+      buildNavigation(m, me, site).flatMap((section) => section.items),
+    ).some((item) => item.to === target);
+    void navigate(available ? target : `/s/${site.key}`);
+  };
   return (
     <DropdownMenu
       align="start"
+      side={collapsed ? inward : 'bottom'}
+      label={m.nav.chooseSite}
       trigger={
         <button
           type="button"
-          aria-label={m.nav.chooseSite}
+          aria-label={current ? `${m.nav.currentSite}: ${bi(current.name)}` : m.nav.chooseSite}
           className={cn(
             'flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-2 text-start shadow-sm transition hover:bg-surface-2',
             collapsed && 'justify-center border-transparent p-1 shadow-none',
@@ -216,14 +341,12 @@ function SiteSwitcher({ me, collapsed }: { me: Me; collapsed: boolean }) {
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1">
+                <span className="block text-[0.65rem] font-medium tracking-wider text-muted uppercase">
+                  {m.nav.sectionWebsite}
+                </span>
                 <span className="block truncate text-sm font-medium">
                   {current ? bi(current.name) : m.nav.chooseSite}
                 </span>
-                {current && (
-                  <span className="block truncate text-xs text-muted">
-                    {m.mode[current.mode] ?? current.mode}
-                  </span>
-                )}
               </span>
               <ChevronsUpDown className="size-4 text-muted" aria-hidden />
             </>
@@ -233,14 +356,14 @@ function SiteSwitcher({ me, collapsed }: { me: Me; collapsed: boolean }) {
     >
       <MenuLabel>{m.nav.sites}</MenuLabel>
       {me.sites.map((site) => (
-        <MenuItem key={site.key} onSelect={() => void navigate(`/s/${site.key}`)}>
+        <MenuItem key={site.key} onSelect={() => switchTo(site)}>
           <SiteMark site={site} className="size-6 rounded-md text-xs" />
           <span className="flex-1 truncate">
             {bi(site.name)}
             {site.archived ? ` (${m.sites['archived'] ?? ''})` : ''}
           </span>
           {site.key === siteKey ? (
-            <Check className="text-accent-text!" aria-hidden />
+            <Check className="text-accent-text!" aria-label={m.nav.currentSite} />
           ) : (
             <Badge tone={modeTone(site.mode)}>{m.mode[site.mode] ?? site.mode}</Badge>
           )}
@@ -249,7 +372,64 @@ function SiteSwitcher({ me, collapsed }: { me: Me; collapsed: boolean }) {
       <MenuSeparator />
       <MenuItem onSelect={() => void navigate('/sites')}>
         <Building2 aria-hidden />
-        {m.nav.allWebsites}
+        {m.nav.manageWebsites}
+      </MenuItem>
+    </DropdownMenu>
+  );
+}
+
+/* ---------------------------------- Account and preferences ---------------------------------- */
+
+function UserMenu({ me, collapsed, signOut }: { me: Me; collapsed: boolean; signOut: () => void }) {
+  const inward = useInward();
+  const { m } = useI18n();
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu
+      side={collapsed ? inward : 'top'}
+      align={collapsed ? 'end' : 'start'}
+      label={m.nav.userMenu}
+      trigger={
+        <button
+          type="button"
+          aria-label={m.nav.userMenu}
+          className={cn(
+            'flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-2/60 p-2 text-start transition hover:bg-surface-2',
+            collapsed && 'justify-center border-transparent bg-transparent p-0',
+          )}
+        >
+          <Avatar name={me.name || me.email} />
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate text-sm font-medium">{me.name}</span>
+                <span className="block truncate text-xs text-muted" dir="ltr">
+                  {me.email}
+                </span>
+              </span>
+              <ChevronsUpDown className="size-4 text-muted" aria-hidden />
+            </>
+          )}
+        </button>
+      }
+    >
+      <div className="px-2.5 py-2">
+        <p className="truncate font-medium">{me.name}</p>
+        <p className="truncate text-xs text-muted" dir="ltr">
+          {me.email}
+        </p>
+      </div>
+      <MenuSeparator />
+      {accountItems(m).map((item) => (
+        <MenuItem key={item.id} onSelect={() => void navigate(item.to)}>
+          {item.icon}
+          {item.label}
+        </MenuItem>
+      ))}
+      <MenuSeparator />
+      <MenuItem onSelect={signOut}>
+        <LogOut aria-hidden />
+        {m.auth.signOut}
       </MenuItem>
     </DropdownMenu>
   );
@@ -261,6 +441,7 @@ function ThemeMenu() {
   const icon = choice === 'dark' ? <Moon /> : choice === 'light' ? <Sun /> : <Monitor />;
   return (
     <DropdownMenu
+      label={m.theme}
       trigger={
         <button
           type="button"
@@ -300,18 +481,20 @@ function LanguageButton() {
   );
 }
 
-/** ⌘K / Ctrl+K: jump to any page or website, or change preferences. */
+/* ------------------------------------ Command palette ------------------------------------ */
+
+/** Ctrl/⌘ + K: every page the person may open, every website, and preferences. */
 function CommandPalette({
   open,
   onClose,
   me,
-  entries,
+  sections,
   signOut,
 }: {
   open: boolean;
   onClose: () => void;
   me: Me;
-  entries: NavEntry[];
+  sections: NavSection[];
   signOut: () => void;
 }) {
   const { m, locale, setLocale } = useI18n();
@@ -333,6 +516,14 @@ function CommandPalette({
     'flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-text data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent-text [&_svg]:size-4 [&_svg]:text-muted';
   const group =
     'mb-1 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted';
+  const pageGroups = [
+    ...sections.map((section) => ({
+      id: section.id,
+      heading: section.label ?? m.nav.sectionWebsite,
+      items: flatten(section.items),
+    })),
+    { id: 'account', heading: m.nav.account, items: accountItems(m) },
+  ];
   return (
     <dialog
       ref={ref}
@@ -358,20 +549,23 @@ function CommandPalette({
             <Command.Empty className="px-3 py-8 text-center text-sm text-muted">
               {m.nav.noResults}
             </Command.Empty>
-            <Command.Group heading={m.nav.pages} className={group}>
-              {entries.map((entry) => (
-                <Command.Item
-                  key={entry.to}
-                  value={`${entry.label} ${entry.to}`}
-                  onSelect={() => run(() => void navigate(entry.to))}
-                  className={item}
-                >
-                  {entry.icon}
-                  {entry.label}
-                </Command.Item>
-              ))}
-            </Command.Group>
-            {me.sites.length > 0 && (
+            {pageGroups.map((g) => (
+              <Command.Group key={g.id} heading={g.heading} className={group}>
+                {g.items.map((entry) => (
+                  <Command.Item
+                    key={entry.to}
+                    value={`${g.heading} ${entry.label} ${entry.to}`}
+                    keywords={entry.keywords ?? []}
+                    onSelect={() => run(() => void navigate(entry.to))}
+                    className={item}
+                  >
+                    {entry.icon}
+                    {entry.label}
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            ))}
+            {me.sites.length > 1 && (
               <Command.Group heading={m.nav.sites} className={group}>
                 {me.sites.map((site) => (
                   <Command.Item
@@ -422,23 +616,44 @@ function CommandPalette({
   );
 }
 
+/* ---------------------------------------- Sidebar ---------------------------------------- */
+
 /** The sidebar's contents, shared by the desktop sidebar and the mobile drawer. */
 function SidebarContent({
   me,
-  site,
+  sections,
   collapsed,
   signOut,
 }: {
   me: Me;
-  site: MySite | undefined;
+  sections: NavSection[];
   collapsed: boolean;
   signOut: () => void;
 }) {
   const { m } = useI18n();
-  const bi = useBilingual();
-  const { siteEntries, platformEntries } = useNavigation(me ?? undefined, site);
+  const location = useLocation();
+  const [folded, setFolded] = useState<string[]>(() => stored('hantex.nav.folded', []));
+  const here = locate(sections, accountItems(m), location.pathname);
+  const siteSections = sections.filter((s) => s.scope === 'site');
+  const platformSections = sections.filter((s) => s.scope === 'platform');
+  const toggle = (id: string) =>
+    setFolded((current) => {
+      const next = current.includes(id) ? current.filter((f) => f !== id) : [...current, id];
+      store('hantex.nav.folded', next);
+      return next;
+    });
+  const block = (section: NavSection) => (
+    <NavSectionBlock
+      key={section.id}
+      section={section}
+      collapsed={collapsed}
+      // The section holding the current page always stays open.
+      folded={folded.includes(section.id) && here?.section?.id !== section.id}
+      onToggle={() => toggle(section.id)}
+    />
+  );
   return (
-    <div className="flex h-full flex-col gap-5">
+    <div className="flex h-full flex-col gap-4">
       <NavLink
         to="/"
         className={cn('flex items-center gap-2.5 px-1', collapsed && 'justify-center px-0')}
@@ -451,41 +666,33 @@ function SidebarContent({
           </span>
         )}
       </NavLink>
-      <SiteSwitcher me={me} collapsed={collapsed} />
-      <nav aria-label={m.appName} className="-mx-1 flex flex-1 flex-col gap-5 overflow-y-auto px-1">
-        {site && <NavSection title={bi(site.name)} entries={siteEntries} collapsed={collapsed} />}
-        <NavSection title={m.nav.platform} entries={platformEntries} collapsed={collapsed} />
-      </nav>
-      <div
-        className={cn(
-          'flex items-center gap-2.5 rounded-xl border border-border bg-surface-2/60 p-2',
-          collapsed && 'flex-col border-transparent bg-transparent p-0',
-        )}
+      <nav
+        aria-label={m.nav.mainNavigation}
+        className="-mx-1 flex flex-1 flex-col gap-4 overflow-y-auto px-1"
       >
-        <Avatar name={me.name || me.email} />
-        {!collapsed && (
-          <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-sm font-medium">{me.name}</span>
-            <span className="block truncate text-xs text-muted" dir="ltr">
-              {me.email}
-            </span>
-          </span>
+        {me.sites.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <SiteSwitcher me={me} collapsed={collapsed} />
+            {siteSections.length > 0 && (
+              <div className="flex flex-col gap-4">{siteSections.map(block)}</div>
+            )}
+          </div>
         )}
-        <IconButton label={m.auth.signOut} onClick={signOut}>
-          <LogOut aria-hidden />
-        </IconButton>
-      </div>
+        {platformSections.length > 0 && (
+          <div className="mt-auto flex flex-col gap-4 border-t border-border pt-4">
+            {platformSections.map(block)}
+          </div>
+        )}
+      </nav>
+      <UserMenu me={me} collapsed={collapsed} signOut={signOut} />
     </div>
   );
 }
 
-function readCollapsed() {
-  try {
-    return localStorage.getItem('hantex.sidebar') === 'collapsed';
-  } catch {
-    return false;
-  }
-}
+/* ----------------------------------------- Shell ----------------------------------------- */
+
+const prefersRail = () =>
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 1279px)').matches;
 
 /** Signed-in layout: sidebar, top bar with breadcrumbs and search, and the page. */
 export function Shell() {
@@ -496,7 +703,8 @@ export function Shell() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  // Tablets start with the icon rail; a choice made with the toggle is remembered.
+  const [collapsed, setCollapsed] = useState(() => stored('hantex.sidebar', prefersRail()));
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
@@ -512,14 +720,6 @@ export function Shell() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('hantex.sidebar', collapsed ? 'collapsed' : 'expanded');
-    } catch {
-      // Storage may be unavailable (private mode); the choice then lasts for this visit.
-    }
-  }, [collapsed]);
-
   // The drawer closes when the page changes.
   useEffect(() => setDrawerOpen(false), [location.pathname]);
   useEffect(() => {
@@ -530,7 +730,7 @@ export function Shell() {
   }, [drawerOpen]);
 
   const site = me?.sites.find((s) => s.key === siteKey);
-  const { siteEntries, platformEntries } = useNavigation(me ?? undefined, site);
+  const sections = useMemo(() => (me ? buildNavigation(m, me, site) : []), [m, me, site]);
 
   if (isPending) {
     return (
@@ -546,11 +746,17 @@ export function Shell() {
     queryClient.clear();
     void navigate('/sign-in', { replace: true });
   };
+  const toggleRail = () =>
+    setCollapsed((c) => {
+      store('hantex.sidebar', !c);
+      return !c;
+    });
 
-  const entries = [...siteEntries, ...platformEntries];
-  const currentPage = [...entries]
-    .sort((a, b) => b.to.length - a.to.length)
-    .find((e) => location.pathname === e.to || location.pathname.startsWith(`${e.to}/`));
+  const here = locate(sections, accountItems(m), location.pathname);
+  const crumbs = [
+    here?.section?.scope === 'platform' ? m.nav.sectionAdmin : site ? bi(site.name) : null,
+    here?.section?.scope === 'site' ? here.section.label : null,
+  ].filter((c): c is string => Boolean(c));
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
   return (
@@ -571,7 +777,7 @@ export function Shell() {
         >
           <SidebarContent
             me={me}
-            site={site}
+            sections={sections}
             collapsed={collapsed}
             signOut={() => void signOut()}
           />
@@ -588,7 +794,12 @@ export function Shell() {
           className="m-0 h-dvh max-h-dvh w-72 max-w-[85vw] border-e border-border bg-surface p-4 text-text shadow-lg md:hidden"
         >
           {drawerOpen && (
-            <SidebarContent me={me} site={site} collapsed={false} signOut={() => void signOut()} />
+            <SidebarContent
+              me={me}
+              sections={sections}
+              collapsed={false}
+              signOut={() => void signOut()}
+            />
           )}
         </dialog>
 
@@ -605,7 +816,7 @@ export function Shell() {
               <IconButton
                 label={collapsed ? m.nav.expand : m.nav.collapse}
                 className="hidden md:inline-flex"
-                onClick={() => setCollapsed((c) => !c)}
+                onClick={toggleRail}
               >
                 {collapsed ? (
                   <PanelLeftOpen aria-hidden className="rtl:-scale-x-100" />
@@ -615,20 +826,20 @@ export function Shell() {
               </IconButton>
               <nav aria-label={m.nav.breadcrumb} className="hidden min-w-0 sm:block">
                 <ol className="flex items-center gap-1.5 text-sm text-muted">
-                  <li className="truncate">{site ? bi(site.name) : m.nav.platform}</li>
-                  {currentPage && (
-                    <>
-                      <li aria-hidden>
-                        <ChevronRight className="size-3.5 rtl:-scale-x-100" />
-                      </li>
-                      <li aria-current="page" className="truncate font-medium text-text">
-                        {currentPage.label}
-                      </li>
-                    </>
+                  {crumbs.map((crumb) => (
+                    <li key={crumb} className="flex items-center gap-1.5">
+                      <span className="truncate">{crumb}</span>
+                      <ChevronRight aria-hidden className="size-3.5 rtl:-scale-x-100" />
+                    </li>
+                  ))}
+                  {here && (
+                    <li aria-current="page" className="truncate font-medium text-text">
+                      {here.item.label}
+                    </li>
                   )}
                 </ol>
               </nav>
-              {site && (
+              {site && here?.section?.scope === 'site' && (
                 <span className="hidden lg:inline-flex">
                   <Badge tone={modeTone(site.mode)} dot>
                     {m.mode[site.mode] ?? site.mode}
@@ -639,7 +850,8 @@ export function Shell() {
                 <button
                   type="button"
                   onClick={() => setPaletteOpen(true)}
-                  className="flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 text-sm text-muted transition hover:border-muted sm:w-64"
+                  aria-label={m.nav.search}
+                  className="flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 text-sm text-muted transition hover:border-muted sm:w-56 lg:w-64"
                   aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
                 >
                   <Search className="size-4" aria-hidden />
@@ -667,7 +879,7 @@ export function Shell() {
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}
           me={me}
-          entries={entries}
+          sections={sections}
           signOut={() => void signOut()}
         />
         <ConfirmHost />

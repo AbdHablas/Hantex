@@ -759,7 +759,7 @@ export function AuditLog({ scope }: { scope: 'site' | 'platform' }) {
   return (
     <>
       <PageHeader
-        title={scope === 'site' ? m.audit.title : m.nav.fullAudit}
+        title={scope === 'site' ? m.nav.activity : m.nav.auditLog}
         intro={scope === 'site' && site ? bi(site.name) : undefined}
       />
       <Card>

@@ -94,7 +94,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await popup.close();
 
   // Site settings: publish a contact email.
-  await page.getByRole('link', { name: 'إعدادات الموقع', exact: true }).click();
+  await page.getByRole('link', { name: 'البحث والتواصل', exact: true }).click();
   await page.getByLabel('البريد الإلكتروني').fill('hello@example.test');
   await page.getByRole('button', { name: 'نشر', exact: true }).click();
   await confirm(page);
@@ -111,7 +111,9 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByRole('alert')).toContainText('النص على خلفية الصفحة');
 
   // Recovery codes need a fresh sign-in, which this is.
-  await page.getByRole('link', { name: 'حسابي', exact: true }).click();
+  // Personal pages live in the account menu at the foot of the sidebar.
+  await page.getByRole('button', { name: 'قائمة الحساب' }).click();
+  await page.getByRole('menuitem', { name: 'حسابي' }).click();
   await page.getByRole('button', { name: 'إنشاء رموز استرداد جديدة' }).click();
   await confirm(page, true);
   await expect(page.getByText('دوّن هذه الرموز الآن')).toBeVisible();
@@ -123,7 +125,8 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByRole('heading', { name: 'My account' })).toBeVisible();
 
   // Sign out, then back in with the same passkey.
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.getByRole('button', { name: 'Sign in with a passkey' }).click();
   await expect(page).toHaveURL(/\/s\/hantex-ultra$/);

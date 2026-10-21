@@ -651,9 +651,14 @@ export function DropdownMenu({
   trigger,
   children,
   align = 'end',
+  side = 'bottom',
+  label,
 }: {
   trigger: ReactNode;
   children: ReactNode;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  /** Names the menu for assistive technology. */
+  label?: string;
   align?: 'start' | 'end';
 }) {
   const { dir } = useI18n();
@@ -663,7 +668,10 @@ export function DropdownMenu({
       <Menu.Portal>
         <Menu.Content
           align={align}
+          side={side}
           sideOffset={6}
+          collisionPadding={8}
+          aria-label={label}
           className="z-50 min-w-56 rounded-xl border border-border bg-surface p-1.5 text-sm text-text shadow-lg animate-pop-in"
         >
           {children}

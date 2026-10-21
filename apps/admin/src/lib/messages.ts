@@ -64,33 +64,43 @@ const en = {
   },
 
   nav: {
+    // Website pages
     overview: 'Overview',
     comingSoon: 'Coming Soon page',
-    settings: 'Site settings',
     appearance: 'Appearance',
-    subscribers: 'Launch sign-ups',
-    staff: 'Staff',
-    audit: 'Audit log',
-    siteSettings: 'Site',
-    platform: 'Platform',
+    subscribers: 'Sign-ups',
+    general: 'General',
+    seoContact: 'SEO & contact',
+    team: 'Team',
+    activity: 'Activity log',
+    // Administration (all websites)
     sites: 'Websites',
-    allStaff: 'All staff',
-    roles: 'Roles',
-    fullAudit: 'Full audit log',
+    people: 'People',
+    roles: 'Roles & permissions',
+    auditLog: 'Audit log',
     account: 'My account',
+    // Sections
+    sectionWebsite: 'Website',
+    sectionContent: 'Content & design',
+    sectionAudience: 'Audience',
+    sectionSettings: 'Website settings',
+    sectionAdmin: 'Administration',
+    sectionAdminHelp: 'All websites',
+    toggleSection: 'Show or hide {section}',
+    // Shell
     menu: 'Menu',
+    mainNavigation: 'Main navigation',
     chooseSite: 'Choose a website',
     currentSite: 'Current website',
+    manageWebsites: 'Manage websites',
     dashboard: 'Dashboard',
     search: 'Search or jump to…',
     searchPlaceholder: 'Type a page, website or action…',
     noResults: 'Nothing matches.',
-    pages: 'Pages',
     actions: 'Actions',
     collapse: 'Collapse sidebar',
     expand: 'Expand sidebar',
-    allWebsites: 'All websites',
-    switchLanguage: 'Switch to {language}',
+    userMenu: 'Account menu',
     breadcrumb: 'Breadcrumb',
   },
 
@@ -134,7 +144,7 @@ const en = {
 
   docs: {
     'coming-soon': 'Coming Soon page',
-    'site-settings': 'Site settings',
+    'site-settings': 'SEO & contact',
     theme: 'Appearance',
   } as Record<string, string>,
 
@@ -224,8 +234,8 @@ const en = {
   },
 
   staff: {
-    title: 'Staff on this website',
-    platformTitle: 'All staff',
+    title: 'Team',
+    platformTitle: 'People',
     name: 'Name',
     email: 'Email',
     role: 'Role',
@@ -251,7 +261,7 @@ const en = {
     enable: 'Enable account',
     disableConfirm: 'Disable {name}’s account? They are signed out of every website immediately.',
     addExisting: 'Give an existing staff member access',
-    allSitesNote: 'All-sites roles are changed from All staff.',
+    allSitesNote: 'All-sites roles are changed under Administration → People.',
     you: 'you',
   },
 
@@ -279,7 +289,7 @@ const en = {
   } as Record<string, string>,
 
   site: {
-    title: 'Website settings',
+    title: 'General settings',
     details: 'Details',
     domains: 'Domains',
     domainsIntro:
@@ -300,7 +310,7 @@ const en = {
   } as Record<string, string>,
 
   settings: {
-    title: 'Site settings',
+    title: 'SEO & contact',
     intro:
       'Contact details, social links and the text search engines show. Leave a field empty to hide it. Publishing rebuilds this website.',
     seo: 'Search engines and sharing',
@@ -479,10 +489,10 @@ const en = {
     'self-change': 'You can’t change your own access.',
     'last-owner': 'The last Owner can’t be removed, disabled or demoted.',
     'owner-all-sites': 'The Owner role always covers all websites.',
-    'mixed-scope': 'This person has an all-sites role. Change it from All staff.',
+    'mixed-scope': 'This person has an all-sites role. Change it under Administration → People.',
     'exceeds-own-scope': 'Only staff with an all-sites role can give all-sites access.',
     'duplicate-site': 'This person already has a role on this website.',
-    'all-sites-role': 'This person has an all-sites role. Change it from All staff.',
+    'all-sites-role': 'This person has an all-sites role. Change it under Administration → People.',
     'email-in-use': 'This email already belongs to a staff member.',
     'invitation-pending': 'This email already has a pending invitation.',
     'unknown-role': 'That role no longer exists.',
@@ -576,31 +586,37 @@ const ar: Messages = {
   nav: {
     overview: 'نظرة عامة',
     comingSoon: 'صفحة «قريبًا»',
-    settings: 'إعدادات الموقع',
     appearance: 'المظهر',
-    subscribers: 'المشتركون في إشعار الإطلاق',
-    staff: 'الفريق',
-    audit: 'سجل التدقيق',
-    siteSettings: 'الموقع',
-    platform: 'المنصة',
+    subscribers: 'المشتركون',
+    general: 'عام',
+    seoContact: 'البحث والتواصل',
+    team: 'الفريق',
+    activity: 'سجل النشاط',
     sites: 'المواقع',
-    allStaff: 'كل الفريق',
-    roles: 'الأدوار',
-    fullAudit: 'سجل التدقيق الكامل',
+    people: 'الأشخاص',
+    roles: 'الأدوار والصلاحيات',
+    auditLog: 'سجل التدقيق',
     account: 'حسابي',
+    sectionWebsite: 'الموقع',
+    sectionContent: 'المحتوى والتصميم',
+    sectionAudience: 'الجمهور',
+    sectionSettings: 'إعدادات الموقع',
+    sectionAdmin: 'الإدارة',
+    sectionAdminHelp: 'كل المواقع',
+    toggleSection: 'إظهار أو إخفاء {section}',
     menu: 'القائمة',
+    mainNavigation: 'التنقل الرئيسي',
     chooseSite: 'اختر موقعًا',
     currentSite: 'الموقع الحالي',
+    manageWebsites: 'إدارة المواقع',
     dashboard: 'لوحة التحكم',
     search: 'ابحث أو انتقل إلى…',
     searchPlaceholder: 'اكتب اسم صفحة أو موقع أو إجراء…',
     noResults: 'لا توجد نتائج.',
-    pages: 'الصفحات',
     actions: 'الإجراءات',
     collapse: 'طيّ الشريط الجانبي',
     expand: 'توسيع الشريط الجانبي',
-    allWebsites: 'كل المواقع',
-    switchLanguage: 'التبديل إلى {language}',
+    userMenu: 'قائمة الحساب',
     breadcrumb: 'مسار التنقل',
   },
 
@@ -644,7 +660,7 @@ const ar: Messages = {
 
   docs: {
     'coming-soon': 'صفحة «قريبًا»',
-    'site-settings': 'إعدادات الموقع',
+    'site-settings': 'البحث والتواصل',
     theme: 'المظهر',
   },
 
@@ -733,8 +749,8 @@ const ar: Messages = {
   },
 
   staff: {
-    title: 'فريق هذا الموقع',
-    platformTitle: 'كل الفريق',
+    title: 'الفريق',
+    platformTitle: 'الأشخاص',
     name: 'الاسم',
     email: 'البريد الإلكتروني',
     role: 'الدور',
@@ -759,7 +775,7 @@ const ar: Messages = {
     enable: 'تفعيل الحساب',
     disableConfirm: 'تعطيل حساب {name}؟ سيُسجَّل خروجه من كل المواقع فورًا.',
     addExisting: 'منح عضو حالي وصولًا',
-    allSitesNote: 'تُغيَّر أدوار «كل المواقع» من صفحة «كل الفريق».',
+    allSitesNote: 'تُغيَّر أدوار «كل المواقع» من «الإدارة ← الأشخاص».',
     you: 'أنت',
   },
 
@@ -785,7 +801,7 @@ const ar: Messages = {
   },
 
   site: {
-    title: 'إعدادات الموقع',
+    title: 'الإعدادات العامة',
     details: 'التفاصيل',
     domains: 'النطاقات',
     domainsIntro:
@@ -806,7 +822,7 @@ const ar: Messages = {
   },
 
   settings: {
-    title: 'إعدادات الموقع',
+    title: 'البحث والتواصل',
     intro:
       'بيانات التواصل وروابط التواصل الاجتماعي والنص الذي تعرضه محركات البحث. اترك الحقل فارغًا لإخفائه. النشر يعيد بناء هذا الموقع.',
     seo: 'محركات البحث والمشاركة',
@@ -984,10 +1000,10 @@ const ar: Messages = {
     'self-change': 'لا يمكنك تغيير وصولك بنفسك.',
     'last-owner': 'لا يمكن إزالة آخر مالك أو تعطيله أو تخفيض دوره.',
     'owner-all-sites': 'دور المالك يشمل كل المواقع دائمًا.',
-    'mixed-scope': 'لهذا الشخص دور على كل المواقع. غيّره من صفحة «كل الفريق».',
+    'mixed-scope': 'لهذا الشخص دور على كل المواقع. غيّره من «الإدارة ← الأشخاص».',
     'exceeds-own-scope': 'لا يمنح وصولًا لكل المواقع إلا من يملك دورًا على كل المواقع.',
     'duplicate-site': 'لهذا الشخص دور في هذا الموقع بالفعل.',
-    'all-sites-role': 'لهذا الشخص دور على كل المواقع. غيّره من صفحة «كل الفريق».',
+    'all-sites-role': 'لهذا الشخص دور على كل المواقع. غيّره من «الإدارة ← الأشخاص».',
     'email-in-use': 'هذا البريد مستخدم لعضو في الفريق.',
     'invitation-pending': 'لهذا البريد دعوة معلّقة بالفعل.',
     'unknown-role': 'هذا الدور لم يعد موجودًا.',

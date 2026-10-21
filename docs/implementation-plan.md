@@ -90,6 +90,7 @@ Next:
 - [x] Sign-up privacy note, edited per site in Site settings (empty hides it)
 - [x] Nightly encrypted backup (`backup.yml`) and health check (`health.yml`) workflows, inactive until configured
 - [x] Interface upgrade: dashboard components on Radix primitives (shadcn/ui style, CSP-safe), collapsible sidebar, Ctrl/Cmd+K command palette, in-app confirmations and notifications, overview charts (daily sign-ups, email/WhatsApp split); public site with animated hero and countdown, scroll reveals (reduced-motion aware), product categories and FAQ from the dashboard, email/WhatsApp switch on the sign-up form
+- [x] Navigation restructured ([`dashboard-navigation.md`](dashboard-navigation.md)): website switcher, then Overview · Content & design · Audience · Website settings; Administration (all websites) apart; personal pages in the account menu; one config drives sidebar, mobile menu, breadcrumbs and command palette; role-based, foldable sections, icon rail on tablets, slide-in menu on phones
 - [x] Browser test of the whole publish chain: dashboard publish → the site build reads it from the database
 - [x] Site engine (`apps/web`, Astro on a site Worker):
   - builds any one site from its published content with the read-only build user (`SITE=<key>`), or from fact-free defaults without a database;
