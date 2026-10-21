@@ -62,17 +62,145 @@ The Studio is built around this difference ([section 6](#6-how-the-studio-works)
 2. It says which kind of result those inputs can honestly produce.
 3. It labels every result by how it was made.
 
-## 3–5. Options compared, recommendation, providers and prices
+## 3. Options compared
 
-*Being completed from the provider research now in progress (2026-10-21):*
+| Method | Made from | Faithful to the real product? | What you provide | Cost per product | Best for | Weak at | Label |
+|--------|-----------|-------------------------------|------------------|------------------|----------|---------|-------|
+| CAD conversion | The manufacturer's 3D design files (STEP/IGES) | **Exact** shape; finishes matched to photos | CAD file, photos for the finishes | US$0 (free tools) | Switches, sockets, frames, modules: rigid, precise parts | Needs the files; gloss and texture matched by hand | Exact (CAD) |
+| Photogrammetry | 50–150 overlapping photos, or a video | **Measured**, within the capture's accuracy | A full capture in controlled light | US$0 with free tools on suitable hardware ([5.1](#51-capture-tools-for-measured-models)) | Lamps, fittings, textured accessories | Glossy, plain white and transparent surfaces; very small details; needs clean-up | Measured |
+| Gaussian splatting | Many photos, or a video | Real appearance, but no clean surface | A full capture | US$0 with free tools ([5.1](#51-capture-tools-for-measured-models)) | Showcase views, reflective finishes | Large files; no finish switching; can't be edited | Captured view |
+| AI image-to-3D | 1–5 photos | **Estimated**: unseen parts invented, small details simplified | A quick capture | ≈ US$0.20–0.90 per attempt ([5.2](#52-ai-image-to-3d-services-results-are-always-ai-estimated)) | Fast drafts; a starting point for an artist | Exact proportions, openings, small buttons, text and logos, the rear side | AI-estimated |
+| 3D artist | Photos, dimensions, drawings | High, checked by a person | A quick capture plus the datasheet dimensions | Quoted per product | Hero products; glass and complex finishes | Cost and time per product | Artist-modelled |
+| AI video or images | Photos and a prompt | **Not 3D**: generated pictures | Photos | ≈ US$0.10–0.40 per second of video ([5.3](#53-ai-video-that-only-looks-3d)) | Marketing visuals, if approved and labelled | Can't be rotated or measured; the product can drift between frames | AI imagery (not 3D) |
 
-- **Section 3:** the comparison of methods (CAD, photogrammetry, Gaussian
-  splatting, AI image-to-3D, 3D artist, AI imagery).
-- **Section 4:** the recommended approach.
-- **Section 5:** each provider's verified prices, data policies and
-  licences.
+## 4. Recommendation
 
-The design in sections 6–9 doesn't depend on which providers are chosen.
+The most cost-effective route to professional results, for **switches and
+sockets** (the main categories):
+
+1. **CAD first.** Ask the factory or supplier for STEP files of each
+   product's visible parts; internal parts aren't needed.
+   - Conversion costs nothing and gives exact geometry, small files and true
+     scale, so "view on your wall" works.
+   - Every finish becomes a material variant of one model: a design in five
+     finishes needs one model, not five.
+2. **Modular assembly,** if the ranges are modular (frames plus inserts).
+   Each frame and insert is modelled once, from CAD or by an artist, and the
+   Studio assembles products from them, so each further product costs almost
+   nothing. To be evaluated when real products are reviewed.
+3. **A full capture and photogrammetry** where there is no CAD: free software
+   on suitable hardware ([5.1](#51-capture-tools-for-measured-models)), a
+   turntable and diffuse light ([5.4](#54-capture-guidance)). Expect some
+   clean-up on glossy white plastic.
+4. **AI generation only as a labelled draft,** if the Owner approves a
+   provider and a budget. At about US$0.30–0.60 an attempt it's a cheap
+   starting point. It is never published without review against the photos
+   and dimensions, and it often needs correction.
+5. **A 3D artist** for hero products or difficult materials.
+
+**Lamps and lighting:** photogrammetry or an artist. Glass and chrome are
+difficult for every automatic method.
+
+**"3D-looking" animations:** render turntables and scroll sequences from
+the approved model on the processing runner, which is free and faithful. Use
+AI video only for labelled mood visuals.
+
+**Expected cost:**
+
+- **CAD, photogrammetry and processing:** US$0 per model, on free tiers and
+  the owner's own hardware.
+- **Storage:** under about US$2.10 a month per 100 fully captured products
+  ([section 7](#7-storage-requirements-and-running-costs)).
+- **AI drafts:** optional, pay-per-use, capped by the Owner's budget.
+
+## 5. Providers and prices (checked 2026-10-21)
+
+**How these were checked:** the figures were read from each provider's
+official pages through web search on 2026-10-21. The pages themselves
+couldn't be opened from this environment. Confirm every price and policy on
+the live page before signing up. **(u)** marks an unverified or ambiguous
+figure.
+
+### 5.1 Capture tools for measured models
+
+*Being completed from the capture research in progress.*
+
+### 5.2 AI image-to-3D services (results are always *AI-estimated*)
+
+| Service | Photos accepted | Output | Price per textured, multi-view model | Entry cost | Uploads used for training? |
+|---------|-----------------|--------|--------------------------------------|------------|----------------------------|
+| [Tripo](https://developers.tripo3d.ai/en/pricing) H3.1 / P1 | H3.1: four views (front, left, back, right). P1: front required, sides optional ([docs](https://docs.tripo3d.ai/model-generation/multiview-to-model-v3-0-v3-1.html)) | GLB, plus USDZ/FBX/OBJ by conversion; PBR; quad option | H3.1 US$0.20–0.40; quad +US$0.05; detailed geometry +US$0.20. P1 US$0.40–0.60 ([H3.1](https://developers.tripo3d.ai/en/models/v3-1), [P1](https://developers.tripo3d.ai/en/models/p1)) | Pay as you go, top-ups from US$1 | Terms: not for paid users ([terms](https://www.tripo3d.ai/terms)). The privacy policy allows anonymised outputs to improve models ([privacy](https://www.tripo3d.ai/privacy)) |
+| [Rodin Gen-2 / 2.5](https://developer.hyper3d.ai/api-specification/rodin-generation-gen2) (Hyper3D) | Up to 5 images | GLB/USDZ/FBX/OBJ; PBR; quad | ≈ US$0.29 on the Business plan; US$0.40 through [fal](https://fal.ai/models/fal-ai/hyper3d/rodin/v2.5/api) | API needs the Business plan, US$120 a month (US$96 billed yearly) ([pricing](https://hyper3d.ai/pricing)), or pay per use through fal | "Not used for training" ([data policy](https://developer.hyper3d.ai/legal/data-policy), page about two years old). Kept 7 days on Business |
+| [Tencent HY 3D](https://www.tencentcloud.com/document/product/1284/75540) (Hunyuan 3.0/3.1) | Front, sides, back; 3.1 adds top, bottom and front diagonals | GLB/OBJ/FBX/STL/USDZ; PBR | ≈ US$0.68–0.90 (u) ([pricing](https://www.tencentcloud.com/document/product/1284/75281)); US$0.675 through [fal](https://fal.ai/models/fal-ai/hunyuan-3d/v3.1/pro/image-to-3d) | Prepaid US$15 for 1,000 credits, valid one year | No statement found. Uploads deleted after processing; outputs kept up to 7 days ([data](https://www.tencentcloud.com/document/product/1284/75295)) |
+| [Meshy](https://docs.meshy.ai/en/api/multi-image-to-3d) (meshy-7.1) | 1–4 images | GLB/FBX/OBJ/USDZ/STL/3MF; PBR | US$0.40 untextured, US$0.60 textured ([pricing](https://docs.meshy.ai/en/api/pricing)) | API only on paid plans: Pro US$20 a month ([plans](https://www.meshy.ai/pricing)) | **Terms allow training on non-Enterprise inputs and outputs** ([terms](https://www.meshy.ai/terms-of-use)) |
+| [Hitem3D](https://docs.hi3d.ai/en/api/getting-started/pricing) | 2–4 images | GLB/OBJ/FBX/USDZ and more | US$0.50–0.90 | Packs from US$40 (u) | Conflicting statements: the FAQ says no, but the terms reserve the right |
+| Open models: [TRELLIS.2](https://huggingface.co/microsoft/TRELLIS.2-4B), [Hunyuan3D 2.x](https://huggingface.co/tencent/Hunyuan3D-2.1), [Stable Fast 3D](https://stability.ai/license) | Mostly a single image | GLB | US$0.10–0.35 hosted on fal or Stability's API | None | Depends on the host |
+
+**Which to use, if the Owner approves AI drafts:**
+
+- **Tripo is the first choice for a trial.** It is pay-as-you-go with no
+  subscription and takes the standard four views. Its terms exclude paid
+  users' data from training.
+- **Rodin is the alternative** when proportions matter most. It accepts the
+  real dimensions as a constraint (`bbox_condition`). Through fal there's no
+  US$120 monthly plan, but fal keeps request data for 30 days unless storage
+  is switched off on each request
+  ([fal](https://fal.ai/docs/documentation/model-apis/inference/payloads)).
+  Its no-training promise covers enterprise customers only
+  ([fal enterprise](https://fal.ai/enterprise)).
+- **Not recommended for unreleased products:**
+  - Meshy: its terms allow training;
+  - Stability's API: trains on inputs unless you opt out
+    ([privacy](https://stability.ai/privacypolicy));
+  - Hitem3D: conflicting statements.
+- **Not recommended: running open models ourselves.** It needs a GPU server,
+  and the licences have limits:
+  - Hunyuan3D excludes the EU, UK and South Korea, and forbids using
+    outputs to improve other AI models
+    ([licence](https://huggingface.co/tencent/Hunyuan3D-2.1/blob/main/LICENSE));
+  - TRELLIS depends on components licensed for non-commercial use only
+    ([nvdiffrast](https://github.com/NVlabs/nvdiffrast/blob/main/LICENSE.txt));
+  - Stable Fast 3D is free only below US$1 million annual revenue.
+
+  Hosting by fal or Replicate doesn't lift these licences (legal review
+  needed).
+
+**Example budget (estimate):** 100 products × 2 attempts × about US$0.40 is
+about US$80 in total. A cap of US$10–20 a month allows 25–50 drafts.
+
+**What the providers themselves say about accuracy:**
+
+- **Unseen sides are "hallucinated".** Thin features and intricate patterns
+  are hard to reconstruct
+  ([Meshy](https://help.meshy.ai/en/articles/15723519-how-to-get-better-image-to-3d-results-in-meshy)).
+- **Rear sides are less accurate.** Backs come out "less accurate and
+  over-smoothed" ([SPAR3D paper](https://arxiv.org/abs/2501.04689)).
+- **Meshes can have small holes.** Raw meshes "may occasionally contain
+  small holes"
+  ([TRELLIS.2](https://huggingface.co/microsoft/TRELLIS.2-4B)).
+- **Socket openings are undocumented.** No provider documents how
+  accurately recesses such as socket openings are reproduced.
+- **None measures real size from photos.** Rodin can be *given* the
+  dimensions; Tripo only *estimates* them.
+
+### 5.3 AI video that only looks 3D
+
+- **Google Veo 3.1** through the Gemini API
+  ([pricing](https://ai.google.dev/gemini-api/docs/pricing)):
+  - US$0.40 a second for standard 720p/1080p video, or US$0.10–0.12 a
+    second for the fast version;
+  - an 8-second clip costs about US$3.20, or about US$0.96 fast;
+  - the preview model IDs are being retired on 2026-10-22
+    ([Veo](https://ai.google.dev/gemini-api/docs/veo)).
+- **Kling 3.0:** about US$0.08–0.11 a second, but the smallest standard pack
+  is US$700 ([pricing](https://kling.ai/dev/pricing)).
+- **Every frame is generated**, so the product can change between frames,
+  and nothing can be rotated or measured. Turntables rendered from the
+  approved model cost nothing and stay faithful.
+
+### 5.4 Capture guidance
+
+*Being completed from the capture research in progress.*
 
 ## 6. How the Studio works
 
