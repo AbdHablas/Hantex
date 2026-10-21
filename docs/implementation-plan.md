@@ -36,7 +36,8 @@ approved by the project owner.
 
 ## Phase 2 — Coming Soon page and dashboard foundation (D-017) *(in progress — approved 2026-10-21)*
 
-- [ ] Design system from the brand reference: design tokens with light and dark values (D-021)
+- [x] Design tokens with light and dark values, contrast validation, theme → CSS (`packages/theme`, D-021)
+- [ ] Design system components (web and dashboard)
 - [x] Repository scaffolding (workspace, TypeScript, ESLint, Prettier, Vitest, local PostgreSQL, CI)
 - [ ] Database schema and migrations for the foundation
 - [ ] Passkey sign-in, invitations, sessions (Better Auth)

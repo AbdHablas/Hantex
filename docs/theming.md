@@ -18,9 +18,11 @@ All styling comes from named tokens, in three layers:
 1. **Palette** — the raw colours: the five brand colours plus derived tints
    (for example accessible text shades).
 2. **Semantic tokens**, defined separately for light and dark mode —
-   `background`, `surface`, `surface-raised`, `text`, `text-muted`, `accent`,
-   `accent-contrast` (text on accent), `border`, `focus-ring`, `success`,
-   `warning`, `danger`, `glow` (Volt).
+   `background`, `surface`, `surface-raised`, `border`, `input-border`,
+   `text`, `text-muted`, `accent`, `accent-contrast` (text on accent),
+   `accent-text` (accent-coloured text and links), `focus-ring`, `success`,
+   `warning`, `danger`, `glow` (Volt). Implemented in `packages/theme`; each
+   becomes a CSS variable `--hx-color-<token>`.
 3. **Components** use only semantic tokens. Hard-coded colours, fonts or
    radii in components are blocked by lint rules in CI.
 

@@ -94,9 +94,10 @@ bottom-right); graphite depth `#1B1E24 → #0F1114`.
 | Circuit Teal | Ice | 2.26 : 1 | Fail — no teal text on light grounds |
 | Ice / white | Circuit Teal | 2.26–2.44 : 1 | Fail — no light text on teal |
 
-Proposed derived text tints (for the design system, to be confirmed):
-`#8A909B` muted text on Graphite (5.2 : 1), `#646A75` muted text on Ice
-(5.0 : 1), `#137784` teal text or links on light grounds (4.85 : 1). The
+Derived text shades used by the default theme (`packages/theme`), chosen so
+every text pair passes AA on every surface in its mode: muted text
+`#9AA0AB` in dark mode (5.1–6.4 : 1) and `#5F6570` in light mode
+(5.4–5.9 : 1); teal text and links on light grounds `#137784` (4.85 : 1). The
 logo itself is exempt from contrast requirements.
 
 ## Typography
