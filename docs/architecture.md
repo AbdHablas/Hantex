@@ -62,7 +62,7 @@ admin.hantexultra.com ── Cloudflare Access (second lock)
 | Testing | Vitest 5 (with `@cloudflare/vitest-plugin` for Workers), Playwright, axe accessibility checks, Lighthouse |
 | Versions | Latest stable release of every platform and library, pinned exactly, with documented exceptions (D-023; see [`development.md`](development.md)) |
 
-## Multi-website platform (D-024 confirmed; design proposed)
+## Multi-website platform (D-024 confirmed)
 
 Every public website is a **site**. Each site has its own domains,
 languages, mode (Coming Soon, live or maintenance), theme, content, product
@@ -180,4 +180,4 @@ docs/               Project documentation
 
 ## Pending
 
-- Approval of the proposed designs: D-024 to D-029.
+- Approval of the proposed designs: D-026 to D-029.

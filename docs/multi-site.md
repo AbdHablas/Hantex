@@ -1,7 +1,7 @@
 # Multi-website platform
 
-**Status:** the requirement was confirmed by the owner on 2026-10-21 (D-024).
-The design below is **Proposed** until the owner approves it. Staff roles
+**Status:** Confirmed by the owner on 2026-10-21, both the requirement and the
+design below (D-024). Each site keeps its own product records. Staff roles
 are assigned per website (D-025, confirmed), and the hosting design is
 proposed in D-028. Nothing in this document is built yet.
 

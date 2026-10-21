@@ -32,7 +32,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-021 | Light and dark modes | Confirmed | Every public-facing design, including all SVGs, supports light and dark mode |
 | D-022 | Central appearance customisation | Confirmed | Dashboard theme editor driving design tokens for all public sites; logo colours adjustable behind a brand warning |
 | D-023 | Latest versions policy | Confirmed | Latest stable release of every platform and library: Node.js 26, pnpm 12, PostgreSQL 18; recorded exceptions (TypeScript 6.0 until the lint tools support 7) |
-| D-024 | Multi-website platform | Confirmed (requirement) · design Proposed | One dashboard manages any number of sites, each with its own branding, design, content, products and configuration — see `docs/multi-site.md` |
+| D-024 | Multi-website platform | Confirmed | One dashboard manages any number of sites, each with its own branding, design, content, products and configuration — see `docs/multi-site.md` |
 | D-025 | Staff access across websites | Confirmed | Roles assigned per site, with an "all sites" option; Owners always cover all sites |
 | D-026 | Product-focused catalogue | Confirmed (requirement) · structure Proposed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
 | D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
@@ -511,13 +511,13 @@ development continues.
 
 ## D-024 — Multi-website platform
 
-- **Status:** Confirmed (requirement) — 2026-10-21 · design Proposed
+- **Status:** Confirmed — 2026-10-21 (requirement and design; design approved by the owner the same day)
 - **Requirement (owner):** the dashboard is a central management platform for
   any website the owner creates, not only www.hantexultra.com. Each website
   has its own branding, design settings, content, products and
   configuration, sharing the same dashboard and management system where
   appropriate.
-- **Proposed design** (`docs/multi-site.md`):
+- **Design** (`docs/multi-site.md`, approved 2026-10-21):
   - **Every public website is a *site*** with its own domains, languages,
     mode, theme, content, catalogue, sign-ups and enquiries.
   - **Shared by all sites:** staff accounts, role definitions, the font
