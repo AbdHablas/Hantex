@@ -9,6 +9,7 @@ GRANT USAGE ON SCHEMA public TO hantex_admin_app, hantex_public_app, hantex_buil
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   users, sessions, accounts, verifications, passkeys, auth_rate_limits,
   roles, role_permissions, role_assignments, invitations, recovery_codes,
+  enrolment_tickets, email_challenges, dashboard_rate_limits,
   site_domains, document_drafts, publish_jobs
 TO hantex_admin_app;
 -- Sites are archived, never deleted (D-024).

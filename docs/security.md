@@ -59,6 +59,19 @@ end.
   and Owner accounts.
 - PostgreSQL row-level security as a second layer is evaluated in Phase 5
   ([`multi-site.md`](multi-site.md)).
+- **Built and tested (2026-10-21):** the dashboard API's site routes
+  (`/api/sites/:siteKey/...`) are tested with every standard role on two
+  sites. A site the person doesn't cover answers "not found"; a missing
+  permission answers "forbidden". Expected results come from the approved
+  role table, not from the code under test. The tests connect as the
+  dashboard's least-privilege database user, so the grants are tested too.
+- **Account-wide actions need an all-sites role.** Disabling or re-enabling
+  an account affects every site the person works on, so a per-site
+  Administrator can't do it. They can remove the person's access to their
+  own site instead.
+- **The dashboard Worker has no `workers.dev` or preview address**
+  (`workers_dev: false`, `preview_urls: false`). It is reachable only on its
+  own domain, behind Cloudflare Access, once the owner approves deployment.
 
 ### Input, output and injection
 
@@ -172,8 +185,8 @@ end.
 - Lockfile committed; dependencies pinned; automated update pull requests;
   vulnerability scanning in CI; GitHub Actions pinned to commit SHAs; CI
   tokens scoped to the minimum.
-- **Latest stable releases (D-023).** The planned upgrade to pnpm 12 brings
-  safer defaults, which we keep as they are:
+- **Latest stable releases (D-023).** pnpm 12 brings safer defaults, which
+  we keep as they are:
   - packages are installed only once they have been published for at least
     a day (`minimumReleaseAge`), which avoids freshly hijacked releases;
   - only packages on the `allowBuilds` list may run install scripts;
@@ -185,12 +198,19 @@ end.
   not built into the public site; preview environments sit behind
   Cloudflare Access; robots rules and `noindex` on anything not public.
 
-## Testing (planned)
+## Testing
 
-Unit and integration tests for validation and permission logic; API tests
-for every endpoint and role; end-to-end tests of sign-in, publish and
-sign-up flows; header and caching checks; dependency scans in CI; an
-automated penetration test (Strix) against staging in Phase 5.
+In place (run in CI on every push):
+
+- unit tests for validation, permission and assignment logic;
+- database tests for constraints, triggers and each database user's grants;
+- dashboard API tests: every site endpoint × every standard role × two
+  sites, cross-site isolation, staff escalation rules, invitations, account
+  recovery, the same-origin check, disabled accounts and archived sites.
+
+Planned: end-to-end tests of passkey sign-in, publishing and sign-up in a
+real browser; header and caching checks against a deployed staging Worker;
+an automated penetration test (Strix) against staging in Phase 5.
 
 ## Known remaining risks
 

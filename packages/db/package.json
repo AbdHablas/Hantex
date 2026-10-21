@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema.ts",
-    "./worker": "./src/worker.ts"
+    "./worker": "./src/worker.ts",
+    "./client": "./src/client.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

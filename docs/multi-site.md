@@ -74,6 +74,19 @@ are never deleted silently.
 
   A record that belongs to another site is answered as "not found".
 
+### API (built 2026-10-21, `apps/api`)
+
+| Address | Who | What |
+|---------|-----|------|
+| `/api/me` | Everyone | Profile, passkeys, recovery codes, and the sites the person can open with their role and permissions on each (for the site switcher) |
+| `/api/sites` | Everyone (list); Owner (create) | Sites the person covers; creating a site, always in Coming Soon mode |
+| `/api/staff`, `/api/audit` | All-sites roles | Every account, all-sites roles, disabling accounts; the whole audit log |
+| `/api/roles` | Anyone who manages staff on some site (read); Owner (edit) | The roles matrix |
+| `/api/sites/:siteKey` | By permission on that site | Site details; editing, domains and archiving (Owner); mode (Owner) |
+| `/api/sites/:siteKey/overview`, `/documents`, `/preview`, `/subscribers`, `/publish`, `/staff`, `/audit` | By permission on that site | That site's content, sign-ups, publishing, staff and audit entries |
+
+Archived sites are read-only until an Owner restores them.
+
 ## Staff access across sites (D-025, confirmed: option A)
 
 - **A. Per site, with an "all sites" option (chosen by the owner).** Each staff

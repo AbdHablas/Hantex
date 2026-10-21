@@ -71,11 +71,13 @@ Next:
   - sites and site domains;
   - site-scoped documents, versions, publish jobs, sign-ups, rate limits and audit;
   - role assignments, with the scope rules enforced in the database and in `@hantex/shared`.
-- [ ] Dashboard API (parked work adapted to site-scoped routes):
-  - passkey sign-in, invitations and recovery;
-  - sessions;
-  - tests for every endpoint × role × site.
-- [ ] Sites management (Owner): create a site, languages, template, theme preset, domains (pending until approved), mode
+- [x] Dashboard API adapted to site-scoped routes (`apps/api`), 345 API tests passing:
+  - passkey sign-in, invitations per site or all sites, and recovery;
+  - sessions, same-origin checks, audit entries per site;
+  - every site endpoint tested × every standard role × two sites;
+  - sites API: create (Coming Soon only), edit, pending domains, mode, archive;
+  - not yet tested in a browser with real passkeys (needs the dashboard app).
+- [ ] Sites management screens (Owner): create a site, languages, template, theme preset, domains (pending until approved), mode. The API is done; choosing a starting theme preset is still to build.
 - [ ] Roles: standard roles, dynamic matrix editor, assignments per D-025, audit log
 - [ ] Coming Soon settings per site (Arabic and English for Hantex Ultra), with Publish rebuilding that site
 - [ ] Appearance editor per site (D-022, D-027):

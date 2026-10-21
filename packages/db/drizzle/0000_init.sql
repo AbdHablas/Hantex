@@ -35,6 +35,12 @@ CREATE TABLE "auth_rate_limits" (
 	CONSTRAINT "auth_rate_limits_key_unique" UNIQUE("key")
 );
 --> statement-breakpoint
+CREATE TABLE "dashboard_rate_limits" (
+	"key" text PRIMARY KEY NOT NULL,
+	"count" integer NOT NULL,
+	"window_started_at" bigint NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "document_drafts" (
 	"site_id" uuid NOT NULL,
 	"kind" text NOT NULL,
@@ -55,6 +61,29 @@ CREATE TABLE "document_versions" (
 	"published_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"restored_from" integer,
 	CONSTRAINT "document_versions_kind_check" CHECK ("document_versions"."kind" in ('coming-soon', 'site-settings', 'theme'))
+);
+--> statement-breakpoint
+CREATE TABLE "email_challenges" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
+	"code_hash" text NOT NULL,
+	"attempts" integer DEFAULT 0 NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"consumed_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "enrolment_tickets" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"purpose" text NOT NULL,
+	"ticket_hash" text NOT NULL,
+	"user_id" text NOT NULL,
+	"invitation_id" uuid,
+	"expires_at" timestamp with time zone NOT NULL,
+	"used_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "enrolment_tickets_ticket_hash_unique" UNIQUE("ticket_hash"),
+	CONSTRAINT "enrolment_tickets_purpose_check" CHECK ("enrolment_tickets"."purpose" in ('invitation', 'recovery'))
 );
 --> statement-breakpoint
 CREATE TABLE "form_rate_limits" (
@@ -231,6 +260,8 @@ ALTER TABLE "document_drafts" ADD CONSTRAINT "document_drafts_site_id_sites_id_f
 ALTER TABLE "document_drafts" ADD CONSTRAINT "document_drafts_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_published_by_users_id_fk" FOREIGN KEY ("published_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_challenges" ADD CONSTRAINT "email_challenges_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "enrolment_tickets" ADD CONSTRAINT "enrolment_tickets_invitation_id_invitations_id_fk" FOREIGN KEY ("invitation_id") REFERENCES "public"."invitations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "form_rate_limits" ADD CONSTRAINT "form_rate_limits_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_site_id_sites_id_fk" FOREIGN KEY ("site_id") REFERENCES "public"."sites"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
@@ -254,6 +285,7 @@ CREATE INDEX "audit_log_occurred_at_idx" ON "audit_log" USING btree ("occurred_a
 CREATE INDEX "audit_log_site_idx" ON "audit_log" USING btree ("site_id","occurred_at");--> statement-breakpoint
 CREATE INDEX "audit_log_actor_idx" ON "audit_log" USING btree ("actor_user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "document_versions_site_kind_version_unique" ON "document_versions" USING btree ("site_id","kind","version");--> statement-breakpoint
+CREATE INDEX "email_challenges_user_id_idx" ON "email_challenges" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "invitations_email_idx" ON "invitations" USING btree (lower("email"));--> statement-breakpoint
 CREATE INDEX "passkeys_user_id_idx" ON "passkeys" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "publish_jobs_site_idx" ON "publish_jobs" USING btree ("site_id","requested_at");--> statement-breakpoint
