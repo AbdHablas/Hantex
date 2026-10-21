@@ -10,7 +10,7 @@ A TypeScript modular monolith on Cloudflare, in one repository. One shared
 dashboard manages several public websites (D-024).
 
 ```
-Public websites (one Cloudflare Worker each, D-028 proposed)
+Public websites (one Cloudflare Worker each, D-028)
   www.hantexultra.com ── site-hantex-ultra   static pages + form endpoints
   <another domain>    ── site-<key>          static pages + form endpoints
   media.<site domain> ── R2 "media" bucket   approved photos, 3D models, documents
@@ -180,4 +180,4 @@ docs/               Project documentation
 
 ## Pending
 
-- Approval of the proposed designs: D-028 and D-029.
+- Approval of the proposed 3D Studio approach: D-029.

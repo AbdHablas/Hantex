@@ -19,7 +19,7 @@ production data is never used in development or tests.
 
 | Resource | Use |
 |----------|-----|
-| Worker per site, `site-<key>` (D-028, proposed) | One public site each: static pages from the site engine (`apps/web`) and its form endpoints. The first is `site-hantex-ultra` for www.hantexultra.com. |
+| Worker per site, `site-<key>` (D-028, confirmed) | One public site each: static pages from the site engine (`apps/web`) and its form endpoints. The first is `site-hantex-ultra` for www.hantexultra.com. |
 | Worker `hantex-admin` | Dashboard (React app) and its API (Hono) on `admin.hantexultra.com`, managing every site |
 | Hyperdrive | Database connections: the public-site user (insert-only sign-ups) for site Workers, uncached for the dashboard |
 | R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |

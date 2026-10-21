@@ -36,7 +36,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-025 | Staff access across websites | Confirmed | Roles assigned per site, with an "all sites" option; Owners always cover all sites |
 | D-026 | Product-focused catalogue | Confirmed | Switches and sockets first; lighting, lamps, accessories; each site owns its catalogue — see `docs/product-catalogue.md` |
 | D-027 | Reusable design system across websites | Confirmed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
-| D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
+| D-028 | Hosting of multiple websites | Confirmed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
 | D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
 
@@ -603,7 +603,7 @@ development continues.
 
 ## D-028 — Hosting of multiple websites
 
-- **Status:** Proposed
+- **Status:** Confirmed — 2026-10-21 (owner chose option A)
 - **Options:**
   - **A. One Cloudflare Worker per site (recommended).** Each serves its
     static pages and form endpoints. Media comes from R2 through a media

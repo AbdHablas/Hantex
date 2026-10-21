@@ -3,7 +3,7 @@
 **Status:** Confirmed by the owner on 2026-10-21, both the requirement and the
 design below (D-024). Each site keeps its own product records. Staff roles
 are assigned per website (D-025, confirmed), and the hosting design is
-proposed in D-028. Nothing in this document is built yet.
+confirmed in D-028. Nothing in this document is built yet.
 
 ## Requirement (owner, 2026-10-21)
 
@@ -107,7 +107,7 @@ How option A works:
   - the last Owner is protected;
   - every change is audited and emailed to the Owners.
 
-## Hosting and publishing (D-028, proposed)
+## Hosting and publishing (D-028, confirmed)
 
 - **One code base for all public sites.** `apps/web`, the *site engine*,
   builds one site at a time from that site's published data, for example
