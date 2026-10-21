@@ -16,7 +16,7 @@ reflected in this plan and in the documents listed.
 | Product-focused catalogue: switches and sockets first; lighting, lamps, accessories | D-026 (confirmed) | [`product-catalogue.md`](product-catalogue.md) |
 | SVG design system with light/dark and adaptable colours per site; central customisation without code; new sites, brands, themes, fonts and palettes without rebuilding | D-027 (confirmed) | [`theming.md`](theming.md) |
 | Latest versions of every platform | D-023 (confirmed) | [`development.md`](development.md) |
-| AI 3D Product Studio | D-029 (approach proposed), D-030 (confirmed: free photogrammetry, no paid AI) | [`3d-product-studio.md`](3d-product-studio.md) |
+| AI 3D Product Studio | D-029 (confirmed), D-030 (confirmed: free photogrammetry, no paid AI) | [`3d-product-studio.md`](3d-product-studio.md) |
 
 ## Phase 1: Discovery and architecture *(complete)*
 
@@ -65,7 +65,7 @@ Next:
 - [x] Catalogue structure approved (D-026)
 - [x] Design system approved (D-027)
 - [x] Hosting approved: one Worker per site (D-028)
-- [ ] Approval of D-029
+- [x] 3D Studio approach approved (D-029)
 - [ ] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18, patch updates
 - [ ] Database made site-aware (D-024, D-025):
   - sites and site domains;

@@ -123,7 +123,7 @@ end.
   Other formats are converted on the processing runner, never in the
   dashboard Worker.
 
-### 3D Product Studio (D-029, proposed)
+### 3D Product Studio (D-029, confirmed)
 
 - **Private by default.** Original photos, CAD files, intermediate files and
   unapproved models live in a private R2 bucket. Only approved, optimised

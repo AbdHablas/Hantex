@@ -1,8 +1,7 @@
 # Architecture
 
 This document describes what has been confirmed in
-[`DECISIONS.md`](DECISIONS.md). Items not yet approved are marked
-*proposed* or *pending*.
+[`DECISIONS.md`](DECISIONS.md).
 
 ## Overview
 
@@ -105,7 +104,7 @@ selector, specifications, downloads. Details:
 
 Details: [`theming.md`](theming.md).
 
-## AI 3D Product Studio (D-029 confirmed; approach proposed; D-030 confirmed)
+## AI 3D Product Studio (D-029, D-030 confirmed)
 
 A reusable dashboard module that turns product captures into optimised,
 interactive 3D models with poster-image fallbacks.
@@ -180,4 +179,4 @@ docs/               Project documentation
 
 ## Pending
 
-- Approval of the proposed 3D Studio approach: D-029.
+No open decisions as of 2026-10-21.

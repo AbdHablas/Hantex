@@ -2,10 +2,11 @@
 
 **Status:**
 
-- The requirement was confirmed by the owner on 2026-10-21 (D-029).
-- The approach below is **Proposed**.
-- Where processing runs, which paid providers are used and the budget are
-  open (D-030).
+- The requirement and the approach below were confirmed by the owner on
+  2026-10-21 (D-029).
+- No CAD files are available. Models come from free photogrammetry on the
+  owner's own Mac, LiDAR iPhone or iPad and GPU PC, processed on a
+  self-hosted runner. No paid AI services are used (D-030).
 - Nothing is built yet.
 
 **About the figures:**
