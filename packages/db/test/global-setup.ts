@@ -33,9 +33,18 @@ export default async function setup(project: TestProject) {
   await ensureSite(db, FIRST_SITE);
   await close();
 
-  const rolePasswords = Object.fromEntries(
-    APP_DB_ROLES.map((role) => [role, randomBytes(24).toString('base64url')]),
+  // Database users exist once per PostgreSQL server, not per database, and test projects set up
+  // in parallel. They share one set of passwords for the run, so one project's setup never
+  // changes the passwords another project is using.
+  const shared = process.env['HANTEX_TEST_ROLE_PASSWORDS'];
+  const rolePasswords = (
+    shared
+      ? JSON.parse(shared)
+      : Object.fromEntries(
+          APP_DB_ROLES.map((role) => [role, randomBytes(24).toString('base64url')]),
+        )
   ) as Record<AppDbRole, string>;
+  process.env['HANTEX_TEST_ROLE_PASSWORDS'] = JSON.stringify(rolePasswords);
   await applyDatabaseRoles(databaseUrl, rolePasswords);
 
   project.provide('databaseUrl', databaseUrl);

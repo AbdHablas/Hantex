@@ -141,11 +141,12 @@ describe('site endpoints', () => {
       ...(e.body ? { body: e.body(site) } : {}),
     });
     if (!covers(person, site)) {
-      expect(response.status).toBe(404);
+      expect(response.status, h.errors.at(-1)).toBe(404);
     } else if (!allowedOn(person, site, e)) {
       expect(response.status).toBe(403);
     } else {
-      expect(response.status, await response.clone().text()).toBeLessThan(400);
+      const detail = `${await response.clone().text()} ${h.errors.at(-1) ?? ''}`;
+      expect(response.status, detail).toBeLessThan(400);
     }
   });
 

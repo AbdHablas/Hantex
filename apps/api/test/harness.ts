@@ -32,6 +32,8 @@ export const env: Env = {
 };
 
 export interface Harness {
+  /** Server errors the app logged, so a failing test can show the cause. */
+  errors: string[];
   /** Owner connection, for fixtures and assertions. */
   db: Database;
   app: ReturnType<typeof createApp>;
@@ -60,6 +62,13 @@ export async function createHarness(): Promise<Harness> {
   appUrl.username = 'hantex_admin_app';
   appUrl.password = passwords['hantex_admin_app'] ?? '';
   const appDb = createPoolDb(appUrl.toString(), 4);
+
+  const errors: string[] = [];
+  const logError = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(JSON.stringify(args));
+    logError(...args);
+  };
 
   const mail = memorySender();
   const dispatched: { jobId: string; siteKey: string }[] = [];
@@ -105,6 +114,7 @@ export async function createHarness(): Promise<Harness> {
   };
 
   return {
+    errors,
     db: owner.db,
     app,
     mail,
@@ -139,6 +149,7 @@ export async function createHarness(): Promise<Harness> {
       return app.request(`http://localhost${path}`, { method, headers, body }, env);
     },
     async close() {
+      console.error = logError;
       await appDb.close();
       await owner.close();
     },
