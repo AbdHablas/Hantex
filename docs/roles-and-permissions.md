@@ -37,6 +37,8 @@ or extended later without rebuilding anything.
 | Sign-ups and enquiries: export (CSV) | ✓ | ✓ | — | ✓ | — | — |
 | Sign-ups and enquiries: delete (e.g. on request) | ✓ | ✓ | — | — | — | — |
 | Site settings (contact details, social links, SEO defaults) | ✓ | ✓ | View | View | — | View |
+| Appearance: edit theme drafts *(D-022, proposed)* | ✓ | ✓ | — | — | — | — |
+| Appearance: publish or roll back the theme *(D-022, proposed)* | ✓ | ✓ | — | — | — | — |
 | Site mode: Coming Soon ↔ live, maintenance | ✓ | — | — | — | — | — |
 | Staff: invite and disable Content Manager, Sales, Editor, Viewer | ✓ | ✓ | — | — | — | — |
 | Staff: manage Owners and Administrators | ✓ | — | — | — | — | — |

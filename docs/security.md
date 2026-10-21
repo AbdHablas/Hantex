@@ -71,6 +71,15 @@ end.
 - The public site's database user can only insert submissions — it cannot
   read them.
 
+### Appearance editor (D-022)
+
+- Theme tokens validated on the server (format and range); text contrast
+  checked against WCAG AA in light and dark mode before publishing.
+- No free-form CSS or script fields; fonts only from the curated,
+  self-hosted library.
+- Publishing and rollback are permission-checked and audited; the dashboard
+  keeps its own fixed theme so a broken public theme cannot lock staff out.
+
 ### File uploads (Phase 3)
 
 - Allow-list of types and sizes, checked by content not just extension;

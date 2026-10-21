@@ -12,5 +12,6 @@ The project has completed **Phase 1 — Discovery and architecture**.
 - [`docs/roles-and-permissions.md`](docs/roles-and-permissions.md) — dashboard roles and permissions
 - [`docs/security.md`](docs/security.md) — security controls and risks
 - [`docs/deployment.md`](docs/deployment.md) — environments, CI/CD, secrets, rollback
-- [`brand/`](brand/) — logo files
+- [`brand/`](brand/) — logo files (fixed and adaptive light/dark)
+- [`docs/theming.md`](docs/theming.md) — light/dark modes and dashboard-controlled appearance
 - [`docs/tooling.md`](docs/tooling.md) — development tooling

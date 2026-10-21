@@ -29,8 +29,10 @@ marked **Confirmed** once the project owner has approved it.
 | D-018 | Launch-notification sign-up | Confirmed | Email or WhatsApp number, with consent, Turnstile and rate limits; subscriber list and export in the dashboard |
 | D-019 | Roles and permission matrix | Confirmed | Six standard roles; the matrix is editable from the dashboard (Phase 2) with escalation safeguards — see `docs/roles-and-permissions.md` |
 | D-020 | Logo update | Confirmed | Updated mark from `hantex-ultra-edited2` (indicator dots, outlet-shaped socket holes), aligned to the brand palette and grid; dots light on all backgrounds |
+| D-021 | Light and dark modes | Confirmed | Every public-facing design, including all SVGs, supports light and dark mode |
+| D-022 | Central appearance customisation | Proposed | Dashboard theme editor driving design tokens for all public sites — open question on logo colours |
 
-All Phase 1 decisions are made. Next: the owner's approval to start Phase 2.
+Open: D-022 (whether logo colours are adjustable), then the owner's approval to start Phase 2.
 
 ---
 
@@ -401,3 +403,32 @@ All Phase 1 decisions are made. Next: the owner's approval to start Phase 2.
 - **Consequences:** all twelve logo files regenerated; the trademark sheet and
   brand guidelines pages 2–8 show the previous mark and should be updated by
   the owner's designer; Volt no longer appears in the mark.
+
+## D-021 — Light and dark modes
+
+- **Status:** Confirmed — 2026-10-21 (owner's requirement)
+- **Requirement:** every public-facing design supports light and dark mode,
+  with adjustable colours; this includes every SVG.
+- **Done so far:** adaptive logo files `brand/logo/mark.svg`, `lockup.svg`
+  and `wordmark.svg` follow the viewer's system setting and accept CSS
+  variable overrides; verified identical to the fixed variants in each mode.
+- **Consequences:** see `docs/theming.md` — design tokens with separate light
+  and dark values, inline token-driven SVGs on the site, lint rules against
+  hard-coded colours.
+
+## D-022 — Central appearance customisation
+
+- **Status:** Proposed — design in `docs/theming.md`; one open question
+- **Requirement (owner):** a centralised customisation system in the
+  dashboard to change colours, fonts and the overall frontend appearance of
+  all public-facing websites, applied consistently.
+- **Proposed design:** design tokens (palette → light/dark semantic tokens →
+  components); Appearance section in the dashboard with draft, side-by-side
+  light/dark preview, publish, version history, rollback and reset to brand
+  defaults; publishing rebuilds the static sites from the tokens; WCAG AA
+  contrast enforced; no custom CSS; fonts from a curated self-hosted
+  library; new permissions *Appearance: edit drafts* and *Appearance:
+  publish* (standard roles: Owner and Administrator).
+- **Open question:** the brand guidelines say the mark must never be
+  recoloured — should the logo's colours be editable in the theme editor?
+- **Owner's choice:** —

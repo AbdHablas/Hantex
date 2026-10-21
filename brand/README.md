@@ -9,6 +9,7 @@ pixel by pixel against the source PDFs. Do not edit the geometry or colours — 
 
 | Variant | Lockup (default) | Icon mark | Wordmark |
 |---------|------------------|-----------|----------|
+| **Adaptive** (light/dark automatically) | `logo/lockup.svg` | `logo/mark.svg` | `logo/wordmark.svg` |
 | On dark grounds | `logo/lockup-on-dark.svg` | `logo/mark-on-dark.svg` | `logo/wordmark-on-dark.svg` |
 | On light grounds | `logo/lockup-on-light.svg` | `logo/mark-on-light.svg` | `logo/wordmark-on-light.svg` |
 | Mono light (Ice) | `logo/lockup-mono-light.svg` | `logo/mark-mono-light.svg` | `logo/wordmark-mono-light.svg` |
@@ -19,3 +20,8 @@ pixel by pixel against the source PDFs. Do not edit the geometry or colours — 
 - The on-dark mark is the supplied artwork. The on-light and mono versions
   apply the guidelines' colour rules; the indicator dots stay light (Ice) on
   every background (owner's choice, D-020) and are omitted in mono versions.
+- The adaptive files follow the viewer's light/dark setting and, when placed
+  inline in a page, take their colours from the CSS variables
+  `--hx-logo-neutral`, `--hx-logo-switch`, `--hx-logo-indicator` and
+  `--hx-logo-accent` (see `docs/theming.md`). Use the fixed variants for
+  print and documents.

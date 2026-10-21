@@ -63,6 +63,12 @@ admin.hantexultra.com   Cloudflare Access (second lock)    │
 - No public sign-up; staff accounts are created by invitation.
 - Secrets live in Cloudflare and CI secret stores, never in the repository.
 
+## Theming (D-021 confirmed, D-022 proposed)
+
+Design tokens with light and dark values drive every public-facing page,
+component and SVG; administrators edit them in the dashboard's Appearance
+section and publishing rebuilds the sites. See [`theming.md`](theming.md).
+
 ## Domain (confirmed, D-008)
 
 - hantexultra.com is active on the owner's Cloudflare account (Free plan).
@@ -94,7 +100,7 @@ docs/           Project documentation
 
 [`roles-and-permissions.md`](roles-and-permissions.md) ·
 [`security.md`](security.md) · [`deployment.md`](deployment.md) ·
-[`brand-guidelines.md`](brand-guidelines.md)
+[`brand-guidelines.md`](brand-guidelines.md) · [`theming.md`](theming.md)
 
 ## Pending
 
