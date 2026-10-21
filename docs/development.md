@@ -48,13 +48,36 @@ pnpm format:check   # Prettier (code; Markdown is formatted by hand)
 pnpm lint           # ESLint, type-aware, plus the no-hard-coded-colours rule
 pnpm typecheck      # TypeScript in every package
 pnpm test           # Vitest across all packages
-pnpm build          # every app
+pnpm build          # every app (the dashboard app, then the dashboard Worker that serves it)
+pnpm --filter @hantex/admin e2e   # browser tests, after `pnpm build` (see below)
 ```
 
 CI (`.github/workflows/ci.yml`) runs the same commands on every pull request
 and push to `main`, against a throwaway PostgreSQL 18 service, and runs
 `pnpm audit --audit-level high`. Third-party actions are pinned to commit
 SHAs.
+
+### Browser tests (end to end)
+
+`apps/admin/e2e` runs the real dashboard Worker (`wrangler dev`, with the
+built dashboard) against a throwaway database, in Chromium with a **virtual
+passkey authenticator**. The tests follow the first Owner's path: setup link,
+passkey, dashboard, edit and publish the Coming Soon page, sign out, sign in
+again. They need a PostgreSQL server at `HANTEX_TEST_DATABASE_URL`. If
+Playwright's own Chromium isn't installed, set `PLAYWRIGHT_CHROMIUM_PATH`.
+
+### Running the dashboard locally
+
+1. `pnpm db:local start`, then migrate, apply the database users and seed
+   (`pnpm --filter @hantex/db migrate|roles|seed`, with `DATABASE_URL` and the
+   `HANTEX_*_PASSWORD` variables set to local-only values).
+2. Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and fill it with
+   local-only random values. Never commit it.
+3. `pnpm build`, then `pnpm --filter @hantex/api dev`, and open
+   http://localhost:8787.
+4. Create the first Owner's link:
+   `APP_ORIGIN=http://localhost:8787 pnpm --filter @hantex/db setup-owner you@example.com`.
+   Passkeys work on `localhost` without HTTPS.
 
 ## Repository layout
 
@@ -101,5 +124,10 @@ their reason.
   tools are ready.
 - **Drizzle ORM 0.45.4,** the latest stable release. 1.0 is still a release
   candidate.
+- **One-day wait for new releases.** pnpm refuses packages published less
+  than a day ago (`minimumReleaseAge`); we pin the previous release and
+  upgrade the next day rather than adding exemptions.
+- **`@simplewebauthn/browser` 13.3.0**, matching the server-side version 13
+  used by Better Auth's passkey plugin.
 - **Vitest 5** with **`@cloudflare/vitest-plugin`** (the renamed
   `@cloudflare/vitest-pool-workers`) for tests inside the Workers runtime.

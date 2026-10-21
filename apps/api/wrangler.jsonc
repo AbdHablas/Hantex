@@ -14,6 +14,14 @@
   "workers_dev": false,
   "preview_urls": false,
   "observability": { "enabled": true },
+  // The dashboard app (apps/admin) is served as static files; only /api/* runs Worker code.
+  // Unknown paths fall back to index.html for the app's own routing. Security headers for the
+  // static files are in apps/admin/public/_headers.
+  "assets": {
+    "directory": "../admin/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",

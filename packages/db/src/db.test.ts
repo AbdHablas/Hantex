@@ -20,6 +20,7 @@ import {
   users,
 } from './schema';
 import { FIRST_SITE, ensureSite, resetStandardRole, syncStandardRoles } from './seed';
+import { createOwnerSetupInvitation } from './setup-owner';
 
 const databaseUrl = inject('databaseUrl');
 const rolePasswords = inject('rolePasswords');
@@ -249,6 +250,55 @@ describe('sites (D-024)', () => {
 
   it('cannot delete a site that has records', async () => {
     await expect(db.delete(sites).where(eq(sites.id, siteA))).rejects.toThrow();
+  });
+});
+
+describe('first-Owner setup invitation', () => {
+  it('stores only a hash, replaces earlier links, and closes once an Owner exists', async () => {
+    const first = await createOwnerSetupInvitation(db, {
+      email: 'Owner@Example.com',
+      appOrigin: 'https://admin.example.test',
+    });
+    const token = new URL(first.link).hash.replace('#token=', '');
+    expect(first.link.startsWith('https://admin.example.test/accept-invitation#token=')).toBe(true);
+    expect(first.expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(24 * 3600 * 1000);
+    const rows = await db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.email, 'owner@example.com'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.tokenHash).not.toContain(token);
+    expect(rows[0]).toMatchObject({ roleId: 'owner', siteId: null, invitedBy: null });
+
+    await createOwnerSetupInvitation(db, {
+      email: 'owner@example.com',
+      appOrigin: 'https://admin.example.test',
+    });
+    const after = await db
+      .select()
+      .from(invitations)
+      .where(eq(invitations.email, 'owner@example.com'));
+    expect(after.filter((r) => r.revokedAt === null)).toHaveLength(1);
+
+    await expect(
+      createOwnerSetupInvitation(db, {
+        email: 'x@example.com',
+        appOrigin: 'http://admin.example.test',
+      }),
+    ).rejects.toThrow(/https/);
+
+    await db
+      .insert(users)
+      .values({ id: 'u-first-owner', name: 'O', email: 'first-owner@example.com' });
+    await db
+      .insert(roleAssignments)
+      .values({ userId: 'u-first-owner', roleId: 'owner', siteId: null });
+    await expect(
+      createOwnerSetupInvitation(db, {
+        email: 'late@example.com',
+        appOrigin: 'https://admin.example.test',
+      }),
+    ).rejects.toThrow(/already exists/);
   });
 });
 

@@ -506,6 +506,13 @@ the site-aware database (D-024, D-025).
     when the tools are ready.
   - **Drizzle ORM stays on 0.45.4,** the latest stable release; 1.0 is a
     release candidate.
+  - **Releases less than a day old wait a day** (pnpm's `minimumReleaseAge`,
+    kept on purpose). On 2026-10-21 that meant Vite 8.3.4, lucide-react
+    1.60.0 and Workers types 5.20261019.1 instead of the releases from that
+    morning. No exemptions are added for convenience.
+  - **`@simplewebauthn/browser` stays on 13.3.0** in the dashboard, matching
+    the version 13 server library that Better Auth's passkey plugin uses;
+    version 14 is a new major for the browser side only.
 - **Done (2026-10-21):** Node.js 26.12.0, pnpm 12.14.0 (`allowBuilds`) and
   PostgreSQL 18 in CI. Format, lint, type-check and all 77 tests passed
   locally on Node.js 26.12.0 with PostgreSQL 18.4. Details in

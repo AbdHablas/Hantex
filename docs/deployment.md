@@ -103,7 +103,11 @@ I'll guide each step when we reach it:
 - enable Cloudflare Zero Trust (free) for Access;
 - create a scoped Cloudflare API token;
 - add secrets to GitHub;
-- approve each DNS change.
+- approve each DNS change;
+- receive the first-Owner setup link. It is created after the first
+  deployment with `pnpm --filter @hantex/db setup-owner <your email>`. It
+  works once, expires after 24 hours, and stops working as soon as an Owner
+  exists. It is sent to you privately and never stored.
 
 **For the 3D Studio (Phase 3, D-030):** create a private repository for the
 processing runner, or set up the runner on your own computer. Approve any

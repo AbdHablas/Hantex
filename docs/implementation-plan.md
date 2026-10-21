@@ -75,16 +75,20 @@ Next:
   - passkey sign-in, invitations per site or all sites, and recovery;
   - sessions, same-origin checks, audit entries per site;
   - every site endpoint tested × every standard role × two sites;
-  - sites API: create (Coming Soon only), edit, pending domains, mode, archive;
-  - not yet tested in a browser with real passkeys (needs the dashboard app).
-- [ ] Sites management screens (Owner): create a site, languages, template, theme preset, domains (pending until approved), mode. The API is done; choosing a starting theme preset is still to build.
-- [ ] Roles: standard roles, dynamic matrix editor, assignments per D-025, audit log
-- [ ] Coming Soon settings per site (Arabic and English for Hantex Ultra), with Publish rebuilding that site
+  - sites API: create (Coming Soon only), edit, pending domains, mode, archive.
+- [x] Dashboard app (`apps/admin`, React), served by the dashboard Worker:
+  - passkey sign-in, invitation acceptance and account recovery (with Turnstile);
+  - site switcher; Arabic (right-to-left) and English; light, dark or device setting;
+  - per site: overview, Coming Soon editor with publish and version history, sign-ups (search, export, delete), staff, audit log, website settings;
+  - platform: websites, all staff, roles matrix editor, full audit log, my account (passkeys, recovery codes);
+  - browser tests with a virtual passkey authenticator, in CI.
+- [x] First-Owner setup link (`setup-owner`): single use, 24 hours, closes once an Owner exists
+- [ ] Sites screens: choosing a starting theme preset for a new site
+- [ ] Site settings editor (contact details, social links, SEO) in the dashboard
 - [ ] Appearance editor per site (D-022, D-027):
   - colours, fonts, shape, motion, mode and logo colours;
   - presets;
   - preview, publish and rollback.
-- [ ] Dashboard app (React): site switcher, the screens above, accessible light/dark interface
 - [ ] Site engine (`apps/web`):
   - builds any site, with the Coming Soon template and Hantex Ultra first;
   - tested on desktop, tablet and mobile, in light and dark, RTL and LTR.

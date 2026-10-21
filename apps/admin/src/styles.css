@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+@import '@fontsource/poppins/latin-400.css';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-600.css';
+@import '@fontsource/readex-pro/arabic-400.css';
+@import '@fontsource/readex-pro/arabic-500.css';
+@import '@fontsource/readex-pro/arabic-600.css';
+
+/*
+ * The dashboard's own fixed interface theme (docs/theming.md): built from the brand palette and
+ * deliberately independent of the public sites' editable themes, so a bad public theme can never
+ * make the dashboard unusable. Text pairs meet WCAG 2.1 AA in both modes (same values as the
+ * brand theme in packages/theme).
+ */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --border: #dde2e8;
+  --input-border: #8a909b;
+  --text: #1b1e24;
+  --muted: #5f6570;
+  --accent: #1fb6c9;
+  --accent-contrast: #1b1e24;
+  --accent-text: #137784;
+  --focus: #137784;
+  --success: #17713f;
+  --warning: #8a5300;
+  --danger: #b42318;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #1b1e24;
+  --surface: #22262d;
+  --border: #353a43;
+  --input-border: #6b717c;
+  --text: #f4f6f8;
+  --muted: #9aa0ab;
+  --accent: #1fb6c9;
+  --accent-contrast: #1b1e24;
+  --accent-text: #1fb6c9;
+  --focus: #6ee7f0;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-input: var(--input-border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-text: var(--accent-text);
+  --color-focus: var(--focus);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: 'Poppins', 'Readex Pro', system-ui, sans-serif;
+}
+
+/* Arabic text uses Readex Pro first; Poppins has no Arabic glyphs. */
+:lang(ar) {
+  --font-sans: 'Readex Pro', 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

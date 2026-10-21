@@ -2,6 +2,7 @@ import {
   invitations,
   passkeys,
   roleAssignments,
+  roles,
   sessions,
   users,
   type Database,
@@ -89,6 +90,16 @@ export function enrolmentHooks(db: Database) {
             .where(pendingInvitation(invitationId, now))
             .for('update');
           if (!pending) throw reject('INVITATION_INVALID');
+          // The first-Owner setup invitation (no inviter) stops working once an Owner exists.
+          if (!pending.invitedBy) {
+            const [owner] = await tx
+              .select({ id: roleAssignments.id })
+              .from(roleAssignments)
+              .innerJoin(roles, eq(roles.id, roleAssignments.roleId))
+              .where(eq(roles.locked, true))
+              .limit(1);
+            if (owner) throw reject('SETUP_CLOSED');
+          }
 
           const [existing] = await tx
             .select({ id: users.id })

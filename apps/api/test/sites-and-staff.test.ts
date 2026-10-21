@@ -349,6 +349,32 @@ describe('staff changes per site (D-025)', () => {
     ).rejects.toThrow();
   });
 
+  it('closes the first-Owner setup invitation once an Owner exists', async () => {
+    const [setup] = await h.db
+      .insert(invitations)
+      .values({
+        email: 'late-setup@example.test',
+        roleId: 'owner',
+        tokenHash: 'hash-late-setup',
+        invitedBy: null,
+        expiresAt: new Date(Date.now() + 3_600_000),
+      })
+      .returning();
+    const { ticket } = await createTicket(h.db, {
+      purpose: 'invitation',
+      userId: 'ss-late-setup',
+      invitationId: setup!.id,
+    });
+    await expect(
+      enrolmentHooks(h.db).afterRegistration({
+        context: ticket,
+        user: { id: 'ss-late-setup' },
+        userVerified: true,
+      }),
+    ).rejects.toThrow();
+    expect(await h.db.select().from(users).where(eq(users.id, 'ss-late-setup'))).toEqual([]);
+  });
+
   it('refuses passkeys that did not verify the person', async () => {
     const hooks = enrolmentHooks(h.db);
     await expect(

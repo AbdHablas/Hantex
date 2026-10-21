@@ -13,7 +13,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx src/cli/migrate.ts",
     "seed": "tsx src/cli/seed.ts",
-    "roles": "tsx src/cli/roles.ts"
+    "roles": "tsx src/cli/roles.ts",
+    "setup-owner": "tsx src/cli/setup-owner.ts"
   },
   "dependencies": {
     "@hantex/shared": "workspace:*",
