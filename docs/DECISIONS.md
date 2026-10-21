@@ -652,6 +652,24 @@ designs (D-024 to D-029), before development continues.
     overlapping photos.
   - AI image-to-3D from a few photos *estimates* the shape and invents
     whatever it can't see.
+- **Evaluation (2026-10-21, sources in the document):**
+  - **CAD conversion:** US$0, exact. Best for switches and sockets.
+  - **Photogrammetry:** US$0 with Apple Object Capture (Mac or LiDAR iPhone)
+    or RealityScan or COLMAP on a suitable PC. RealityScan is free below
+    US$1M company revenue. Without suitable hardware, the KIRI Engine app
+    costs US$17.99 a month.
+  - **AI image-to-3D:** about US$0.20–0.90 per attempt. Tripo is pay-as-you-go
+    and recommended for a trial; Rodin is the alternative. Meshy's terms
+    allow training on uploads, so it is not recommended for unreleased
+    products.
+  - **AI video:** US$0.10–0.40 a second, and not 3D.
+  - **3D artist:** quoted per product.
+- **Recommended route:**
+  1. CAD first.
+  2. Modular assembly where ranges are modular.
+  3. Full capture plus photogrammetry otherwise.
+  4. AI only as a labelled draft.
+  5. An artist for hero products.
 - **Proposed approach** (`docs/3d-product-studio.md`):
   - **Labels set by method, not by providers' claims:** Exact (CAD),
     Measured, Artist-modelled, Captured view, AI-estimated, and AI imagery
@@ -665,7 +683,7 @@ designs (D-024 to D-029), before development continues.
   - **Paid AI providers** only with the Owner's approval and a budget.
 - **Consequences:**
   - Stage 1 is built in Phase 3, stage 2 in Phase 4.
-  - Storage is estimated at under about US$2.10 a month per 100 fully
+  - Storage is estimated at under about US$2.50 a month per 100 fully
     captured products on R2.
   - Processing is free within GitHub's private-repository allowance or on
     the owner's own hardware.

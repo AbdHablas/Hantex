@@ -50,7 +50,7 @@ views are never seen at all.
 
 - **Reconstruction** measures the real object. It needs either the
   product's design files (CAD) or a **full capture**: dozens of overlapping
-  photos taken from all around the product (section 5).
+  photos taken from all around the product ([5.4](#54-capture-guidance)).
 - **Generation** (AI image-to-3D) turns a few photos into a convincing model
   quickly and cheaply. But it **invents** whatever the photos don't show and
   approximates proportions and small details: exactly what must not be
@@ -88,10 +88,14 @@ sockets** (the main categories):
    Each frame and insert is modelled once, from CAD or by an artist, and the
    Studio assembles products from them, so each further product costs almost
    nothing. To be evaluated when real products are reviewed.
-3. **A full capture and photogrammetry** where there is no CAD: free software
-   on suitable hardware ([5.1](#51-capture-tools-for-measured-models)), a
-   turntable and diffuse light ([5.4](#54-capture-guidance)). Expect some
-   clean-up on glossy white plastic.
+3. **A full capture and photogrammetry** where there is no CAD. A turntable
+   and diffuse light are needed ([5.4](#54-capture-guidance)), and glossy
+   white plastic will need some clean-up. The software depends on the
+   hardware available ([5.1](#51-capture-tools-for-measured-models)):
+   - **Free:** Apple Object Capture on a Mac or a LiDAR iPhone, or
+     RealityScan or COLMAP on a PC with a suitable graphics card.
+   - **Without such hardware:** KIRI Engine's app (US$17.99 a month), which
+     has a mode for plain and shiny objects.
 4. **AI generation only as a labelled draft,** if the Owner approves a
    provider and a budget. At about US$0.30–0.60 an attempt it's a cheap
    starting point. It is never published without review against the photos
@@ -109,21 +113,54 @@ AI video only for labelled mood visuals.
 
 - **CAD, photogrammetry and processing:** US$0 per model, on free tiers and
   the owner's own hardware.
-- **Storage:** under about US$2.10 a month per 100 fully captured products
+- **Storage:** under about US$2.50 a month per 100 fully captured products
   ([section 7](#7-storage-requirements-and-running-costs)).
 - **AI drafts:** optional, pay-per-use, capped by the Owner's budget.
 
 ## 5. Providers and prices (checked 2026-10-21)
 
-**How these were checked:** the figures were read from each provider's
-official pages through web search on 2026-10-21. The pages themselves
-couldn't be opened from this environment. Confirm every price and policy on
+**How these were checked:** most figures were read from each provider's
+official pages through web search on 2026-10-21, because the pages
+themselves couldn't be opened from this environment. Package versions and
+licences were read from npm and GitHub directly. Confirm every price and policy on
 the live page before signing up. **(u)** marks an unverified or ambiguous
 figure.
 
 ### 5.1 Capture tools for measured models
 
-*Being completed from the capture research in progress.*
+| Tool | Runs on | Cost | Automation | Output and notes |
+|------|---------|------|------------|------------------|
+| [Apple Object Capture](https://developer.apple.com/documentation/realitykit/creating-3d-objects-from-photographs), Mac | macOS 12 or later with a GPU of at least 4 GB that supports ray tracing. Apple silicon is fastest ([WWDC21](https://developer.apple.com/videos/play/wwdc2021/10076/)) | Free, part of macOS | Command line ([Apple sample](https://developer.apple.com/documentation/realitykit/creating-a-photogrammetry-command-line-app)), so the Mac can act as the Studio's self-hosted runner | USDZ or OBJ. "Full" detail: up to 250,000 triangles with 8K textures, including diffuse, normal, roughness and occlusion maps ([detail levels](https://developer.apple.com/documentation/realitykit/photogrammetrysession/request/detail)). There is no metallic map, so metal finishes are set in the Studio. A high feature-sensitivity setting helps plain surfaces. **The best free option.** |
+| Apple Object Capture, iPhone or iPad | iOS 17 or later on an iPhone 12 Pro or iPad Pro (2021) or newer, with LiDAR ([WWDC23](https://developer.apple.com/videos/play/wwdc2023/10191/)) | Free | Manual capture app | On the device: "reduced" detail (under 50,000 triangles, 2K textures). The same photos can be processed on a Mac at full detail. LiDAR helps with low-texture objects, and its depth data gives real scale. |
+| [Epic RealityScan 2.x](https://www.realityscan.com/license) | Windows with an NVIDIA GPU, or AMD RDNA 3 and later since 2.2. Experimental Linux command-line build. No macOS. | Free if the whole company group's gross revenue in the last 12 months, including funds raised, is under US$1M ([EULA](https://www.realityscan.com/en-US/eula)). Otherwise US$1,250 per seat per year. | Command line and headless mode ([docs](https://dev.epicgames.com/documentation/en-us/realityscan/command-line-operations)) | Professional photogrammetry. Without a supported GPU it can only align photos. |
+| [COLMAP 4.2](https://github.com/colmap/colmap) + [OpenMVS 2.4](https://github.com/cdcseacave/openMVS) | Linux, Windows or Mac. The dense step needs NVIDIA CUDA or AMD HIP (COLMAP), or CUDA or Metal (OpenMVS). | Free: BSD-3 (COLMAP) and AGPL-3.0 (OpenMVS) | Command line | Textured mesh. The AGPL concerns the software, not the models it produces; this is an interpretation that needs legal review before use. |
+| [Meshroom 2025.1](https://github.com/alicevision/Meshroom) | Windows or Linux with NVIDIA CUDA | Free (MPL-2.0) | Graphical and command line | Without CUDA, only low-quality draft meshes. |
+| [KIRI Engine](https://www.kiriengine.app/api) | Cloud: phone app or API | App Pro US$17.99 a month or US$79.99 a year ([pricing](https://www.kiriengine.app/pricing)). API US$1 per model with a US$500 minimum top-up. | API | A "Featureless Object" mode is designed for shiny or plain objects ([feature](https://www.kiriengine.app/features/featureless-object-scan)). Takes 20–300 photos and outputs OBJ, FBX, GLB, USDZ or PLY. Users own their scans and may use them commercially. Training policy not found (u). **The cloud option when there's no suitable hardware.** |
+| Polycam, Scaniverse | Cloud or phone | Polycam API only on Enterprise (US$1,200 per user per year, at least 3 users). Scaniverse is free, but commercial rights need Pro (US$50 a month). | — | **Not recommended for unreleased products.** Polycam may license user content for AI training ([privacy](https://poly.cam/privacy_policy)), and Niantic takes a perpetual licence that includes AI training ([Scaniverse terms](https://scaniverse.com/terms/)). |
+
+**Gaussian splatting (captured views):**
+
+- **Training tools:** gsplat and nerfstudio are free (Apache-2.0) but need an
+  NVIDIA GPU ([gsplat](https://github.com/nerfstudio-project/gsplat)). The
+  original Inria code is non-commercial.
+- **File sizes:** about 6–16 MB for a 500,000-splat object in the compact SOG,
+  SPZ or `.splat` formats, compared with about 117 MB as PLY. These are
+  estimates from the formats' published sizes per splat
+  ([SOG](https://developer.playcanvas.com/user-manual/gaussian-splatting/formats/sog/),
+  [SPZ](https://github.com/nianticlabs/spz)).
+- **Web viewers:** Spark 2.4 (MIT, built on three.js) and the PlayCanvas
+  engine (MIT).
+- **Standard:** the Khronos registry lists `KHR_gaussian_splatting` as
+  ratified in 2026
+  ([registry](https://github.com/KhronosGroup/glTF/blob/main/extensions/README.md)).
+
+Splats look real but can't switch finishes, and are larger than the 3 MB
+model budget, so they remain an optional showcase.
+
+**Fast reconstruction research models** (VGGT, MASt3R, MapAnything, Depth
+Anything 3) estimate camera positions and depth from a few photos, not
+finished models. Most of their weights are licensed for non-commercial use
+only. They're watched for future use, not used now.
 
 ### 5.2 AI image-to-3D services (results are always *AI-estimated*)
 
@@ -200,7 +237,46 @@ about US$80 in total. A cap of US$10–20 a month allows 25–50 drafts.
 
 ### 5.4 Capture guidance
 
-*Being completed from the capture research in progress.*
+The Studio shows this guide when photos are uploaded, and the capture check
+tests for it.
+
+- **Quick capture** (enough for an AI-estimated draft or for an artist, never
+  for a measured model):
+  - views: front, left, right, rear and top;
+  - 1–3 detail close-ups;
+  - at least 2,000 px on the long side;
+  - plain background;
+  - real dimensions entered.
+- **Full capture** (for a measured model):
+  - **Amount:** Apple recommends 20–200 close-up photos with at least 70 %
+    overlap; under 50 % may fail
+    ([Apple](https://developer.apple.com/documentation/realitykit/capturing-photographs-for-realitykit-object-capture)).
+    Epic advises no more than 30° between neighbouring views, with every
+    point visible in at least two photos
+    ([Epic](https://dev.epicgames.com/documentation/realityscan-mobile/Photogrammetry-Camera-Movement)).
+  - **The Studio's standard:**
+    - three rings of 36 photos (every 10°) at different heights on a
+      turntable;
+    - then the product turned over for the back;
+    - about 100–150 photos in all.
+- **Light:** soft, even light (a light tent or diffuse lamps). Apple and Epic
+  both warn that reflective, transparent and plain single-colour surfaces may
+  not give enough information.
+- **Glossy white plastic** is the usual case for switches and sockets. In
+  order of preference:
+  1. a LiDAR iPhone or iPad, or KIRI's featureless mode;
+  2. cross-polarised light, which removes reflections but also gloss, so the
+     gloss is restored in the Studio's finish settings
+     ([technique](https://paulbourke.net/miscellaneous/crosspolarisation/));
+  3. a temporary scanning spray, with a second unsprayed pass for the true
+     colour.
+
+  Markers go on the turntable, never on the product.
+- **Glass and chrome** remain unreliable for every capture method. Use CAD
+  or an artist.
+- **Scale:** LiDAR depth data (Apple), measured distances between markers
+  (RealityScan), or printed scale bars. The Studio always checks the result
+  against the datasheet dimensions.
 
 ## 6. How the Studio works
 
@@ -431,7 +507,7 @@ Approved models link to products and variants in the catalogue.
 
 - photos average 5 MB (12–24 MP JPEG or HEIC);
 - a quick capture is 6 photos;
-- a full capture is 100 photos;
+- a full capture is 100–150 photos;
 - processing leftovers are deleted 30 days after a model is approved or
   rejected.
 
@@ -439,7 +515,7 @@ Approved models link to products and variants in the catalogue.
 
 | Item | Quick capture | Full capture | CAD |
 |------|---------------|--------------|-----|
-| Originals (kept for re-processing) | ≈ 30 MB | ≈ 500 MB | ≈ 1–20 MB, plus reference photos ≈ 30 MB |
+| Originals (kept for re-processing) | ≈ 30 MB | ≈ 500–750 MB | ≈ 1–20 MB, plus reference photos ≈ 30 MB |
 | Processing files (temporary, 30 days) | ≈ 10–50 MB | up to ≈ 1 GB | ≈ 10–50 MB |
 | Published (two GLBs, posters) | ≈ 5–6 MB | ≈ 5–6 MB | ≈ 5–6 MB |
 
@@ -451,7 +527,7 @@ after 10 GB free; uploads and downloads within the free 1 million and
 | Scenario | Stored | Cost per month |
 |----------|--------|----------------|
 | Quick captures only | ≈ 4 GB | US$0, within the free 10 GB |
-| Full captures | ≈ 51 GB long-term, up to ≈ 150 GB while processing files are kept | ≈ US$0.60 long-term; up to ≈ US$2.10 while processing files are kept |
+| Full captures | ≈ 51–76 GB long-term, up to ≈ 176 GB while processing files are kept | ≈ US$0.60–1.00 long-term; up to ≈ US$2.50 while processing files are kept |
 | CAD | ≈ 6 GB | US$0 |
 
 **Running costs:**
@@ -460,8 +536,8 @@ after 10 GB free; uploads and downloads within the free 1 million and
 |-------|------|------|
 | Dashboard Worker (Workers Free) | Uploads, job tracking, review screens. No heavy processing: the Free plan allows 10 ms of CPU per request. | US$0 |
 | GitHub Actions in a **private** runner repository | Conversion, optimisation, validation, posters, calls to providers | US$0 within 2,000 minutes a month (2 vCPU, 8 GB runners) ([GitHub](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). Estimated 2–5 minutes per model, to be measured. |
-| The owner's own computer as a self-hosted runner | Photogrammetry, if suitable hardware exists (section 5) | US$0. Self-hosted runners are free; a planned GitHub platform fee for them was postponed, not cancelled ([GitHub](https://github.com/resources/insights/2026-pricing-changes-for-github-actions)). |
-| Paid providers | Optional AI generation | Per model, within the Owner's budget (section 5) |
+| The owner's own computer as a self-hosted runner | Photogrammetry, if suitable hardware exists ([5.1](#51-capture-tools-for-measured-models)) | US$0. Self-hosted runners are free; a planned GitHub platform fee for them was postponed, not cancelled ([GitHub](https://github.com/resources/insights/2026-pricing-changes-for-github-actions)). |
+| Paid providers | Optional AI generation | About US$0.20–0.60 per model, within the Owner's budget ([5.2](#52-ai-image-to-3d-services-results-are-always-ai-estimated)) |
 
 **Why not on Cloudflare itself:**
 
@@ -493,10 +569,13 @@ Unreleased product photos must never pass through it.
   never by AI.
 - **True-scale AR** needs a model whose size matches the entered dimensions.
   Otherwise "view on your wall" is switched off.
-- **Gaussian splats** are large, can't switch finishes and aren't yet a
-  settled web standard. They are not the default.
+- **Gaussian splats** are larger than the model budget (about 6–16 MB for
+  an object) and can't switch finishes. Their glTF standard was ratified
+  only in 2026, and viewer support is still settling. They are not the
+  default.
 - **No GPU is available** on free CI runners or on Cloudflare. Photogrammetry
-  runs on the owner's suitable computer or on a paid GPU service (D-030).
+  runs on the owner's suitable computer or through KIRI Engine's cloud
+  service (D-030).
 - **iOS Quick Look** files generated on the fly don't support animation, and
   very large models open slowly on phones.
 - **Signed links don't work on the media domain.** R2 signed links work only
@@ -517,9 +596,14 @@ Unreleased product photos must never pass through it.
 
 1. Are 3D design files (CAD) available from the factory or supplier for the
    switches and sockets?
-2. Which equipment is available for capture: a Mac with Apple silicon, an
-   iPhone or iPad with LiDAR, a Windows PC with an NVIDIA graphics card, or
-   none of these?
+2. Which equipment is available for capture?
+   - a Mac (Apple silicon is best);
+   - an iPhone 12 Pro or iPad Pro (2021) or newer, with LiDAR;
+   - a Windows PC with an NVIDIA or recent AMD graphics card;
+   - none of these.
+
+   This decides between the free tools and the KIRI Engine subscription
+   ([5.1](#51-capture-tools-for-measured-models)).
 3. Is there a monthly budget for paid AI 3D services, or free methods only?
 
 **Delivery in stages:**
