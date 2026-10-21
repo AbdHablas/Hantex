@@ -592,7 +592,7 @@ Unreleased product photos must never pass through it.
 
 ## 9. Decisions needed and delivery
 
-**D-030 (pending): the owner's input decides the main path:**
+**D-030 (confirmed 2026-10-21): the owner's answers set the main path:**
 
 1. Are 3D design files (CAD) available from the factory or supplier for the
    switches and sockets?
@@ -612,6 +612,8 @@ Unreleased product photos must never pass through it.
    true-scale models, and RealityScan or COLMAP on the PC. KIRI Engine isn't
    needed. The Mac or PC can serve as the self-hosted processing runner.
 3. Is there a monthly budget for paid AI 3D services, or free methods only?
+   **Answer (2026-10-21): free methods only.** AI providers stay switched off
+   with a US$0 budget until the owner approves one.
 
 **Delivery in stages:**
 

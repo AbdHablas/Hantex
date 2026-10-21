@@ -16,7 +16,7 @@ reflected in this plan and in the documents listed.
 | Product-focused catalogue: switches and sockets first; lighting, lamps, accessories | D-026 (structure proposed) | [`product-catalogue.md`](product-catalogue.md) |
 | SVG design system with light/dark and adaptable colours per site; central customisation without code; new sites, brands, themes, fonts and palettes without rebuilding | D-027 (design proposed) | [`theming.md`](theming.md) |
 | Latest versions of every platform | D-023 (confirmed) | [`development.md`](development.md) |
-| AI 3D Product Studio | D-029 (approach proposed), D-030 (pending) | [`3d-product-studio.md`](3d-product-studio.md) |
+| AI 3D Product Studio | D-029 (approach proposed), D-030 (confirmed: free photogrammetry, no paid AI) | [`3d-product-studio.md`](3d-product-studio.md) |
 
 ## Phase 1: Discovery and architecture *(complete)*
 
@@ -60,7 +60,8 @@ Done:
 Next:
 
 - [x] Staff access across websites: roles per site, with an "all sites" option (D-025)
-- [ ] Owner's answers: D-030 (3D inputs). Approval of D-024 and D-026 to D-029.
+- [x] Owner's answers on 3D inputs (D-030): no CAD, own capture hardware, free methods only
+- [ ] Approval of D-024 and D-026 to D-029
 - [ ] Toolchain on the latest versions (D-023): Node.js 26, pnpm 12, PostgreSQL 18, patch updates
 - [ ] Database made site-aware (D-024, D-025):
   - sites and site domains;
@@ -158,7 +159,7 @@ Full evaluation and sources: [`3d-product-studio.md`](3d-product-studio.md).
 | Uploads, job tracking, review screens | Dashboard Worker (Workers Free) | US$0. No heavy processing: the Free plan allows 10 ms of CPU per request. |
 | Conversion, optimisation, validation, posters | GitHub Actions in a **private** runner repository | US$0 within 2,000 minutes a month. Estimated 2–5 minutes per model, to be measured. |
 | Photo reconstruction (photogrammetry) | Apple Object Capture (Mac or LiDAR iPhone), RealityScan or COLMAP on a suitable PC, all free; or the KIRI Engine app. The owner has a Mac, a LiDAR iPhone or iPad and a GPU PC (D-030), so the free tools are used. | US$0 on suitable hardware (RealityScan is free below US$1M company revenue). Otherwise KIRI Engine is US$17.99 a month, or its API US$1 per model after a US$500 minimum top-up. |
-| AI image-to-3D drafts (optional) | Tripo (recommended for a trial) or Rodin. Others are compared in `3d-product-studio.md` section 5. | About US$0.20–0.60 per attempt. Only with the Owner's approval and budget. |
+| AI image-to-3D drafts (optional) | Tripo (recommended for a trial) or Rodin. Others are compared in `3d-product-studio.md` section 5. | About US$0.20–0.60 per attempt. Not used: the owner chose free methods only (D-030). |
 | 3D artist (optional) | Freelance | Quoted per product |
 | Turntable videos and scroll sequences | Rendered from the approved model on the processing runner | US$0. AI video would cost US$0.10–0.40 a second and isn't a 3D model. |
 

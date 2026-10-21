@@ -105,7 +105,7 @@ selector, specifications, downloads. Details:
 
 Details: [`theming.md`](theming.md).
 
-## AI 3D Product Studio (D-029 confirmed; approach proposed; D-030 pending)
+## AI 3D Product Studio (D-029 confirmed; approach proposed; D-030 confirmed)
 
 A reusable dashboard module that turns product captures into optimised,
 interactive 3D models with poster-image fallbacks.
@@ -149,8 +149,8 @@ owner's approval.
 
 - The Workers Free plan is used (D-007). The dashboard Worker's bundle size
   is checked against the free plan's limit in CI.
-- Optional paid 3D providers are pay-per-use, behind an owner-set budget
-  (D-030).
+- No paid 3D providers: the owner chose free methods only (D-030). Any
+  provider added later is pay-per-use behind an owner-set budget.
 
 ## Planned repository layout
 
@@ -180,5 +180,4 @@ docs/               Project documentation
 
 ## Pending
 
-- D-030: 3D processing location, provider choice and budget.
 - Approval of the proposed designs: D-024 to D-029.

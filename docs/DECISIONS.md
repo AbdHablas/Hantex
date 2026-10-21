@@ -38,10 +38,10 @@ marked **Confirmed** once the project owner has approved it.
 | D-027 | Reusable design system across websites | Confirmed (requirement) · design Proposed | Theme per site from presets; font library and SVG logo uploads in the dashboard — see `docs/theming.md` |
 | D-028 | Hosting of multiple websites | Proposed | One Cloudflare Worker per site (static pages + forms), media from R2 on a media domain per site |
 | D-029 | AI 3D Product Studio | Confirmed (requirement) · approach Proposed | Provider-based module with quality gates, honest labels and approval before publishing — see `docs/3d-product-studio.md` |
-| D-030 | 3D processing location, providers and budget | Pending | No CAD files; Mac, LiDAR iPhone/iPad and GPU PC available (free photogrammetry). Budget for paid AI services still to answer |
+| D-030 | 3D processing location, providers and budget | Confirmed | No CAD files. Free photogrammetry on the owner's Mac, LiDAR iPhone/iPad and GPU PC. Self-hosted runner. No paid AI services. |
 
-Next: the owner's answers to D-030, and approval of the proposed designs
-(D-024, D-026 to D-029), before development continues.
+Next: approval of the proposed designs (D-024, D-026 to D-029) before
+development continues.
 
 ---
 
@@ -691,7 +691,7 @@ Next: the owner's answers to D-030, and approval of the proposed designs
 
 ## D-030 — 3D processing location, providers and budget
 
-- **Status:** Pending — the owner's input
+- **Status:** Confirmed — 2026-10-21
 - **Questions:**
   1. Are CAD files available from the factory or supplier?
   2. Which capture equipment is available: a Mac with Apple silicon, an
@@ -711,6 +711,13 @@ Next: the owner's answers to D-030, and approval of the proposed designs
   self-hosted processing runner, so unreleased product photos never leave the
   owner's machines. The exact Mac chip and iPhone or iPad model are checked
   when capture starts.
+- **Answer 3 (2026-10-21): free methods only.** No paid AI 3D services. The
+  provider interface keeps a slot for them, but every AI provider stays
+  switched off with a US$0 budget until the owner approves one.
+- **Result:** Confirmed. Photogrammetry on the owner's own hardware is the
+  main path, with LiDAR capture for quick true-scale models. Processing runs
+  on a self-hosted runner on the owner's Mac or PC. A 3D artist is quoted
+  per product only if the owner asks.
 - **Why it matters:** CAD gives exact models at no cost. Capture equipment
   decides whether photo reconstruction can run for free on the owner's
   hardware. The budget decides whether AI drafts are offered at all.
