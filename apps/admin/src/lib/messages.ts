@@ -333,6 +333,10 @@ const en = {
       'Shown under the launch sign-up form. Use your own wording; nothing is filled in for you.',
     privacyNote: 'Note',
     privacyUrl: 'Link to the full privacy policy',
+    analytics: 'Visitor statistics',
+    analyticsHelp:
+      'Cloudflare Web Analytics: cookieless page views, with no consent banner needed. In Cloudflare, add this website under Web Analytics and paste the token from its snippet (32 letters and digits). Leave empty to collect nothing.',
+    analyticsToken: 'Cloudflare Web Analytics token',
   },
 
   appearance: {
@@ -1102,6 +1106,10 @@ const ar: Messages = {
       'تظهر تحت نموذج الاشتراك في إشعار الإطلاق. اكتبها بصياغتك؛ لا يُملأ شيء نيابةً عنك.',
     privacyNote: 'الملاحظة',
     privacyUrl: 'رابط سياسة الخصوصية الكاملة',
+    analytics: 'إحصاءات الزوار',
+    analyticsHelp:
+      'Cloudflare Web Analytics: عدد زيارات الصفحات دون ملفات تعريف الارتباط ودون الحاجة إلى نافذة موافقة. أضف هذا الموقع في Cloudflare ضمن Web Analytics والصق الرمز من الشيفرة (32 حرفًا ورقمًا). اتركه فارغًا لعدم جمع أي شيء.',
+    analyticsToken: 'رمز Cloudflare Web Analytics',
   },
 
   appearance: {

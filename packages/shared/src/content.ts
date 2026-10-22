@@ -138,6 +138,18 @@ export const siteSettingsSchema = z.strictObject({
   privacy: z
     .strictObject({ note: bilingual(600), url: optionalHttpsUrl })
     .default({ note: { ar: '', en: '' }, url: '' }),
+  /**
+   * Cloudflare Web Analytics (D-042): the site token Cloudflare shows for this website, 32 hex
+   * characters, public by design (it is in every page). Empty: no statistics are collected.
+   */
+  analytics: z
+    .strictObject({
+      cloudflareToken: z
+        .string()
+        .trim()
+        .regex(/^([0-9a-f]{32})?$/, 'Not a Cloudflare Web Analytics token'),
+    })
+    .default({ cloudflareToken: '' }),
 });
 
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
@@ -155,4 +167,5 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
   social: { instagram: '', facebook: '', linkedin: '', x: '', youtube: '', tiktok: '' },
   privacy: { note: { ar: '', en: '' }, url: '' },
+  analytics: { cloudflareToken: '' },
 };

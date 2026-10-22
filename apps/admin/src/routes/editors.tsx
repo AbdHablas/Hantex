@@ -170,6 +170,15 @@ export function SiteSettingsEditor() {
             })}
           </div>
         </Card>
+        <Card title={t.analytics}>
+          <p className="mb-4 text-sm text-muted">{t.analyticsHelp}</p>
+          {text(
+            t.analyticsToken,
+            draft.analytics.cloudflareToken,
+            (cloudflareToken) => set('analytics', { cloudflareToken: cloudflareToken.trim() }),
+            { max: 32 },
+          )}
+        </Card>
         <VersionHistory editor={editor} />
       </div>
     </>

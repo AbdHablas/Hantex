@@ -89,9 +89,14 @@ end.
 ### Browser and HTTP
 
 - Strict Content-Security-Policy (no inline scripts except hashed ones;
-  Turnstile allowed explicitly), `frame-ancestors 'none'`, HSTS,
-  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
-  Cross-Origin-Opener-Policy.
+  Turnstile and Cloudflare Web Analytics (D-042) allowed explicitly),
+  `frame-ancestors 'none'`, HSTS, `X-Content-Type-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, Cross-Origin-Opener-Policy.
+- Draft previews may be framed only by the dashboard (`DASHBOARD_ORIGIN`),
+  for the page editor's device preview; the dashboard allows `https:` frames
+  for that reason and nothing else changes.
+- Visitor statistics are cookieless and collected only on published pages of
+  a website whose settings hold a Web Analytics token; previews never count.
 - State-changing requests require the same origin (Origin header check) in
   addition to `SameSite` cookies.
 - Dashboard and API responses are `Cache-Control: no-store` and never cached

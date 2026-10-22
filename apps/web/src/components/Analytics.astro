@@ -1,0 +1,22 @@
+---
+/**
+ * Cloudflare Web Analytics (D-042): cookieless page-view statistics, only when the website has
+ * a token in its settings and never in draft previews. The token is validated by the settings
+ * schema (32 hex characters), and the security policy allows only Cloudflare's beacon.
+ */
+interface Props {
+  token: string;
+}
+const { token } = Astro.props;
+---
+
+{
+  token && (
+    <script
+      is:inline
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={JSON.stringify({ token })}
+    />
+  )
+}

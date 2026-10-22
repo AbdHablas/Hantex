@@ -4,6 +4,7 @@ import type { Theme } from '@hantex/theme';
 import { TEXT, dirOf } from '../i18n';
 import { SITE, pathFor } from '../site-data';
 import Icon, { type IconName } from './Icon.astro';
+import Analytics from './Analytics.astro';
 import SignupForm from './SignupForm.astro';
 import '../styles/site.css';
 
@@ -360,5 +361,6 @@ const year = new Date().getUTCFullYear();
       </div>
     </footer>
     <script src="../scripts/page.ts"></script>
+    {!preview && <Analytics token={settings.analytics.cloudflareToken} />}
   </body>
 </html>

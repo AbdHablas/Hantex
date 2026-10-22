@@ -12,6 +12,31 @@ import { createHmac } from 'node:crypto';
 const LIVE = `http://localhost:${process.env['E2E_LIVE_PORT'] ?? '8790'}`;
 const SOON = `http://localhost:${process.env['E2E_PORT'] ?? '8789'}`;
 
+// Cloudflare's analytics beacon is answered locally, so the tests never reach the internet.
+test.beforeEach(async ({ context }) => {
+  await context.route('https://static.cloudflareinsights.com/**', (route) =>
+    route.fulfill({ contentType: 'text/javascript', body: '' }),
+  );
+});
+
+test('published pages carry the cookieless analytics beacon with the site token (D-042)', async ({
+  page,
+}) => {
+  const cspErrors: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+  });
+  await page.goto(`${LIVE}/en/`);
+  const beacon = page.locator('script[src="https://static.cloudflareinsights.com/beacon.min.js"]');
+  await expect(beacon).toHaveAttribute(
+    'data-cf-beacon',
+    JSON.stringify({ token: '0123456789abcdef0123456789abcdef' }),
+  );
+  expect(cspErrors).toEqual([]);
+  // No cookies are set by the site.
+  expect(await page.context().cookies()).toEqual([]);
+});
+
 test('the home page is built from its sections, in Arabic by default', async ({ page }) => {
   await page.goto(`${LIVE}/`);
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -173,6 +198,8 @@ test('a draft page preview renders, and only the dashboard may frame it', async 
   const html = await response.text();
   expect(html).toContain('Draft section');
   expect(html).toContain('noindex');
+  // Previews are never counted.
+  expect(html).not.toContain('cloudflareinsights');
   // Signed for this site only: the other site refuses it.
   expect(
     (await request.post(`${SOON}/preview`, { form: { payload, expires, signature } })).status(),

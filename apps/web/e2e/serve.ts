@@ -167,6 +167,7 @@ await db.insert(documentVersions).values([
     data: {
       ...DEFAULT_SITE_SETTINGS,
       contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'live@example.test' },
+      analytics: { cloudflareToken: '0123456789abcdef0123456789abcdef' },
     },
   },
 ]);

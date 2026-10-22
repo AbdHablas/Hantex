@@ -105,6 +105,20 @@ describe('site settings', () => {
     expect(siteSettingsSchema.safeParse(link('javascript:alert(1)')).success).toBe(false);
   });
 
+  it('accepts only a Cloudflare Web Analytics token, and none by default', () => {
+    const { analytics: _analytics, ...older } = DEFAULT_SITE_SETTINGS;
+    expect(siteSettingsSchema.parse(older).analytics.cloudflareToken).toBe('');
+    const token = (cloudflareToken: string) => ({
+      ...DEFAULT_SITE_SETTINGS,
+      analytics: { cloudflareToken },
+    });
+    expect(siteSettingsSchema.safeParse(token('0123456789abcdef0123456789abcdef')).success).toBe(
+      true,
+    );
+    expect(siteSettingsSchema.safeParse(token('"><script>')).success).toBe(false);
+    expect(siteSettingsSchema.safeParse(token('0123456789ABCDEF')).success).toBe(false);
+  });
+
   it('requires international phone numbers in E.164 form', () => {
     const contact = (phone: string) => ({
       ...DEFAULT_SITE_SETTINGS,
