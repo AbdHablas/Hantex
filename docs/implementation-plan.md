@@ -131,19 +131,21 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       (sharing images come with media, 3b)
 - [x] Section editor: add, remove, reorder, duplicate, hide per device;
       live preview at phone, tablet and desktop widths
-- [ ] Sections without media: hero, rich text, features, call to action, FAQ,
+- [x] Sections without media: hero, rich text, features, call to action, FAQ,
       statistics, contact, newsletter sign-up, category list, divider
-- [ ] Global sections per site: header, footer, saved sections
+      (a category list is the Cards section)
+- [x] Global sections per site: header, footer, saved sections
 - [x] Menus: header and footer; links to pages and addresses; dropdowns
 - [x] Publish changes: validation, versions, rollback, redirects for changed
-      slugs; one rebuild per site (page version restore: API only so far)
+      slugs; one rebuild per site
 - [x] Guided *New website*; duplicate a website; templates copied on use
 - [x] Site engine renders pages, menus and sections; Coming Soon stays a mode
       (live sites, signed page previews framed only by the dashboard, sitemap)
-- [ ] Tests: isolation, permissions, validation, publishing, builder
+- [x] Tests: isolation, permissions, validation, publishing, builder
       workflow in the browser, responsive at 360/768/1024/1440 px
-- [ ] **Acceptance:** a second website created, customised and published
+- [x] **Acceptance:** a second website created, customised and published
       without code; the first website unchanged
+      (verified in the browser tests; live sites wait for the deployment setup)
 
 ### 3b. Media
 

@@ -215,14 +215,14 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('checkbox', { name: 'Phones' }).uncheck();
   await expectAccessible(page, 'page editor');
   await page.getByRole('button', { name: 'Save draft' }).click();
-  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
   await expect(page.getByText(/Hidden on Phones/)).toBeVisible();
   // Reusable: the section moves into the website's saved sections; the page keeps a reference.
   await page.getByRole('button', { name: 'Actions for Call to action' }).click();
   await page.getByRole('menuitem', { name: 'Save as reusable section' }).click();
   await expect(page.getByText('Saved section', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Save draft' }).click();
-  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
 
   // Rich text: formatting is stored as data, never HTML.
   await page.getByRole('link', { name: 'All pages' }).click();
@@ -238,7 +238,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.keyboard.type('Quality first.');
   await expect(english.locator('strong')).toHaveText('Quality first.');
   await page.getByRole('button', { name: 'Save draft' }).click();
-  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
 
   // Menus: a dropdown link in the header menu.
   await page.getByRole('link', { name: 'Menus, header & footer', exact: true }).click();
@@ -248,7 +248,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('group', { name: 'Dropdown links' }).getByLabel('Arabic').fill('فريقنا');
   await expectAccessible(page, 'menus');
   await page.getByRole('button', { name: 'Save draft' }).click();
-  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
 
   // Publish changes: everything changed on this website, together.
   await expect(page.getByText(/unpublished changes on this website/)).toBeVisible();
