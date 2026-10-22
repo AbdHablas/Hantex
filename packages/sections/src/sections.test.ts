@@ -11,6 +11,8 @@ import {
   pageSchema,
   pagesIndexSchema,
   richDocSchema,
+  savedReference,
+  savedSectionsSchema,
   sectionSchema,
   starterContent,
   SITE_STARTERS,
@@ -207,5 +209,28 @@ describe('site checks', () => {
     expect(localizedPath('/products', 'en', 'ar')).toBe('/en/products');
     expect(localizedPath('/', 'en', 'ar')).toBe('/en/');
     expect(localizedPath('/products', 'ar', 'ar')).toBe('/products');
+  });
+
+  it('checks saved sections: references must exist, and their links count where they are used', () => {
+    const site = draft([
+      ['home00', page('home')],
+      ['hidden', page('hidden', { visible: false })],
+    ]);
+    const cta = newSection('cta');
+    cta.settings.button.link = { type: 'page', pageId: 'hidden' };
+    site.saved = { items: [{ id: 'saved1', name: { ar: 'م', en: 'm' }, section: cta }] };
+    expect(savedSectionsSchema.safeParse(site.saved).success).toBe(true);
+    // Unused, its broken link doesn't matter yet.
+    expect(checkSite(site)).toEqual([]);
+    site.pages.get('home00')!.sections.push(savedReference('saved1'), savedReference('gone00'));
+    expect(checkSite(site).map((i) => `${i.code}:${i.target}`)).toEqual([
+      'missing-saved-section:page:home00',
+      'broken-link:saved:saved1',
+    ]);
+    // A saved section can't hold another reference.
+    const nested = {
+      items: [{ id: 'saved2', name: { ar: 'م', en: 'm' }, section: savedReference('saved1') }],
+    };
+    expect(savedSectionsSchema.safeParse(nested).success).toBe(false);
   });
 });

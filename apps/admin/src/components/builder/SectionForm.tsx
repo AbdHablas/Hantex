@@ -5,7 +5,7 @@ import {
   type Field as RegistryField,
   type Link,
   type RichDoc,
-  type Section,
+  type ContentSection,
   type SectionStyle,
   type Visibility,
 } from '@hantex/sections';
@@ -245,7 +245,7 @@ export function SectionForm({
   onChange,
   pages,
   disabled,
-}: FormProps & { section: Section; onChange: (section: Section) => void }) {
+}: FormProps & { section: ContentSection; onChange: (section: ContentSection) => void }) {
   const { m } = useI18n();
   const b = m.builder;
   const definition = SECTIONS[section.type];
@@ -254,7 +254,7 @@ export function SectionForm({
       <Fields
         fields={definition.fields}
         values={section.settings}
-        onChange={(settings) => onChange({ ...section, settings } as Section)}
+        onChange={(settings) => onChange({ ...section, settings } as ContentSection)}
         pages={pages}
         disabled={disabled}
       />

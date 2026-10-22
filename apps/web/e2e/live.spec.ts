@@ -39,6 +39,13 @@ test('every page has an English version linked from the Arabic one', async ({ pa
   ).toHaveAttribute('aria-current', 'page');
 });
 
+test('a saved section appears on every page that uses it', async ({ page }) => {
+  for (const path of ['/en/', '/en/who-we-are/']) {
+    await page.goto(`${LIVE}${path}`);
+    await expect(page.getByRole('heading', { name: 'Shared section' }), path).toBeVisible();
+  }
+});
+
 test('a page’s old address leads to its new one', async ({ request }) => {
   for (const [from, to] of [
     ['/about', '/who-we-are/'],

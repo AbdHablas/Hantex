@@ -1,5 +1,12 @@
 import type { Locale, SiteSettings } from '@hantex/shared';
-import { localizedPath, pagePath, type Bilingual, type Link, type Page } from '@hantex/sections';
+import {
+  localizedPath,
+  pagePath,
+  type Bilingual,
+  type ContentSection,
+  type Link,
+  type Page,
+} from '@hantex/sections';
 import type { BuilderContent } from './site-data';
 
 /**
@@ -69,4 +76,18 @@ export function livePaths(ctx: Omit<RenderContext, 'locale'>) {
       .filter((id) => isLive(ctx, id))
       .map((id) => ({ id, locale, path: pageHref({ ...ctx, locale }, id) })),
   );
+}
+
+/**
+ * A page's sections as drawn: references to saved sections (D-038) are replaced by the saved
+ * section, keeping the reference's id so the same saved section can appear twice. A reference to
+ * a saved section that no longer exists draws nothing (Publish changes refuses that anyway).
+ */
+export function resolveSections(ctx: RenderContext, page: Page): ContentSection[] {
+  const saved = new Map((ctx.content.saved?.items ?? []).map((item) => [item.id, item.section]));
+  return page.sections.flatMap((section) => {
+    if (section.type !== 'saved') return [section];
+    const target = saved.get(section.settings.savedId);
+    return target ? [{ ...target, id: section.id }] : [];
+  });
 }

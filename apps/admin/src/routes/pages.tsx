@@ -3,8 +3,12 @@ import {
   SECTION_TYPES,
   newSection,
   pageSchema,
+  savedReference,
+  savedSectionsSchema,
   slugSchema,
+  type ContentSection,
   type Page,
+  type SavedSections,
   type Section,
   type SectionType,
 } from '@hantex/sections';
@@ -12,6 +16,7 @@ import {
   AlignLeft,
   ArrowDown,
   ArrowUp,
+  Bookmark,
   ChartNoAxesColumn,
   ChevronDown,
   CircleHelp,
@@ -30,8 +35,10 @@ import {
   SeparatorHorizontal,
   Sparkles,
   Trash2,
+  Unlink,
   type LucideIcon,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BilingualField } from '../components/document';
@@ -56,6 +63,7 @@ import {
   MenuSeparator,
   PageHeader,
   Select,
+  Table,
   cn,
   confirmAction,
   later,
@@ -64,9 +72,11 @@ import { api, sitePath } from '../lib/api';
 import {
   newItemId,
   slugify,
+  useBuilderKeys,
   useBuilderMutation,
   usePage,
   usePages,
+  useSavedSections,
   type PageSummary,
 } from '../lib/builder';
 import { useBilingual, useI18n } from '../lib/i18n';
@@ -378,7 +388,7 @@ const sectionIcon = (type: SectionType) => {
 };
 
 /** A short description of a section's content, to tell sections apart in the list. */
-function summary(section: Section, pick: (v: { ar: string; en: string }) => string) {
+function summary(section: ContentSection, pick: (v: { ar: string; en: string }) => string) {
   const s = section.settings as Record<string, unknown>;
   for (const key of ['heading', 'title']) {
     const value = s[key] as { ar: string; en: string } | undefined;
@@ -391,10 +401,14 @@ function AddSectionDialog({
   open,
   onClose,
   onAdd,
+  saved,
+  onAddSaved,
 }: {
   open: boolean;
   onClose: () => void;
   onAdd: (type: SectionType) => void;
+  saved: SavedSections['items'];
+  onAddSaved: (savedId: string) => void;
 }) {
   const { m } = useI18n();
   const bi = useBilingual();
@@ -439,8 +453,108 @@ function AddSectionDialog({
             </ul>
           </section>
         ))}
+        {saved.length > 0 && (
+          <section aria-labelledby="cat-saved">
+            <h3
+              id="cat-saved"
+              className="mb-2 text-xs font-medium tracking-wide text-muted uppercase"
+            >
+              {b['savedSections']}
+            </h3>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {saved.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => onAddSaved(item.id)}
+                    className="flex w-full items-start gap-3 rounded-xl border border-border p-3 text-start hover:border-accent hover:bg-accent-soft/40"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-text">
+                      <Bookmark className="size-4" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{bi(item.name)}</span>
+                      <span className="block text-xs text-muted">
+                        {bi(SECTIONS[item.section.type].name)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </Dialog>
+  );
+}
+
+/** Published versions of one page; restoring puts a version back into the draft (D-037). */
+function PageHistory({
+  pageId,
+  editable,
+  onRestored,
+}: {
+  pageId: string;
+  editable: boolean;
+  onRestored: (version: number) => void;
+}) {
+  const { m, format, date } = useI18n();
+  const b = m.builder;
+  const keys = useBuilderKeys();
+  const versions = useQuery({
+    queryKey: [...keys.page(pageId), 'versions'],
+    queryFn: () =>
+      api<{ version: number; publishedAt: string; publishedBy: string | null }[]>(
+        sitePath(keys.siteKey, `/pages/${pageId}/versions`),
+      ),
+  });
+  const restore = useBuilderMutation((version: number) =>
+    api(sitePath(keys.siteKey, `/pages/${pageId}/restore`), {
+      method: 'POST',
+      body: { version },
+    }),
+  );
+  const rows = versions.data ?? [];
+  return (
+    <Card title={b['pageHistory']}>
+      <ErrorText error={restore.error ?? versions.error} />
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">{b['noVersions']}</p>
+      ) : (
+        <Table>
+          <tbody>
+            {rows.map((v) => (
+              <tr key={v.version}>
+                <td className="font-medium">#{v.version}</td>
+                <td>{date(v.publishedAt, true)}</td>
+                <td>{v.publishedBy ?? ''}</td>
+                <td className="text-end">
+                  {editable && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      busy={restore.isPending && restore.variables === v.version}
+                      onClick={later(async () => {
+                        if (
+                          await confirmAction(
+                            format(b['restoreDraftConfirm'] ?? '', { version: v.version }),
+                          )
+                        ) {
+                          restore.mutate(v.version, { onSuccess: () => onRestored(v.version) });
+                        }
+                      })}
+                    >
+                      {b['restoreToDraft']}
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </Card>
   );
 }
 
@@ -458,19 +572,40 @@ export function PageEditor() {
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const editable = can('pages.edit') && site?.archived !== true;
+  // The website's saved sections (D-038), edited here and saved with the page.
+  const savedQuery = useSavedSections();
+  const [saved, setSaved] = useState<SavedSections | null>(null);
+  const [savedDirty, setSavedDirty] = useState(false);
 
   useEffect(() => {
     if (query.data && !dirty) setDraft(query.data.page);
   }, [query.data, dirty]);
+  useEffect(() => {
+    if (savedQuery.data && !savedDirty) setSaved(savedQuery.data);
+  }, [savedQuery.data, savedDirty]);
 
-  const save = useBuilderMutation((page: Page) =>
-    api(sitePath(siteKey, `/pages/${pageId}`), { method: 'PUT', body: page }),
-  );
+  const save = useBuilderMutation(async (input: { page: Page; saved: SavedSections | null }) => {
+    if (input.saved) {
+      await api(sitePath(siteKey, '/saved-sections'), { method: 'PUT', body: input.saved });
+    }
+    await api(sitePath(siteKey, `/pages/${pageId}`), { method: 'PUT', body: input.page });
+  });
 
   if (query.error) return <ErrorText error={query.error} />;
-  if (!draft || !query.data) return <Loading />;
+  if (!draft || !query.data || !saved) return <Loading />;
 
-  const valid = pageSchema.safeParse(draft).success;
+  const valid = pageSchema.safeParse(draft).success && savedSectionsSchema.safeParse(saved).success;
+  const savedItems = saved.items;
+  const savedItem = (s: Section) =>
+    s.type === 'saved' ? savedItems.find((i) => i.id === s.settings.savedId) : undefined;
+  /** What a row shows: the section itself, or the saved section it refers to. */
+  const contentOf = (s: Section): ContentSection | null =>
+    s.type === 'saved' ? (savedItem(s)?.section ?? null) : s;
+  const updateSaved = (next: SavedSections) => {
+    setSaved(next);
+    setSavedDirty(true);
+    setNotice(null);
+  };
   const update = (next: Page) => {
     setDraft(next);
     setDirty(true);
@@ -487,8 +622,11 @@ export function PageEditor() {
   const allPages = pages.data?.pages ?? [];
   const title = bi(draft.title) || draft.slug;
   const isHome = query.data.home;
-  const devices = (s: Section) =>
-    (['mobile', 'tablet', 'desktop'] as const).filter((d) => !s.visibility[d]).map((d) => b[d]);
+  const devices = (s: ContentSection | null) =>
+    s
+      ? (['mobile', 'tablet', 'desktop'] as const).filter((d) => !s.visibility[d]).map((d) => b[d])
+      : [];
+  const anyDirty = dirty || savedDirty;
 
   return (
     <>
@@ -503,14 +641,18 @@ export function PageEditor() {
           editable && (
             <Button
               busy={save.isPending}
-              disabled={!dirty || !valid}
+              disabled={!anyDirty || !valid}
               onClick={() =>
-                save.mutate(draft, {
-                  onSuccess: () => {
-                    setDirty(false);
-                    setNotice(m.saved);
+                save.mutate(
+                  { page: draft, saved: savedDirty ? saved : null },
+                  {
+                    onSuccess: () => {
+                      setDirty(false);
+                      setSavedDirty(false);
+                      setNotice(m.saved);
+                    },
                   },
-                })
+                )
               }
             >
               {b['saveDraft']}
@@ -521,7 +663,7 @@ export function PageEditor() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="grid min-w-0 content-start gap-5">
           {!editable && <Alert>{b['readOnly']}</Alert>}
-          {dirty && <Alert tone="warning">{b['unsaved']}</Alert>}
+          {anyDirty && <Alert tone="warning">{b['unsaved']}</Alert>}
           {notice && <Alert tone="success">{notice}</Alert>}
           {!valid && <Alert tone="danger">{m.errors['invalid-input']}</Alert>}
           <ErrorText error={save.error} />
@@ -532,9 +674,16 @@ export function PageEditor() {
             ) : (
               <SortableList items={sections} onReorder={setSections} disabled={!editable}>
                 {(section, index) => {
-                  const name = bi(SECTIONS[section.type].name);
-                  const about = summary(section, bi);
-                  const hiddenOn = devices(section);
+                  const content = contentOf(section);
+                  const item = savedItem(section);
+                  const name =
+                    section.type === 'saved'
+                      ? item
+                        ? bi(item.name)
+                        : (b['savedMissing'] ?? '')
+                      : bi(SECTIONS[section.type].name);
+                  const about = content ? summary(content, bi) : '';
+                  const hiddenOn = devices(content);
                   const expanded = open === section.id;
                   return (
                     <SortableRow key={section.id} id={section.id} label={name} disabled={!editable}>
@@ -543,7 +692,11 @@ export function PageEditor() {
                           <div className="flex items-center gap-2 p-2 pe-3">
                             {handle}
                             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-text">
-                              {sectionIcon(section.type)}
+                              {section.type === 'saved' ? (
+                                <Bookmark className="size-4" aria-hidden />
+                              ) : (
+                                sectionIcon(section.type)
+                              )}
                             </span>
                             <button
                               type="button"
@@ -558,6 +711,9 @@ export function PageEditor() {
                                   <span className="block truncate text-xs text-muted">{about}</span>
                                 )}
                               </span>
+                              {section.type === 'saved' && (
+                                <Badge tone="accent">{b['savedBadge']}</Badge>
+                              )}
                               {hiddenOn.length > 0 && (
                                 <Badge>
                                   {format(b['hiddenOn'] ?? '', { devices: hiddenOn.join('، ') })}
@@ -607,6 +763,58 @@ export function PageEditor() {
                                   <Copy aria-hidden />
                                   {b['duplicateSection']}
                                 </MenuItem>
+                                {section.type !== 'saved' && savedItems.length < 50 && (
+                                  <MenuItem
+                                    onSelect={() => {
+                                      // The section moves into the website's saved sections; the
+                                      // page keeps a reference to it.
+                                      const savedId = newItemId();
+                                      const sectionName = bi(SECTIONS[section.type].name);
+                                      updateSaved({
+                                        items: [
+                                          ...savedItems,
+                                          {
+                                            id: savedId,
+                                            name: {
+                                              ar: summary(section, (v) => v.ar) || sectionName,
+                                              en: summary(section, (v) => v.en) || sectionName,
+                                            },
+                                            section: { ...section, anchor: '' },
+                                          },
+                                        ],
+                                      });
+                                      setSections(
+                                        sections.map((s) =>
+                                          s.id === section.id
+                                            ? {
+                                                ...savedReference(savedId, section.id),
+                                                anchor: section.anchor,
+                                              }
+                                            : s,
+                                        ),
+                                      );
+                                    }}
+                                  >
+                                    <Bookmark aria-hidden />
+                                    {b['saveAsReusable']}
+                                  </MenuItem>
+                                )}
+                                {section.type === 'saved' && content && (
+                                  <MenuItem
+                                    onSelect={() =>
+                                      setSections(
+                                        sections.map((s) =>
+                                          s.id === section.id
+                                            ? { ...structuredClone(content), id: newItemId() }
+                                            : s,
+                                        ),
+                                      )
+                                    }
+                                  >
+                                    <Unlink aria-hidden />
+                                    {b['detach']}
+                                  </MenuItem>
+                                )}
                                 <MenuSeparator />
                                 <MenuItem
                                   className="text-danger"
@@ -631,14 +839,51 @@ export function PageEditor() {
                               id={`section-${section.id}`}
                               className="border-t border-border p-4"
                             >
-                              <SectionForm
-                                section={section}
-                                pages={allPages}
-                                disabled={!editable}
-                                onChange={(next) =>
-                                  setSections(sections.map((s) => (s.id === section.id ? next : s)))
-                                }
-                              />
+                              {section.type === 'saved' ? (
+                                item ? (
+                                  <div className="grid gap-4">
+                                    <Alert>{b['savedEditNote']}</Alert>
+                                    <BilingualField
+                                      label={b['savedName'] ?? ''}
+                                      value={item.name}
+                                      max={60}
+                                      disabled={!editable}
+                                      onChange={(nameValue) =>
+                                        updateSaved({
+                                          items: savedItems.map((i) =>
+                                            i.id === item.id ? { ...i, name: nameValue } : i,
+                                          ),
+                                        })
+                                      }
+                                    />
+                                    <SectionForm
+                                      section={item.section}
+                                      pages={allPages}
+                                      disabled={!editable}
+                                      onChange={(next) =>
+                                        updateSaved({
+                                          items: savedItems.map((i) =>
+                                            i.id === item.id ? { ...i, section: next } : i,
+                                          ),
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                ) : (
+                                  <Alert tone="warning">{b['savedMissing']}</Alert>
+                                )
+                              ) : (
+                                <SectionForm
+                                  section={section}
+                                  pages={allPages}
+                                  disabled={!editable}
+                                  onChange={(next) =>
+                                    setSections(
+                                      sections.map((s) => (s.id === section.id ? next : s)),
+                                    )
+                                  }
+                                />
+                              )}
                             </div>
                           )}
                         </div>
@@ -744,11 +989,23 @@ export function PageEditor() {
               </fieldset>
             </div>
           </Card>
+          <PageHistory
+            pageId={pageId}
+            editable={editable}
+            onRestored={(version) => {
+              setDirty(false);
+              setDraft(null);
+              setNotice(format(b['restoredDraft'] ?? '', { version }));
+            }}
+          />
           <PublishBar />
         </div>
 
         <div className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-          <Card title={b['preview']} description={dirty ? b['saveForPreview'] : b['previewIntro']}>
+          <Card
+            title={b['preview']}
+            description={anyDirty ? b['saveForPreview'] : b['previewIntro']}
+          >
             <DevicePreview pageId={pageId} title={title} revision={query.data.draftUpdatedAt} />
           </Card>
         </div>
@@ -756,6 +1013,11 @@ export function PageEditor() {
       <AddSectionDialog
         open={adding}
         onClose={() => setAdding(false)}
+        saved={savedItems}
+        onAddSaved={(savedId) => {
+          setSections([...sections, savedReference(savedId, newItemId())]);
+          setAdding(false);
+        }}
         onAdd={(type) => {
           const section = newSection(type, newItemId());
           setSections([...sections, section]);

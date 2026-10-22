@@ -15,11 +15,13 @@ import {
   DEFAULT_LAYOUT,
   DEFAULT_MENUS,
   DEFAULT_PAGES_INDEX,
+  DEFAULT_SAVED_SECTIONS,
   layoutSchema,
   menusSchema,
   newPage,
   pageSchema,
   pagesIndexSchema,
+  savedSectionsSchema,
 } from '@hantex/sections';
 import { brandTheme, themeSchema } from '@hantex/theme';
 import { and, desc, eq, sql } from 'drizzle-orm';
@@ -92,10 +94,17 @@ export const DOCUMENTS: Record<
     edit: ['pages.edit'],
     publish: ['pages.edit', 'site.publish'],
   },
+  'saved-sections': {
+    schema: savedSectionsSchema,
+    defaults: DEFAULT_SAVED_SECTIONS,
+    view: ['pages.view'],
+    edit: ['pages.edit'],
+    publish: ['pages.edit', 'site.publish'],
+  },
 };
 
 /** Every site has these builder documents; pages are the only kind with many (keyed by page id). */
-export const BUILDER_KINDS = ['pages', 'menus', 'layout'] as const;
+export const BUILDER_KINDS = ['pages', 'menus', 'layout', 'saved-sections'] as const;
 
 const versionsOf = (siteId: string, kind: DocumentKind, key = '') =>
   and(

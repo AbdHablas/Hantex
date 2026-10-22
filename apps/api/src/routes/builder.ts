@@ -6,6 +6,7 @@ import {
   menusSchema,
   newPage,
   pageSchema,
+  savedSectionsSchema,
   slugSchema,
   type Page,
   type PagesIndex,
@@ -347,6 +348,25 @@ export const builderRoutes = new Hono<AppEnv>()
     await saveDraft(c.var.db, c.var.site.id, 'menus', c.req.valid('json'), c.var.access.userId);
     return c.json({ ok: true });
   })
+  /** Saved sections (D-038): reused by reference on this website's pages. */
+  .get('/saved-sections', requirePermission('pages.view'), async (c) =>
+    c.json((await currentDraft(c.var.db, c.var.site.id, 'saved-sections')).data),
+  )
+  .put(
+    '/saved-sections',
+    requirePermission('pages.edit'),
+    validate('json', savedSectionsSchema),
+    async (c) => {
+      await saveDraft(
+        c.var.db,
+        c.var.site.id,
+        'saved-sections',
+        c.req.valid('json'),
+        c.var.access.userId,
+      );
+      return c.json({ ok: true });
+    },
+  )
   .get('/layout', requirePermission('pages.view'), async (c) =>
     c.json((await currentDraft(c.var.db, c.var.site.id, 'layout')).data),
   )
@@ -395,7 +415,7 @@ export const builderRoutes = new Hono<AppEnv>()
       }
 
       const touchesBuilder = items.some((i) =>
-        ['page', 'pages', 'menus', 'layout'].includes(i.kind),
+        ['page', 'pages', 'menus', 'layout', 'saved-sections'].includes(i.kind),
       );
       let redirects: PagesIndex['redirects'] = [];
       if (touchesBuilder) {

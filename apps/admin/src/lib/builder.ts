@@ -1,4 +1,4 @@
-import type { Layout, Menus, Page, SiteIssue } from '@hantex/sections';
+import type { Layout, Menus, Page, SavedSections, SiteIssue } from '@hantex/sections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, sitePath } from './api';
 import { useCurrentSite } from './session';
@@ -48,6 +48,7 @@ export function useBuilderKeys() {
     page: (id: string) => [...base, 'page', id] as const,
     menus: [...base, 'menus'] as const,
     layout: [...base, 'layout'] as const,
+    saved: [...base, 'saved'] as const,
     changes: [...base, 'changes'] as const,
   };
 }
@@ -88,6 +89,17 @@ export function useLayout() {
   return useQuery({
     queryKey: keys.layout,
     queryFn: () => api<Layout>(sitePath(keys.siteKey, '/layout')),
+    enabled: site !== null,
+  });
+}
+
+/** The website's saved sections (D-038), reused by reference on its pages. */
+export function useSavedSections() {
+  const { site } = useCurrentSite();
+  const keys = useBuilderKeys();
+  return useQuery({
+    queryKey: keys.saved,
+    queryFn: () => api<SavedSections>(sitePath(keys.siteKey, '/saved-sections')),
     enabled: site !== null,
   });
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { RESERVED_SLUGS, bilingual, emptyText, itemId, linkSchema, slugSchema } from './primitives';
 import type { Bilingual, Link } from './primitives';
-import { sectionSchema } from './registry';
+import { contentSectionSchema, sectionSchema } from './registry';
 
 /**
  * A website's structure (D-035, D-037): pages made of sections, the page index (order, home page,
@@ -76,6 +76,22 @@ export const layoutSchema = z.strictObject({
 });
 export type Layout = z.infer<typeof layoutSchema>;
 
+/** The website's saved sections (D-038), reused by reference on any of its pages. */
+export const savedSectionsSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        id: itemId,
+        name: bilingual(60),
+        section: contentSectionSchema,
+      }),
+    )
+    .max(50),
+});
+export type SavedSections = z.infer<typeof savedSectionsSchema>;
+export type SavedSection = SavedSections['items'][number];
+export const DEFAULT_SAVED_SECTIONS: SavedSections = { items: [] };
+
 export const DEFAULT_LAYOUT: Layout = {
   header: {
     sticky: true,
@@ -127,7 +143,8 @@ export interface SiteIssue {
     | 'missing-parent'
     | 'nested-too-deep'
     | 'missing-title'
-    | 'broken-link';
+    | 'broken-link'
+    | 'missing-saved-section';
   /** The page or menu item concerned. */
   target: string;
   detail?: string;
@@ -138,6 +155,8 @@ export interface SiteDraft {
   pages: Map<string, Page>;
   menus: Menus;
   layout: Layout;
+  /** Saved sections the pages may reference; none when left out. */
+  saved?: SavedSections;
   locales: readonly string[];
 }
 
@@ -196,20 +215,36 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
     }
   }
   checkLink(site.layout.header.button.link, 'layout:header');
+  const saved = new Map((site.saved?.items ?? []).map((item) => [item.id, item]));
+  const used = new Set<string>();
   for (const pageId of index.order) {
     const page = pages.get(pageId);
     if (!page?.visible) continue;
     for (const link of linksIn(page)) checkLink(link, `page:${pageId}`);
+    for (const section of page.sections) {
+      if (section.type !== 'saved') continue;
+      if (saved.has(section.settings.savedId)) used.add(section.settings.savedId);
+      else issues.push({ code: 'missing-saved-section', target: `page:${pageId}` });
+    }
+  }
+  // Links inside saved sections count wherever a public page uses them.
+  for (const savedId of used) {
+    const item = saved.get(savedId);
+    if (item) for (const link of linksInSection(item.section)) checkLink(link, `saved:${savedId}`);
   }
   return issues;
 }
 
 /** Every link a page's sections contain. */
 export function linksIn(page: Page): Link[] {
+  return page.sections.flatMap(linksInSection);
+}
+
+/** Every link one section's settings contain. */
+export function linksInSection(section: { settings: unknown }): Link[] {
   const links: Link[] = [];
-  for (const section of page.sections) {
-    const s = section.settings as Record<string, unknown>;
-    for (const value of Object.values(s)) collect(value, links);
+  for (const value of Object.values(section.settings as Record<string, unknown>)) {
+    collect(value, links);
   }
   return links;
 }

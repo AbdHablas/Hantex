@@ -5,7 +5,7 @@ import type {
   SiteSettings,
   SiteTemplate,
 } from '@hantex/shared';
-import type { Layout, Menus, Page, PagesIndex } from '@hantex/sections';
+import type { Layout, Menus, Page, PagesIndex, SavedSections } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
 import data from './data/site.json';
 
@@ -15,6 +15,8 @@ export interface BuilderContent {
   pages: Record<string, Page>;
   menus: Menus;
   layout: Layout;
+  /** Saved sections the pages reuse by reference (D-038). */
+  saved?: SavedSections;
 }
 
 /** One site's build data, written by scripts/site-data.ts from its published content. */

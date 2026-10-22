@@ -1,4 +1,11 @@
-import { layoutSchema, menusSchema, pageSchema, pagesIndexSchema, itemId } from '@hantex/sections';
+import {
+  itemId,
+  layoutSchema,
+  menusSchema,
+  pageSchema,
+  pagesIndexSchema,
+  savedSectionsSchema,
+} from '@hantex/sections';
 import { LOCALES, comingSoonSchema, siteSettingsSchema } from '@hantex/shared';
 import { themeSchema } from '@hantex/theme';
 import { z } from 'zod';
@@ -22,6 +29,7 @@ const payloadSchema = z.object({
         pages: z.record(itemId, pageSchema),
         menus: menusSchema,
         layout: layoutSchema,
+        saved: savedSectionsSchema.optional(),
       })
       .optional(),
     page: z.object({ id: itemId, locale: z.enum(LOCALES) }).optional(),

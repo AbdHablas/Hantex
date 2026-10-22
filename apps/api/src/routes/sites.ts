@@ -92,6 +92,7 @@ export const sitesRoutes = new Hono<AppEnv>()
         );
         await saveDraft(v.db, site.id, 'menus', source.menus, v.access.userId);
         await saveDraft(v.db, site.id, 'layout', source.layout, v.access.userId);
+        await saveDraft(v.db, site.id, 'saved-sections', source.saved, v.access.userId);
         for (const kind of [
           'coming-soon',
           'site-settings',

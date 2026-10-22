@@ -29,6 +29,13 @@
       "when": 1792650887595,
       "tag": "0003_document_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792658247535,
+      "tag": "0004_saved_sections",
+      "breakpoints": true
     }
   ]
 }

@@ -454,10 +454,10 @@ const sectionBase = {
   anchor: z.union([z.literal(''), slugSchema]),
 };
 
-const variant = <T extends SectionType, S extends z.ZodType>(type: T, settings: S) =>
+const variant = <T extends SectionType | 'saved', S extends z.ZodType>(type: T, settings: S) =>
   z.strictObject({ ...sectionBase, type: z.literal(type), settings });
 
-export const sectionSchema = z.discriminatedUnion('type', [
+const contentVariants = [
   variant('hero', heroSchema),
   variant('richText', richTextSchema),
   variant('features', featuresSchema),
@@ -468,9 +468,39 @@ export const sectionSchema = z.discriminatedUnion('type', [
   variant('contact', contactSchema),
   variant('newsletter', newsletterSchema),
   variant('divider', dividerSchema),
+] as const;
+
+/** A section with its own content: one of the registered types. */
+export const contentSectionSchema = z.discriminatedUnion('type', [...contentVariants]);
+export type ContentSection = z.infer<typeof contentSectionSchema>;
+export type SectionOf<T extends SectionType> = Extract<ContentSection, { type: T }>;
+
+/**
+ * A reusable section (D-038): the page holds only a reference to one of the website's saved
+ * sections, so editing that saved section changes every page of this website that uses it.
+ * Its own style and visibility are not used; the saved section's are.
+ */
+export const savedReferenceSchema = variant('saved', z.strictObject({ savedId: itemId }));
+export type SavedReference = z.infer<typeof savedReferenceSchema>;
+
+/** Anything a page can hold: a section, or a reference to a saved section. */
+export const sectionSchema = z.discriminatedUnion('type', [
+  ...contentVariants,
+  savedReferenceSchema,
 ]);
 export type Section = z.infer<typeof sectionSchema>;
-export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
+
+/** A reference to a saved section, shown on every screen size (the saved section decides). */
+export function savedReference(savedId: string, sectionId: string = id()): SavedReference {
+  return {
+    id: sectionId,
+    type: 'saved',
+    style: DEFAULT_STYLE,
+    visibility: { mobile: true, tablet: true, desktop: true },
+    anchor: '',
+    settings: { savedId },
+  };
+}
 
 export const DEFAULT_STYLE: SectionStyle = {
   background: 'none',

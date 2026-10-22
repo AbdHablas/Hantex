@@ -15,6 +15,7 @@ import { FIRST_SITE } from '@hantex/db/worker';
 import {
   DEFAULT_LAYOUT,
   DEFAULT_MENUS,
+  DEFAULT_SAVED_SECTIONS,
   checkSite,
   layoutSchema,
   localizedPath,
@@ -22,6 +23,7 @@ import {
   pagePath,
   pageSchema,
   pagesIndexSchema,
+  savedSectionsSchema,
   type Page,
 } from '@hantex/sections';
 import {
@@ -102,7 +104,7 @@ async function fromDatabase(url: string): Promise<SiteData> {
     // the page index, of the menus and of the header and footer.
     const builderRows = (
       await client.query<{ kind: string; key: string; data: unknown }>(
-        "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('page', 'pages', 'menus', 'layout') order by kind, key, version desc",
+        "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('page', 'pages', 'menus', 'layout', 'saved-sections') order by kind, key, version desc",
         [site.id],
       )
     ).rows;
@@ -152,6 +154,7 @@ function builderContent(rows: { kind: string; key: string; data: unknown }[]): B
     pages,
     menus: menusSchema.parse(row('menus')?.data ?? DEFAULT_MENUS),
     layout: layoutSchema.parse(row('layout')?.data ?? DEFAULT_LAYOUT),
+    saved: savedSectionsSchema.parse(row('saved-sections')?.data ?? DEFAULT_SAVED_SECTIONS),
   };
 }
 

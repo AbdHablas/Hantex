@@ -82,11 +82,13 @@ function IssueLine({ issue, pages }: { issue: SiteIssue; pages: PageSummary[] })
       ? area === 'header'
         ? b['headerMenu']
         : b['footerMenu']
-      : scope === 'layout'
-        ? b['header']
-        : scope === 'page'
-          ? pageTitle(area ?? '')
-          : pageTitle(issue.target);
+      : scope === 'saved'
+        ? b['savedBadge']
+        : scope === 'layout'
+          ? b['header']
+          : scope === 'page'
+            ? pageTitle(area ?? '')
+            : pageTitle(issue.target);
   return (
     <li>
       {format(b[`issue.${issue.code}`] ?? issue.code, { detail })}

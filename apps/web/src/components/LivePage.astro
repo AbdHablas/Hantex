@@ -1,7 +1,7 @@
 ---
 import type { MenuItem } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
-import { hrefOf, pageHref, pick, type RenderContext } from '../builder';
+import { hrefOf, pageHref, pick, resolveSections, type RenderContext } from '../builder';
 import { TEXT, dirOf } from '../i18n';
 import { SITE } from '../site-data';
 import Icon, { type IconName } from './Icon.astro';
@@ -58,8 +58,8 @@ const footerLinks = footer.filter((item) => item.children.length === 0);
 const footerGroups = footer.filter((item) => item.children.length > 0);
 const headerButton = pick(ctx, layout.header.button.label) ? hrefOf(ctx, layout.header.button.link) : null;
 
-const firstHero = page.sections.find((s) => s.type === 'hero' && pick(ctx, s.settings.heading));
-const sections = page.sections;
+const sections = resolveSections(ctx, page);
+const firstHero = sections.find((s) => s.type === 'hero' && pick(ctx, s.settings.heading));
 
 const social = Object.entries(settings.social).filter(([, url]) => url) as [IconName, string][];
 const socialName = (network: string) => (network === 'x' ? 'X' : network.charAt(0).toUpperCase() + network.slice(1));

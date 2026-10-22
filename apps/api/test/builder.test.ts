@@ -1,5 +1,5 @@
 import { documentVersions, sites, subscribers } from '@hantex/db/worker';
-import { newSection, type Menus, type Page } from '@hantex/sections';
+import { newSection, savedReference, type Menus, type Page } from '@hantex/sections';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHarness, type Harness } from './harness';
@@ -273,5 +273,48 @@ describe('Publish changes (D-037)', () => {
       ).status,
     ).toBe(200);
     expect((await page(ONE, about.id)).slug).toBe('about');
+  });
+
+  it('publishes saved sections with the pages that use them, and refuses missing ones', async () => {
+    const { home } = await pages(ONE);
+    const homePage = await page(ONE, home);
+    const cta = newSection('cta');
+    cta.settings.heading = { ar: 'مشترك', en: 'Shared' };
+    expect(
+      (
+        await h.request('PUT', `/api/sites/${ONE}/saved-sections`, {
+          cookie: owner,
+          body: { items: [{ id: 'shared01', name: { ar: 'م', en: 'm' }, section: cta }] },
+        })
+      ).status,
+    ).toBe(200);
+    // A reference to a saved section that doesn't exist blocks publishing.
+    const missing = { ...homePage, sections: [...homePage.sections, savedReference('gone0001')] };
+    expect((await savePage(ONE, home, missing)).status).toBe(200);
+    const refused = await publishChanges(ONE);
+    expect(refused.status).toBe(409);
+    const body = await json<{ details: { issues: { code: string }[] } }>(refused);
+    expect(body.details.issues.map((i) => i.code)).toContain('missing-saved-section');
+
+    const using = { ...homePage, sections: [...homePage.sections, savedReference('shared01')] };
+    expect((await savePage(ONE, home, using)).status).toBe(200);
+    expect((await publishChanges(ONE)).status).toBe(200);
+    const [site] = await h.db.select().from(sites).where(eq(sites.key, ONE));
+    const saved = await h.db
+      .select()
+      .from(documentVersions)
+      .where(
+        and(eq(documentVersions.siteId, site!.id), eq(documentVersions.kind, 'saved-sections')),
+      );
+    expect(saved).toHaveLength(1);
+    // Another website can't read them.
+    expect(
+      (await h.request('GET', `/api/sites/${TWO}/saved-sections`, { cookie: owner })).status,
+    ).toBe(200);
+    expect(
+      await json<{ items: unknown[] }>(
+        await h.request('GET', `/api/sites/${TWO}/saved-sections`, { cookie: owner }),
+      ),
+    ).toEqual({ items: [] });
   });
 });

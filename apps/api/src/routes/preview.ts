@@ -77,6 +77,7 @@ export const previewRoutes = new Hono<AppEnv>().post(
         ),
         menus: content.menus,
         layout: content.layout,
+        saved: content.saved,
       };
       if (page) data['page'] = { id: page, locale: locale ?? v.site.defaultLocale };
     }

@@ -1,5 +1,5 @@
 ---
-import type { Section } from '@hantex/sections';
+import type { ContentSection } from '@hantex/sections';
 import { pick, type RenderContext } from '../../builder';
 import Cards from './Cards.astro';
 import Contact from './Contact.astro';
@@ -16,7 +16,7 @@ import Stats from './Stats.astro';
  * section's style (theme colours, spacing, width, alignment) and the screen sizes it shows on.
  */
 interface Props {
-  section: Section;
+  section: ContentSection;
   ctx: RenderContext;
   main?: boolean;
 }

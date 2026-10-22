@@ -217,6 +217,12 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
   await expect(page.getByText(/Hidden on Phones/)).toBeVisible();
+  // Reusable: the section moves into the website's saved sections; the page keeps a reference.
+  await page.getByRole('button', { name: 'Actions for Call to action' }).click();
+  await page.getByRole('menuitem', { name: 'Save as reusable section' }).click();
+  await expect(page.getByText('Saved section', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
 
   // Rich text: formatting is stored as data, never HTML.
   await page.getByRole('link', { name: 'All pages' }).click();
@@ -250,6 +256,11 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await confirm(page);
   await expect(page.getByText('Changes published.')).toBeVisible();
   await expect(page.getByText('Everything is published.')).toBeVisible();
+  // Each page keeps its published versions, ready to restore into the draft.
+  await page.goto('/s/second-site/pages');
+  await page.getByRole('link', { name: 'Home', exact: true }).click();
+  await expect(page.getByRole('cell', { name: '#1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Restore to draft' })).toBeVisible();
 
   // Phones and tablets: the builder fits without sideways scrolling.
   for (const width of [360, 768]) {

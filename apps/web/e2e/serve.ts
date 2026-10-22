@@ -16,7 +16,7 @@ import {
   sites,
   syncStandardRoles,
 } from '@hantex/db';
-import { newSection, richDocFromText, starterContent } from '@hantex/sections';
+import { newSection, richDocFromText, savedReference, starterContent } from '@hantex/sections';
 import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { eq } from 'drizzle-orm';
 import { execFileSync, spawn } from 'node:child_process';
@@ -139,6 +139,12 @@ if (text.type === 'richText') {
     en: richDocFromText('Test text about the website.'),
   };
 }
+// A saved section (D-038), reused on two pages.
+const shared = newSection('cta');
+shared.settings.heading = { ar: 'قسم مشترك', en: 'Shared section' };
+const saved = { items: [{ id: 'shared01', name: { ar: 'مشترك', en: 'Shared' }, section: shared }] };
+home.sections.push(savedReference('shared01', 'ref00001'));
+about.sections.push(savedReference('shared01', 'ref00002'));
 // /about was this page's earlier address (Publish changes keeps it as a redirect).
 about.slug = 'who-we-are';
 content.index.redirects = [{ from: '/about', to: aboutId }];
@@ -146,6 +152,7 @@ await db.insert(documentVersions).values([
   { siteId: liveId, kind: 'pages', version: 1, data: content.index },
   { siteId: liveId, kind: 'menus', version: 1, data: content.menus },
   { siteId: liveId, kind: 'layout', version: 1, data: content.layout },
+  { siteId: liveId, kind: 'saved-sections', version: 1, data: saved },
   ...Object.entries(content.pages).map(([id, page]) => ({
     siteId: liveId,
     kind: 'page' as const,

@@ -3,15 +3,18 @@ import {
   DEFAULT_LAYOUT,
   DEFAULT_MENUS,
   DEFAULT_PAGES_INDEX,
+  DEFAULT_SAVED_SECTIONS,
   layoutSchema,
   menusSchema,
   pageSchema,
   pagePath,
   pagesIndexSchema,
+  savedSectionsSchema,
   type Layout,
   type Menus,
   type Page,
   type PagesIndex,
+  type SavedSections,
 } from '@hantex/sections';
 import { desc, eq } from 'drizzle-orm';
 
@@ -25,9 +28,11 @@ export interface SiteContent {
   pages: Map<string, Page>;
   menus: Menus;
   layout: Layout;
+  saved: SavedSections;
 }
 
-type Kind = 'page' | 'pages' | 'menus' | 'layout';
+type Kind = 'page' | 'pages' | 'menus' | 'layout' | 'saved-sections';
+const BUILDER: Kind[] = ['page', 'pages', 'menus', 'layout', 'saved-sections'];
 
 async function latestVersions(db: Database, siteId: string, kinds: Kind[]) {
   const rows = await db
@@ -73,7 +78,7 @@ const parse = <T>(
 
 /** The published content: what the live site is built from. */
 export async function publishedContent(db: Database, siteId: string): Promise<SiteContent> {
-  const latest = await latestVersions(db, siteId, ['page', 'pages', 'menus', 'layout']);
+  const latest = await latestVersions(db, siteId, BUILDER);
   const index = parse(pagesIndexSchema, latest.get('pages:')?.data, DEFAULT_PAGES_INDEX);
   const pages = new Map<string, Page>();
   for (const id of index.order) {
@@ -86,6 +91,7 @@ export async function publishedContent(db: Database, siteId: string): Promise<Si
     pages,
     menus: parse(menusSchema, latest.get('menus:')?.data, DEFAULT_MENUS),
     layout: parse(layoutSchema, latest.get('layout:')?.data, DEFAULT_LAYOUT),
+    saved: parse(savedSectionsSchema, latest.get('saved-sections:')?.data, DEFAULT_SAVED_SECTIONS),
   };
 }
 
@@ -93,7 +99,7 @@ export async function publishedContent(db: Database, siteId: string): Promise<Si
 export async function draftContent(db: Database, siteId: string): Promise<SiteContent> {
   const [draftRows, latest] = await Promise.all([
     drafts(db, siteId),
-    latestVersions(db, siteId, ['page', 'pages', 'menus', 'layout']),
+    latestVersions(db, siteId, BUILDER),
   ]);
   const pick = (id: string) => draftRows.get(id)?.data ?? latest.get(id)?.data;
   const index = parse(pagesIndexSchema, pick('pages:'), DEFAULT_PAGES_INDEX);
@@ -107,6 +113,7 @@ export async function draftContent(db: Database, siteId: string): Promise<SiteCo
     pages,
     menus: parse(menusSchema, pick('menus:'), DEFAULT_MENUS),
     layout: parse(layoutSchema, pick('layout:'), DEFAULT_LAYOUT),
+    saved: parse(savedSectionsSchema, pick('saved-sections:'), DEFAULT_SAVED_SECTIONS),
   };
 }
 
@@ -126,7 +133,7 @@ export function newRedirects(published: SiteContent, next: SiteContent): PagesIn
 
 /** Latest version number per builder document, for the dashboard's "changed" badges. */
 export async function publishedVersions(db: Database, siteId: string) {
-  const latest = await latestVersions(db, siteId, ['page', 'pages', 'menus', 'layout']);
+  const latest = await latestVersions(db, siteId, BUILDER);
   return new Map([...latest].map(([id, row]) => [id, row]));
 }
 
