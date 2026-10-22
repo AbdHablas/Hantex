@@ -454,24 +454,20 @@ const sectionBase = {
   anchor: z.union([z.literal(''), slugSchema]),
 };
 
-const variant = <T extends SectionType>(type: T) =>
-  z.strictObject({
-    ...sectionBase,
-    type: z.literal(type),
-    settings: SECTIONS[type].schema,
-  });
+const variant = <T extends SectionType, S extends z.ZodType>(type: T, settings: S) =>
+  z.strictObject({ ...sectionBase, type: z.literal(type), settings });
 
 export const sectionSchema = z.discriminatedUnion('type', [
-  variant('hero'),
-  variant('richText'),
-  variant('features'),
-  variant('cards'),
-  variant('cta'),
-  variant('faq'),
-  variant('stats'),
-  variant('contact'),
-  variant('newsletter'),
-  variant('divider'),
+  variant('hero', heroSchema),
+  variant('richText', richTextSchema),
+  variant('features', featuresSchema),
+  variant('cards', cardsSchema),
+  variant('cta', ctaSchema),
+  variant('faq', faqSchema),
+  variant('stats', statsSchema),
+  variant('contact', contactSchema),
+  variant('newsletter', newsletterSchema),
+  variant('divider', dividerSchema),
 ]);
 export type Section = z.infer<typeof sectionSchema>;
 export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
