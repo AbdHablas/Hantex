@@ -1,7 +1,9 @@
-# Product catalogue: switches and sockets first
+# Product catalogue: general, switches and sockets first for Hantex Ultra
 
 **Status:** Confirmed by the owner on 2026-10-21, both the requirement and the
-structure below (D-026). No prices or online ordering. The dashboard side is built in Phase 3
+structure below (D-026). **Made general on 2026-10-22 (D-045):** the same catalogue serves
+any kind of product on any website; everything specific to switches and sockets below
+is a *template* or Hantex Ultra's own data, never built into the code. No prices or online ordering. The dashboard side is built in Phase 3
 and the public pages in Phase 4. Nothing is built yet.
 
 ## Business context

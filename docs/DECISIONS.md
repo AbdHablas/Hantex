@@ -52,9 +52,11 @@ marked **Confirmed** once the project owner has approved it.
 | D-041 | Privacy policy page | Confirmed | Draft written from what the platform actually does, marked for the owner's (or a lawyer's) review; published only after approval |
 | D-042 | Visitor statistics | Confirmed | Cloudflare Web Analytics: free, cookieless; figures on each website's overview |
 | D-043 | Automated accessibility checks | Confirmed | axe-core in the browser tests of the dashboard and the sites |
+| D-044 | Image processing | Confirmed | In the dashboard, before upload: resized to a few widths, WebP, camera and location data removed; the server re-checks every file |
+| D-045 | General catalogue | Confirmed | Any kind of product on any website: categories, attributes and page templates are data per site; switches and sockets are Hantex Ultra's first categories, not built in |
 
-All open decisions are settled. Next: accessibility checks (D-043), then the
-website builder core (Phase 3a).
+All open decisions are settled. Next: the media library (Phase 3b, D-044),
+then the general product catalogue (Phase 3c, D-045).
 
 ---
 
@@ -942,4 +944,32 @@ website builder core (Phase 3a).
   tests of the dashboard and the public sites, failing on serious and
   critical problems in Arabic and English, light and dark. The owner stopped
   its installation once (2026-10-21), so it waits for an explicit choice.
+
+## D-044 — Image processing
+
+- **Status:** Confirmed — 2026-10-22
+- **Options:** in the dashboard before upload · Cloudflare Images
+  (transformations, paid beyond the free allowance) · no resizing.
+- **Owner's choice:** in the dashboard.
+- **Consequences:** the browser decodes each photo, resizes it to a few widths
+  (phone to large screen), encodes WebP and so drops all camera and location
+  data, then uploads only those copies; originals never leave the device.
+  The dashboard API checks every file again (type by content, size,
+  dimensions) and stores it in the site's private R2 space. Free; the Workers
+  free plan's CPU limit rules out resizing on the server anyway. SVG logos are
+  sanitised; fonts follow D-033.
+
+## D-045 — General catalogue
+
+- **Status:** Confirmed — 2026-10-22 (owner: "make it general, not just
+  switches and sockets")
+- **Choice:** the catalogue (D-026) and media library serve any kind of
+  product on any website. Categories, attribute definitions, finishes and
+  product page layouts are data each website defines; nothing in the code is
+  specific to switches or sockets.
+- **Consequences:** D-026's wall-plate page layout and switch and socket
+  attribute sets become optional *templates* a website can start from, next
+  to general ones (e.g. lighting, generic product). Hantex Ultra keeps
+  Switches and Sockets as its first, *main* categories as the owner named
+  them; another website can lead with entirely different products.
 

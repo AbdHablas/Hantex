@@ -518,6 +518,8 @@
 /* Questions */
 .sx-faq .faq {
   max-width: 50rem;
+  /* Lines up with the section title; centred only when the section is. */
+  margin-inline: 0;
 }
 .al-center.sx-faq .faq {
   margin-inline: auto;
