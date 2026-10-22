@@ -317,4 +317,21 @@ describe('Publish changes (D-037)', () => {
       ),
     ).toEqual({ items: [] });
   });
+
+  it('starts a privacy policy page from the draft for review, hidden (D-041)', async () => {
+    const created = await h.request('POST', `/api/sites/${ONE}/pages`, {
+      cookie: owner,
+      body: {
+        title: { ar: 'سياسة الخصوصية', en: 'Privacy policy' },
+        slug: 'privacy',
+        template: 'privacy-draft',
+      },
+    });
+    expect(created.status).toBe(201);
+    const { id } = await json<{ id: string }>(created);
+    const draft = await page(ONE, id);
+    expect(draft.visible).toBe(false);
+    expect(JSON.stringify(draft.sections)).toContain('DRAFT FOR REVIEW');
+    expect(JSON.stringify(draft.sections)).toContain(`Site ${ONE}`);
+  });
 });

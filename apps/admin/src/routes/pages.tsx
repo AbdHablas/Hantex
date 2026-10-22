@@ -104,10 +104,12 @@ function NewPageDialog({
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
   const [parentId, setParentId] = useState('');
+  // An empty page, or the privacy policy draft for the owner's review (D-041).
+  const [template, setTemplate] = useState<'' | 'privacy-draft'>('');
   const create = useBuilderMutation(() =>
     api<{ id: string }>(sitePath(siteKey, '/pages'), {
       method: 'POST',
-      body: { title, slug, parentId: parentId || null },
+      body: { title, slug, parentId: parentId || null, ...(template ? { template } : {}) },
     }),
   );
   const valid =
@@ -125,6 +127,37 @@ function NewPageDialog({
   return (
     <Dialog open={open} onClose={onClose} title={b['newPage']}>
       <form className="flex flex-col gap-4" onSubmit={submit}>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">{b['pageStart']}</legend>
+          {(['', 'privacy-draft'] as const).map((option) => (
+            <label
+              key={option || 'empty'}
+              className="flex items-start gap-3 rounded-xl border border-border p-3 has-checked:border-accent has-checked:bg-accent-soft/40"
+            >
+              <input
+                type="radio"
+                name="page-template"
+                className="mt-1 size-4 accent-accent"
+                checked={template === option}
+                onChange={() => {
+                  setTemplate(option);
+                  if (option === 'privacy-draft') {
+                    setTitle({ ar: 'سياسة الخصوصية', en: 'Privacy policy' });
+                    if (!slugEdited) setSlug('privacy');
+                  }
+                }}
+              />
+              <span>
+                <span className="block text-sm font-medium">
+                  {option ? b['privacyDraft'] : b['emptyPage']}
+                </span>
+                {option && (
+                  <span className="block text-xs text-muted">{b['privacyDraftHelp']}</span>
+                )}
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <BilingualField
           label={b['pageTitle'] ?? ''}
           value={title}

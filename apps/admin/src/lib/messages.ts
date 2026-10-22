@@ -469,6 +469,11 @@ const en = {
       'The pages of this website and their order. Changes are drafts until you publish them with Publish changes.',
     newPage: 'New page',
     pageTitle: 'Title',
+    pageStart: 'Start with',
+    emptyPage: 'An empty page',
+    privacyDraft: 'Privacy policy draft (for review)',
+    privacyDraftHelp:
+      'A hidden page describing what this website really collects, with [placeholders] for your details. Not legal advice: review it, or have a lawyer review it, before showing it.',
     address: 'Address',
     addressHelp: 'Lowercase Latin letters, digits and hyphens. Shown after the website’s domain.',
     parent: 'Inside page',
@@ -1240,6 +1245,11 @@ const ar: Messages = {
     pagesIntro: 'صفحات هذا الموقع وترتيبها. تبقى التغييرات مسودات حتى تنشرها من «نشر التغييرات».',
     newPage: 'صفحة جديدة',
     pageTitle: 'العنوان',
+    pageStart: 'البداية',
+    emptyPage: 'صفحة فارغة',
+    privacyDraft: 'مسودة سياسة الخصوصية (للمراجعة)',
+    privacyDraftHelp:
+      'صفحة مخفية تصف ما يجمعه هذا الموقع فعلًا، مع [خانات] لتفاصيلك. ليست استشارة قانونية: راجعها بنفسك أو مع محامٍ قبل إظهارها.',
     address: 'العنوان في المتصفح',
     addressHelp: 'أحرف لاتينية صغيرة وأرقام وشرطات. يظهر بعد نطاق الموقع.',
     parent: 'ضمن صفحة',

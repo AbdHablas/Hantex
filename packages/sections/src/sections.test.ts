@@ -9,6 +9,7 @@ import {
   newSection,
   pagePath,
   pageSchema,
+  privacyPolicyDraft,
   pagesIndexSchema,
   richDocSchema,
   savedReference,
@@ -232,5 +233,22 @@ describe('site checks', () => {
       items: [{ id: 'saved2', name: { ar: 'م', en: 'm' }, section: savedReference('saved1') }],
     };
     expect(savedSectionsSchema.safeParse(nested).success).toBe(false);
+  });
+});
+
+describe('privacy policy draft (D-041)', () => {
+  it('is a valid, hidden page in both languages, marked as a draft with placeholders', () => {
+    const page = privacyPolicyDraft(siteName);
+    expect(pageSchema.safeParse(page).success).toBe(true);
+    expect(page.visible).toBe(false);
+    const section = page.sections[0]!;
+    if (section.type !== 'richText') throw new Error('expected rich text');
+    const en = JSON.stringify(section.settings.body.en);
+    const ar = JSON.stringify(section.settings.body.ar);
+    expect(en).toContain('DRAFT FOR REVIEW');
+    expect(en).toContain('[company legal name]');
+    expect(en).toContain('Hantex Ultra');
+    expect(ar).toContain('مسودة للمراجعة');
+    expect(ar).toContain('هانتكس ألترا');
   });
 });

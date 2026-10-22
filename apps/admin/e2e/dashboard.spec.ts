@@ -261,6 +261,18 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('link', { name: 'Home', exact: true }).click();
   await expect(page.getByRole('cell', { name: '#1' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Restore to draft' })).toBeVisible();
+  // The privacy policy starts as a hidden draft for the owner's review (D-041).
+  await page.getByRole('link', { name: 'All pages' }).click();
+  await page.getByRole('button', { name: 'New page' }).click();
+  await page.getByRole('radio', { name: /Privacy policy draft/ }).check();
+  await page
+    .getByRole('dialog', { name: 'New page' })
+    .getByRole('button', { name: 'Create' })
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Privacy policy' })).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Show this page on the website' }),
+  ).not.toBeChecked();
 
   // Phones and tablets: the builder fits without sideways scrolling.
   for (const width of [360, 768]) {

@@ -168,7 +168,11 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site
 - [ ] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
-- [ ] Privacy policy page: draft for the owner's review (D-041)
+- [x] Privacy policy page: draft for the owner's review (D-041) — *New page → Privacy policy
+      draft: a hidden page in both languages stating only what the platform does, with
+      [placeholders] for company details, database region and retention; goes live only
+      when the owner shows and publishes it. Its email statements assume the launch
+      email (D-040) with unsubscribe links.*
 - [ ] Visitor statistics: Cloudflare Web Analytics, figures on each website's overview (D-042)
       — *done: per-site token in SEO & contact, cookieless beacon on published pages only,
       security policy; to do: figures on the overview, which need a read-only Cloudflare

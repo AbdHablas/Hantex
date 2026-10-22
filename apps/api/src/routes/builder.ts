@@ -6,6 +6,7 @@ import {
   menusSchema,
   newPage,
   pageSchema,
+  privacyPolicyDraft,
   savedSectionsSchema,
   slugSchema,
   type Page,
@@ -122,6 +123,8 @@ export const builderRoutes = new Hono<AppEnv>()
         title: bilingualTitle,
         slug: slugSchema,
         parentId: itemId.nullable().optional(),
+        /** Start from a page template: the privacy policy draft for review (D-041). */
+        template: z.enum(['privacy-draft']).optional(),
       }),
     ),
     async (c) => {
@@ -131,10 +134,16 @@ export const builderRoutes = new Hono<AppEnv>()
       if (body.parentId && !index.order.includes(body.parentId)) throw badRequest('unknown-parent');
       if (index.order.length >= 200) throw conflict('too-many-pages');
       const id = newId();
-      const page: Page = {
-        ...newPage(body.title, await freeSlug(v, body.slug, body.parentId ?? null)),
-        parentId: body.parentId ?? null,
-      };
+      const slug = await freeSlug(v, body.slug, body.parentId ?? null);
+      const page: Page =
+        body.template === 'privacy-draft'
+          ? {
+              ...privacyPolicyDraft({ ar: v.site.nameAr, en: v.site.nameEn }),
+              title: body.title,
+              slug,
+              parentId: body.parentId ?? null,
+            }
+          : { ...newPage(body.title, slug), parentId: body.parentId ?? null };
       await saveDraft(v.db, v.site.id, 'page', page, v.access.userId, id);
       await saveDraft(
         v.db,
