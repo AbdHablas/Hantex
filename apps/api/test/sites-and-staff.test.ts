@@ -609,7 +609,7 @@ describe('typography (D-032)', () => {
       .insert(documentDrafts)
       .values({ siteId, kind: 'theme', data: old })
       .onConflictDoUpdate({
-        target: [documentDrafts.siteId, documentDrafts.kind],
+        target: [documentDrafts.siteId, documentDrafts.kind, documentDrafts.key],
         set: { data: old },
       });
     const doc = await json<{

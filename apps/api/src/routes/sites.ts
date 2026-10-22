@@ -1,4 +1,5 @@
 import { documentDrafts, publishJobs, siteDomains, sites } from '@hantex/db/worker';
+import { starterContent } from '@hantex/sections';
 import { LOCALES, SITE_MODES, hostnameSchema, newSiteSchema } from '@hantex/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -8,6 +9,8 @@ import { coversSite } from '../lib/access';
 import { writeAudit } from '../lib/audit';
 import { badRequest, conflict, notFound } from '../lib/errors';
 import { presetTheme, publishedTheme, siteIdByKey } from '../lib/presets';
+import { currentDraft, saveDraft } from '../lib/documents';
+import { draftContent } from '../lib/site-content';
 import { notifyOwners } from '../lib/staff';
 import { validate } from '../lib/validate';
 import { requirePermission, requirePlatformPermission } from '../middleware/session';
@@ -53,6 +56,11 @@ export const sitesRoutes = new Hono<AppEnv>()
         if (!sourceId || !coversSite(v.access, sourceId)) throw badRequest('unknown-site');
         startTheme = await publishedTheme(v.db, sourceId);
       }
+      let duplicateOf: string | null = null;
+      if (body.startFrom && 'duplicate' in body.startFrom) {
+        duplicateOf = await siteIdByKey(v.db, body.startFrom.duplicate);
+        if (!duplicateOf || !coversSite(v.access, duplicateOf)) throw badRequest('unknown-site');
+      }
       // New sites always start in Coming Soon mode (the column default), whatever is sent.
       const [site] = await v.db
         .insert(sites)
@@ -68,6 +76,41 @@ export const sitesRoutes = new Hono<AppEnv>()
         .onConflictDoNothing({ target: sites.key })
         .returning({ id: sites.id });
       if (!site) throw conflict('site-key-in-use');
+      // Pages, menus and layout: a copy of another site's current drafts (never its sign-ups,
+      // staff or history), or a starter template (D-038). Everything starts as drafts.
+      if (duplicateOf) {
+        const source = await draftContent(v.db, duplicateOf);
+        for (const [pageId, page] of source.pages) {
+          await saveDraft(v.db, site.id, 'page', page, v.access.userId, pageId);
+        }
+        await saveDraft(
+          v.db,
+          site.id,
+          'pages',
+          { ...source.index, redirects: [] },
+          v.access.userId,
+        );
+        await saveDraft(v.db, site.id, 'menus', source.menus, v.access.userId);
+        await saveDraft(v.db, site.id, 'layout', source.layout, v.access.userId);
+        for (const kind of [
+          'coming-soon',
+          'site-settings',
+          ...(startTheme ? [] : (['theme'] as const)),
+        ] as const) {
+          const draft = await currentDraft(v.db, duplicateOf, kind);
+          await saveDraft(v.db, site.id, kind, draft.data, v.access.userId);
+        }
+      } else {
+        const starter =
+          body.startFrom && 'starter' in body.startFrom ? body.startFrom.starter : 'blank';
+        const content = starterContent(starter, body.name);
+        for (const [pageId, page] of Object.entries(content.pages)) {
+          await saveDraft(v.db, site.id, 'page', page, v.access.userId, pageId);
+        }
+        await saveDraft(v.db, site.id, 'pages', content.index, v.access.userId);
+        await saveDraft(v.db, site.id, 'menus', content.menus, v.access.userId);
+        await saveDraft(v.db, site.id, 'layout', content.layout, v.access.userId);
+      }
       // A starting theme becomes the new site's theme draft, to review and publish as usual.
       if (startTheme) {
         await v.db

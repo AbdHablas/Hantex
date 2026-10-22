@@ -39,6 +39,19 @@ export const PERMISSIONS = {
     group: 'content',
     label: { en: 'Publish changes to the public website', ar: 'نشر التغييرات على الموقع العام' },
   },
+  'pages.view': {
+    scope: 'site',
+    group: 'content',
+    label: { en: 'View pages, sections and menus', ar: 'عرض الصفحات والأقسام والقوائم' },
+  },
+  'pages.edit': {
+    scope: 'site',
+    group: 'content',
+    label: {
+      en: 'Edit pages, sections, menus, header and footer (drafts)',
+      ar: 'تعديل الصفحات والأقسام والقوائم والترويسة والتذييل (مسودات)',
+    },
+  },
   'settings.view': {
     scope: 'site',
     group: 'site',
@@ -190,6 +203,8 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
     description: { en: 'Runs the site day to day.', ar: 'يدير الموقع يوميًا.' },
     permissions: [
       'dashboard.view',
+      'pages.view',
+      'pages.edit',
       'comingSoon.view',
       'comingSoon.edit',
       'site.publish',
@@ -213,6 +228,8 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
     description: { en: 'Updates and publishes website content.', ar: 'يحدّث محتوى الموقع وينشره.' },
     permissions: [
       'dashboard.view',
+      'pages.view',
+      'pages.edit',
       'comingSoon.view',
       'comingSoon.edit',
       'site.publish',
@@ -227,6 +244,7 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
     description: { en: 'Follows up sign-ups and enquiries.', ar: 'يتابع المشتركين والاستفسارات.' },
     permissions: [
       'dashboard.view',
+      'pages.view',
       'comingSoon.view',
       'settings.view',
       'subscribers.view',
@@ -242,7 +260,13 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
       en: 'Prepares drafts; someone else publishes.',
       ar: 'يجهّز المسودات وينشرها شخص آخر.',
     },
-    permissions: ['dashboard.view', 'comingSoon.view', 'comingSoon.edit'],
+    permissions: [
+      'dashboard.view',
+      'pages.view',
+      'pages.edit',
+      'comingSoon.view',
+      'comingSoon.edit',
+    ],
     protected: false,
     locked: false,
   },
@@ -253,7 +277,7 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
       en: 'Read-only; never sees customer personal data.',
       ar: 'قراءة فقط، دون الاطلاع على بيانات العملاء.',
     },
-    permissions: ['dashboard.view', 'comingSoon.view', 'settings.view'],
+    permissions: ['dashboard.view', 'pages.view', 'comingSoon.view', 'settings.view'],
     protected: false,
     locked: false,
   },

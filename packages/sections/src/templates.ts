@@ -1,3 +1,4 @@
+import type { SiteStarter } from '@hantex/shared';
 import type { Bilingual } from './primitives';
 import { newId, newSection, type Section } from './registry';
 import {
@@ -17,8 +18,7 @@ import {
  * nothing factual is invented for any brand.
  */
 
-export const SITE_STARTERS = ['blank', 'business', 'product-brand'] as const;
-export type SiteStarter = (typeof SITE_STARTERS)[number];
+export { SITE_STARTERS, type SiteStarter } from '@hantex/shared';
 
 export const STARTER_INFO: Record<SiteStarter, { name: Bilingual; description: Bilingual }> = {
   blank: {

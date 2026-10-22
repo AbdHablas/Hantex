@@ -369,9 +369,23 @@ export const auditLog = pgTable(
  * an older version's data as a new version, so history stays linear and auditable.
  * ---------------------------------------------------------------------------------------- */
 
-export const DOCUMENT_KINDS = ['coming-soon', 'site-settings', 'theme'] as const;
+/**
+ * Site documents. Most kinds have one document per site (key ''); pages have one per page, keyed
+ * by the page's id (D-035).
+ */
+export const DOCUMENT_KINDS = [
+  'coming-soon',
+  'site-settings',
+  'theme',
+  'page',
+  'pages',
+  'menus',
+  'layout',
+] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
-const kindCheck = (column: unknown) => sql`${column} in ('coming-soon', 'site-settings', 'theme')`;
+const kindCheck = (column: unknown) =>
+  sql`${column} in ('coming-soon', 'site-settings', 'theme', 'page', 'pages', 'menus', 'layout')`;
+const keyColumn = () => text('key').notNull().default('');
 
 const siteRef = () =>
   uuid('site_id')
@@ -383,12 +397,13 @@ export const documentDrafts = pgTable(
   {
     siteId: siteRef(),
     kind: text('kind').notNull(),
+    key: keyColumn(),
     data: jsonb('data').notNull(),
     updatedBy: text('updated_by').references(() => users.id, { onDelete: 'set null' }),
     updatedAt: updatedAt(),
   },
   (t) => [
-    primaryKey({ columns: [t.siteId, t.kind] }),
+    primaryKey({ columns: [t.siteId, t.kind, t.key] }),
     check('document_drafts_kind_check', kindCheck(t.kind)),
   ],
 );
@@ -399,6 +414,7 @@ export const documentVersions = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     siteId: siteRef(),
     kind: text('kind').notNull(),
+    key: keyColumn(),
     version: integer('version').notNull(),
     data: jsonb('data').notNull(),
     publishedBy: text('published_by').references(() => users.id, { onDelete: 'set null' }),
@@ -407,7 +423,12 @@ export const documentVersions = pgTable(
     restoredFrom: integer('restored_from'),
   },
   (t) => [
-    uniqueIndex('document_versions_site_kind_version_unique').on(t.siteId, t.kind, t.version),
+    uniqueIndex('document_versions_site_kind_key_version_unique').on(
+      t.siteId,
+      t.kind,
+      t.key,
+      t.version,
+    ),
     check('document_versions_kind_check', kindCheck(t.kind)),
   ],
 );

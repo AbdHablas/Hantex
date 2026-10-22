@@ -249,6 +249,26 @@ describe('sites (D-024)', () => {
     ).rejects.toThrow();
   });
 
+  it('keeps a draft and version numbers per page (D-035)', async () => {
+    for (const key of ['page01', 'page02']) {
+      await db.insert(documentDrafts).values({ siteId: siteA, kind: 'page', key, data: {} });
+      await db
+        .insert(documentVersions)
+        .values({ siteId: siteA, kind: 'page', key, version: 1, data: {} });
+    }
+    await expect(
+      db.insert(documentDrafts).values({ siteId: siteA, kind: 'page', key: 'page01', data: {} }),
+    ).rejects.toThrow();
+    await expect(
+      db
+        .insert(documentVersions)
+        .values({ siteId: siteA, kind: 'page', key: 'page01', version: 1, data: {} }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(documentDrafts).values({ siteId: siteA, kind: 'script', data: {} }),
+    ).rejects.toThrow();
+  });
+
   it('cannot delete a site that has records', async () => {
     await expect(db.delete(sites).where(eq(sites.id, siteA))).rejects.toThrow();
   });

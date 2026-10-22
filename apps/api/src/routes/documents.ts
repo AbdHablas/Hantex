@@ -1,4 +1,4 @@
-import { documentVersions, publishJobs, users, type DocumentKind } from '@hantex/db/worker';
+import { documentVersions, users, type DocumentKind } from '@hantex/db/worker';
 import { brandTheme, publishable, validateTheme, type Theme } from '@hantex/theme';
 import type { Permission } from '@hantex/shared';
 import { and, desc, eq } from 'drizzle-orm';
@@ -6,6 +6,7 @@ import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
+import { startRebuild } from '../lib/rebuild';
 import {
   DOCUMENTS,
   KINDS,
@@ -43,19 +44,7 @@ async function publish(
 ) {
   const v = c.var;
   const version = await publishVersion(v.db, v.site.id, kind, data, v.access.userId, restoredFrom);
-  const [job] = await v.db
-    .insert(publishJobs)
-    .values({ siteId: v.site.id, requestedBy: v.access.userId })
-    .returning({ id: publishJobs.id });
-  const result = job
-    ? await v.deps.publisher(c.env).dispatch({ jobId: job.id, siteKey: v.site.key })
-    : { dispatched: false, detail: 'no-job' };
-  if (job) {
-    await v.db
-      .update(publishJobs)
-      .set({ status: result.dispatched ? 'dispatched' : 'failed', detail: result.detail })
-      .where(eq(publishJobs.id, job.id));
-  }
+  const { job, result } = await startRebuild(c);
   await writeAudit(
     v.db,
     auditActor(v),

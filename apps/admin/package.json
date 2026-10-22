@@ -9,6 +9,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@hantex/sections": "workspace:*",
     "@hantex/shared": "workspace:*",
     "@hantex/theme": "workspace:*",
     "@simplewebauthn/browser": "13.3.0",

@@ -7,13 +7,15 @@ import {
   permissionsOf,
 } from './permissions';
 
-// The approved matrix (docs/roles-and-permissions.md, D-019, D-022) for the Phase 2 features.
+// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035).
 const EXPECTED: Record<string, string[]> = {
   owner: Object.keys(PERMISSIONS),
   administrator: [
     'dashboard.view',
     'comingSoon.view',
     'comingSoon.edit',
+    'pages.view',
+    'pages.edit',
     'site.publish',
     'settings.view',
     'settings.edit',
@@ -30,18 +32,21 @@ const EXPECTED: Record<string, string[]> = {
     'dashboard.view',
     'comingSoon.view',
     'comingSoon.edit',
+    'pages.view',
+    'pages.edit',
     'site.publish',
     'settings.view',
   ],
   sales: [
     'dashboard.view',
     'comingSoon.view',
+    'pages.view',
     'settings.view',
     'subscribers.view',
     'subscribers.export',
   ],
-  editor: ['dashboard.view', 'comingSoon.view', 'comingSoon.edit'],
-  viewer: ['dashboard.view', 'comingSoon.view', 'settings.view'],
+  editor: ['dashboard.view', 'comingSoon.view', 'comingSoon.edit', 'pages.view', 'pages.edit'],
+  viewer: ['dashboard.view', 'comingSoon.view', 'pages.view', 'settings.view'],
 };
 
 describe('standard roles', () => {

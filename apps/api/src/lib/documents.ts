@@ -11,6 +11,16 @@ import {
   siteSettingsSchema,
   type Permission,
 } from '@hantex/shared';
+import {
+  DEFAULT_LAYOUT,
+  DEFAULT_MENUS,
+  DEFAULT_PAGES_INDEX,
+  layoutSchema,
+  menusSchema,
+  newPage,
+  pageSchema,
+  pagesIndexSchema,
+} from '@hantex/sections';
 import { brandTheme, themeSchema } from '@hantex/theme';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ZodType } from 'zod';
@@ -52,61 +62,109 @@ export const DOCUMENTS: Record<
     edit: ['appearance.edit'],
     publish: ['appearance.publish'],
   },
+  // Website builder (D-035): one document per page, plus the page index, menus and layout. They
+  // go live together through Publish changes (D-037).
+  page: {
+    schema: pageSchema,
+    defaults: newPage({ ar: '', en: '' }, 'page'),
+    view: ['pages.view'],
+    edit: ['pages.edit'],
+    publish: ['pages.edit', 'site.publish'],
+  },
+  pages: {
+    schema: pagesIndexSchema,
+    defaults: DEFAULT_PAGES_INDEX,
+    view: ['pages.view'],
+    edit: ['pages.edit'],
+    publish: ['pages.edit', 'site.publish'],
+  },
+  menus: {
+    schema: menusSchema,
+    defaults: DEFAULT_MENUS,
+    view: ['pages.view'],
+    edit: ['pages.edit'],
+    publish: ['pages.edit', 'site.publish'],
+  },
+  layout: {
+    schema: layoutSchema,
+    defaults: DEFAULT_LAYOUT,
+    view: ['pages.view'],
+    edit: ['pages.edit'],
+    publish: ['pages.edit', 'site.publish'],
+  },
 };
 
-const versionsOf = (siteId: string, kind: DocumentKind) =>
-  and(eq(documentVersions.siteId, siteId), eq(documentVersions.kind, kind));
+/** Every site has these builder documents; pages are the only kind with many (keyed by page id). */
+export const BUILDER_KINDS = ['pages', 'menus', 'layout'] as const;
 
-export async function latestPublished(db: Database, siteId: string, kind: DocumentKind) {
+const versionsOf = (siteId: string, kind: DocumentKind, key = '') =>
+  and(
+    eq(documentVersions.siteId, siteId),
+    eq(documentVersions.kind, kind),
+    eq(documentVersions.key, key),
+  );
+
+export async function latestPublished(db: Database, siteId: string, kind: DocumentKind, key = '') {
   const [row] = await db
     .select()
     .from(documentVersions)
-    .where(versionsOf(siteId, kind))
+    .where(versionsOf(siteId, kind, key))
     .orderBy(desc(documentVersions.version))
     .limit(1);
   return row ?? null;
 }
 
 /** The working draft, or the published version, or the defaults (nothing factual pre-filled). */
-export async function currentDraft(db: Database, siteId: string, kind: DocumentKind) {
+export async function currentDraft(db: Database, siteId: string, kind: DocumentKind, key = '') {
   const [draft] = await db
     .select()
     .from(documentDrafts)
-    .where(and(eq(documentDrafts.siteId, siteId), eq(documentDrafts.kind, kind)));
+    .where(
+      and(
+        eq(documentDrafts.siteId, siteId),
+        eq(documentDrafts.kind, kind),
+        eq(documentDrafts.key, key),
+      ),
+    );
   // Stored data written by an older format is upgraded on read (e.g. theme version 1 → 2).
   const normalise = (data: unknown) => {
     const parsed = DOCUMENTS[kind].schema.safeParse(data);
     return parsed.success ? parsed.data : data;
   };
   if (draft) return { data: normalise(draft.data), updatedAt: draft.updatedAt };
-  const published = await latestPublished(db, siteId, kind);
+  const published = await latestPublished(db, siteId, kind, key);
   return { data: normalise(published?.data ?? DOCUMENTS[kind].defaults), updatedAt: null };
 }
 
+/** The database or a transaction: anything that can run these queries. */
+export type Executor = Pick<Database, 'insert' | 'select' | 'update' | 'delete'>;
+
 export async function saveDraft(
-  db: Database,
+  db: Executor,
   siteId: string,
   kind: DocumentKind,
   data: unknown,
   userId: string,
+  key = '',
 ) {
   await db
     .insert(documentDrafts)
-    .values({ siteId, kind, data, updatedBy: userId })
+    .values({ siteId, kind, key, data, updatedBy: userId })
     .onConflictDoUpdate({
-      target: [documentDrafts.siteId, documentDrafts.kind],
+      target: [documentDrafts.siteId, documentDrafts.kind, documentDrafts.key],
       set: { data, updatedBy: userId, updatedAt: new Date() },
     });
 }
 
 /** Appends an immutable version; the unique (site, kind, version) index guards against races. */
 export async function publishVersion(
-  db: Database,
+  db: Executor,
   siteId: string,
   kind: DocumentKind,
   data: unknown,
   userId: string,
   restoredFrom: number | null = null,
+  key = '',
 ): Promise<number> {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -115,10 +173,11 @@ export async function publishVersion(
         .values({
           siteId,
           kind,
+          key,
           data,
           publishedBy: userId,
           restoredFrom,
-          version: sql`(select coalesce(max(${documentVersions.version}), 0) + 1 from ${documentVersions} where ${documentVersions.siteId} = ${siteId} and ${documentVersions.kind} = ${kind})`,
+          version: sql`(select coalesce(max(${documentVersions.version}), 0) + 1 from ${documentVersions} where ${documentVersions.siteId} = ${siteId} and ${documentVersions.kind} = ${kind} and ${documentVersions.key} = ${key})`,
         })
         .returning({ version: documentVersions.version });
       if (row) return row.version;

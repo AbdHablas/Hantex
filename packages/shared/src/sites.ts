@@ -32,6 +32,10 @@ export const hostnameSchema = z
 
 const localeSchema = z.enum(LOCALES);
 
+/** Starting structures for a new website's pages and menus (D-038; defined in @hantex/sections). */
+export const SITE_STARTERS = ['blank', 'business', 'product-brand'] as const;
+export type SiteStarter = (typeof SITE_STARTERS)[number];
+
 /** Fields the Owner enters when creating a site. New sites always start in Coming Soon mode. */
 export const newSiteSchema = z
   .strictObject({
@@ -51,6 +55,16 @@ export const newSiteSchema = z
       .union([
         z.strictObject({ preset: z.string().min(1).max(64) }),
         z.strictObject({ site: siteKeySchema }),
+      ])
+      .optional(),
+    /**
+     * The new site's pages, menus and layout: a starter template, or a copy of another site's
+     * current content (D-038). Without it, the site starts with a home page only.
+     */
+    startFrom: z
+      .union([
+        z.strictObject({ starter: z.enum(SITE_STARTERS) }),
+        z.strictObject({ duplicate: siteKeySchema }),
       ])
       .optional(),
   })
