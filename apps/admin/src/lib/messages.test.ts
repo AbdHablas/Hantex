@@ -1,40 +1,38 @@
 import { describe, expect, it } from 'vitest';
 import { MESSAGES } from './messages';
 
-/** Every key path in a nested message object, e.g. "auth.signIn". */
-function keys(value: unknown, prefix = ''): string[] {
+/** Every key path in a nested message object, e.g. ["auth", "signIn"]. Keys may contain dots. */
+function paths(value: unknown, prefix: string[] = []): string[][] {
   if (typeof value !== 'object' || value === null) return [prefix];
-  return Object.entries(value).flatMap(([key, child]) =>
-    keys(child, prefix ? `${prefix}.${key}` : key),
-  );
+  return Object.entries(value).flatMap(([key, child]) => paths(child, [...prefix, key]));
 }
+
+const get = (root: unknown, path: string[]) =>
+  path.reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], root);
+const name = (path: string[]) => path.join(' › ');
 
 describe('dashboard messages', () => {
   it('has every text in both Arabic and English', () => {
-    expect(keys(MESSAGES.ar).sort()).toEqual(keys(MESSAGES.en).sort());
+    expect(paths(MESSAGES.ar).map(name).sort()).toEqual(paths(MESSAGES.en).map(name).sort());
   });
 
   it('has no empty texts', () => {
     for (const locale of ['ar', 'en'] as const) {
-      const empty = keys(MESSAGES[locale]).filter((path) => {
-        const value = path
-          .split('.')
-          .reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], MESSAGES[locale]);
+      const empty = paths(MESSAGES[locale]).filter((path) => {
+        const value = get(MESSAGES[locale], path);
         return typeof value === 'string' && value.trim() === '';
       });
-      expect(empty, locale).toEqual([]);
+      expect(empty.map(name), locale).toEqual([]);
     }
   });
 
   it('keeps the same placeholders in both languages', () => {
     const placeholders = (text: unknown) =>
       typeof text === 'string' ? (text.match(/\{\w+\}/g) ?? []).sort() : [];
-    for (const path of keys(MESSAGES.en)) {
-      const get = (root: unknown) =>
-        path
-          .split('.')
-          .reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], root);
-      expect(placeholders(get(MESSAGES.ar)), path).toEqual(placeholders(get(MESSAGES.en)));
+    for (const path of paths(MESSAGES.en)) {
+      expect(placeholders(get(MESSAGES.ar, path)), name(path)).toEqual(
+        placeholders(get(MESSAGES.en, path)),
+      );
     }
   });
 });

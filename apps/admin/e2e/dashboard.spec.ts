@@ -58,7 +58,7 @@ async function confirm(page: Page, ifAsked = false) {
 test('the first Owner sets up a passkey, publishes the Coming Soon page and signs in again', async ({
   browser,
 }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   const context = await browser.newContext();
   const page = await context.newPage();
   await addAuthenticator(context, page);
@@ -184,6 +184,89 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expectAccessible(page, 'roles (English)');
   await page.goto('/sites');
   await expectAccessible(page, 'websites (English)');
+
+  // The website builder (D-035 to D-038): a second website, made and published without code.
+  await page.getByRole('button', { name: 'New website' }).first().click();
+  const create = page.getByRole('dialog', { name: 'New website' });
+  await create.getByLabel('Short key').fill('second-site');
+  await create.getByLabel('Name in Arabic').fill('الموقع الثاني');
+  await create.getByLabel('Name in English').fill('Second site');
+  await create.getByRole('radio', { name: /Business/ }).check();
+  await create.getByRole('button', { name: 'Create' }).click();
+  await expect(page).toHaveURL(/\/s\/second-site\/settings$/);
+
+  await page.getByRole('link', { name: 'Pages', exact: true }).click();
+  const pageList = page.getByRole('list').filter({ hasText: 'About us' });
+  await expect(pageList.getByRole('link')).toHaveText(['Home', 'About us', 'Contact']);
+  await expectAccessible(page, 'pages');
+  await pageList.getByRole('link', { name: 'Home' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Home' })).toBeVisible();
+  // No domain yet, so the device preview explains what it needs.
+  await expect(page.getByText('Add a main domain in General settings')).toBeVisible();
+  await page.getByRole('button', { name: 'Add section' }).click();
+  await page
+    .getByRole('dialog', { name: 'Choose a section' })
+    .getByRole('button', { name: /^Call to action/ })
+    .click();
+  await page.getByRole('group', { name: 'Heading' }).getByLabel('English').fill('Talk to our team');
+  await page.getByRole('group', { name: 'Heading' }).getByLabel('Arabic').fill('تحدث إلى فريقنا');
+  // Shown on desktops only.
+  await page.getByRole('checkbox', { name: 'Phones' }).uncheck();
+  await expectAccessible(page, 'page editor');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+  await expect(page.getByText(/Hidden on Phones/)).toBeVisible();
+
+  // Rich text: formatting is stored as data, never HTML.
+  await page.getByRole('link', { name: 'All pages' }).click();
+  await pageList.getByRole('link', { name: 'About us' }).click();
+  await page.getByRole('button', { name: /^Text/ }).click();
+  const english = page.getByRole('textbox', { name: 'Text (English)' });
+  await english.click();
+  await page.keyboard.type('We make switches. ');
+  await page
+    .getByRole('toolbar', { name: 'Text formatting (Text (English))' })
+    .getByRole('button', { name: 'Bold' })
+    .click();
+  await page.keyboard.type('Quality first.');
+  await expect(english.locator('strong')).toHaveText('Quality first.');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+
+  // Menus: a dropdown link in the header menu.
+  await page.getByRole('link', { name: 'Menus, header & footer', exact: true }).click();
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
+  await page.getByRole('button', { name: 'Add dropdown link' }).click();
+  await page.getByRole('group', { name: 'Dropdown links' }).getByLabel('English').fill('Our team');
+  await page.getByRole('group', { name: 'Dropdown links' }).getByLabel('Arabic').fill('فريقنا');
+  await expectAccessible(page, 'menus');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved')).toBeVisible();
+
+  // Publish changes: everything changed on this website, together.
+  await expect(page.getByText(/unpublished changes on this website/)).toBeVisible();
+  await page.getByRole('button', { name: 'Publish changes' }).click();
+  await confirm(page);
+  await expect(page.getByText('Changes published.')).toBeVisible();
+  await expect(page.getByText('Everything is published.')).toBeVisible();
+
+  // Phones and tablets: the builder fits without sideways scrolling.
+  for (const width of [360, 768]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const path of ['/s/second-site/pages', '/s/second-site/menus']) {
+      await page.goto(path);
+      await page.getByRole('heading', { level: 1 }).first().waitFor();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  // The first website is unchanged: its pages are its own.
+  await page.goto('/s/hantex-ultra/pages');
+  await expect(page.getByText('No pages yet')).toBeVisible();
   await page.goto('/account');
 
   // Sign out, then back in with the same passkey.

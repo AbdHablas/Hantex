@@ -7,7 +7,8 @@ import { z } from 'zod';
  * editor can inject markup or scripts.
  */
 
-const safeHref = z
+/** Links in rich text: https, mailto, tel, or a path on the same site. */
+export const safeHref = z
   .string()
   .max(500)
   .refine((href) => {

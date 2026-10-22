@@ -124,22 +124,20 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 
 ### 3a. Website builder core *(D-035 to D-039 confirmed)*
 
-- [ ] Section registry (`packages/sections`): typed, validated settings;
+- [x] Section registry (`packages/sections`): typed, validated settings;
       site renderers and dashboard forms; responsive by design
-      — *done: registry, validation, site renderers; to do: dashboard forms*
-- [ ] Pages: create, rename, duplicate, reorder, hide/show, publish/unpublish,
+- [x] Pages: create, rename, duplicate, reorder, hide/show, publish/unpublish,
       delete; slug, SEO and sharing fields; home page; parent page
-- [ ] Section editor: add, remove, reorder, duplicate, hide per device;
+      (sharing images come with media, 3b)
+- [x] Section editor: add, remove, reorder, duplicate, hide per device;
       live preview at phone, tablet and desktop widths
 - [ ] Sections without media: hero, rich text, features, call to action, FAQ,
       statistics, contact, newsletter sign-up, category list, divider
 - [ ] Global sections per site: header, footer, saved sections
-- [ ] Menus: header and footer; links to pages and addresses; dropdowns
-      — *done: API, site header and footer with phone menu; to do: editor*
-- [ ] Publish changes: validation, versions, rollback, redirects for changed
-      slugs; one rebuild per site — *done: API and `_redirects`; to do: dashboard bar*
-- [ ] Guided *New website*; duplicate a website; templates copied on use
-      — *done: API (starter or duplicate); to do: wizard*
+- [x] Menus: header and footer; links to pages and addresses; dropdowns
+- [x] Publish changes: validation, versions, rollback, redirects for changed
+      slugs; one rebuild per site (page version restore: API only so far)
+- [x] Guided *New website*; duplicate a website; templates copied on use
 - [x] Site engine renders pages, menus and sections; Coming Soon stays a mode
       (live sites, signed page previews framed only by the dashboard, sitemap)
 - [ ] Tests: isolation, permissions, validation, publishing, builder

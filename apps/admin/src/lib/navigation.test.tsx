@@ -44,6 +44,8 @@ describe('dashboard navigation', () => {
     expect(ids(person('owner', true))).toEqual([
       'overview',
       'coming-soon',
+      'pages',
+      'menus',
       'appearance',
       'subscribers',
       'general',

@@ -171,3 +171,38 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Rich-text editor (Tiptap, D-036). Its own stylesheet isn't injected (strict CSP), so the few
+ * rules it needs are here, with the text styles the sites use.
+ */
+.rich-editor {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-variant-ligatures: none;
+}
+.rich-editor > * + * {
+  margin-top: 0.5em;
+}
+.rich-editor h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.rich-editor h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.rich-editor ul,
+.rich-editor ol {
+  padding-inline-start: 1.25rem;
+}
+.rich-editor ul {
+  list-style: disc;
+}
+.rich-editor ol {
+  list-style: decimal;
+}
+.rich-editor a {
+  color: var(--accent-text);
+  text-decoration: underline;
+}

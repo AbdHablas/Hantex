@@ -1,4 +1,5 @@
-import { LOCALES, SITE_MODES, SITE_TEMPLATES, newSiteSchema } from '@hantex/shared';
+import { STARTER_INFO } from '@hantex/sections';
+import { LOCALES, SITE_MODES, SITE_STARTERS, SITE_TEMPLATES, newSiteSchema } from '@hantex/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
@@ -49,7 +50,12 @@ function CreateSiteDialog({ open, onClose }: { open: boolean; onClose: () => voi
     defaultLocale: 'ar',
     template: 'coming-soon',
     startTheme: '',
+    // A starter template, or "duplicate" with the website to copy (D-038).
+    startFrom: 'business',
+    duplicateOf: '',
   });
+  const { data: me } = useMe();
+  const copyable = (me?.sites ?? []).filter((s) => !s.archived);
   const bi = useBilingual();
   const choices = useThemeChoices(open);
   const start = choices.data?.find((c) => c.value === form.startTheme)?.start;
@@ -59,7 +65,11 @@ function CreateSiteDialog({ open, onClose }: { open: boolean; onClose: () => voi
     locales: form.locales,
     defaultLocale: form.defaultLocale,
     template: form.template,
-    ...(start ? { startTheme: start } : {}),
+    ...(start && form.startFrom !== 'duplicate' ? { startTheme: start } : {}),
+    startFrom:
+      form.startFrom === 'duplicate'
+        ? { duplicate: form.duplicateOf }
+        : { starter: form.startFrom },
   };
   const valid = newSiteSchema.safeParse(body);
   const create = useMutation({
@@ -166,24 +176,78 @@ function CreateSiteDialog({ open, onClose }: { open: boolean; onClose: () => voi
             </Select>
           )}
         </Field>
-        <Field label={m.sites['startTheme']} help={m.sites['startThemeHelp']}>
-          {(props) => (
-            <Select
-              {...props}
-              value={form.startTheme}
-              onChange={(e) => setForm({ ...form, startTheme: e.target.value })}
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 text-sm font-medium">{m.builder['startFrom']}</legend>
+          {[...SITE_STARTERS, 'duplicate' as const].map((option) => (
+            <label
+              key={option}
+              className="flex items-start gap-3 rounded-xl border border-border p-3 has-checked:border-accent has-checked:bg-accent-soft/40"
             >
-              <option value="">{m.sites['startThemeDefault']}</option>
-              {choices.data
-                ?.filter((c) => c.value !== 'preset:brand')
-                .map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {bi(c.name)}
+              <input
+                type="radio"
+                name="start-from"
+                className="mt-1 size-4 accent-accent"
+                checked={form.startFrom === option}
+                onChange={() =>
+                  setForm({
+                    ...form,
+                    startFrom: option,
+                    duplicateOf: form.duplicateOf || (copyable[0]?.key ?? ''),
+                  })
+                }
+              />
+              <span>
+                <span className="block text-sm font-medium">
+                  {option === 'duplicate'
+                    ? m.builder['duplicateSite']
+                    : bi(STARTER_INFO[option].name)}
+                </span>
+                <span className="block text-xs text-muted">
+                  {option === 'duplicate'
+                    ? m.builder['duplicateHelp']
+                    : bi(STARTER_INFO[option].description)}
+                </span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        {form.startFrom === 'duplicate' && (
+          <Field label={m.builder['duplicateSource']}>
+            {(props) => (
+              <Select
+                {...props}
+                value={form.duplicateOf}
+                onChange={(e) => setForm({ ...form, duplicateOf: e.target.value })}
+              >
+                {copyable.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {bi(s.name)}
                   </option>
                 ))}
-            </Select>
-          )}
-        </Field>
+              </Select>
+            )}
+          </Field>
+        )}
+        {form.startFrom !== 'duplicate' && (
+          <Field label={m.sites['startTheme']} help={m.sites['startThemeHelp']}>
+            {(props) => (
+              <Select
+                {...props}
+                value={form.startTheme}
+                onChange={(e) => setForm({ ...form, startTheme: e.target.value })}
+              >
+                <option value="">{m.sites['startThemeDefault']}</option>
+                {choices.data
+                  ?.filter((c) => c.value !== 'preset:brand')
+                  .map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {bi(c.name)}
+                    </option>
+                  ))}
+              </Select>
+            )}
+          </Field>
+        )}
         <ErrorText error={create.error} />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>

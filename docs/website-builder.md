@@ -2,9 +2,11 @@
 
 How the dashboard lets the owner create and run several independent websites
 without code: pages, sections, menus, branding, content and publishing.
-Status: **confirmed** (D-035 to D-039, 2026-10-22). Progress: section registry,
-builder API and site engine done; dashboard builder screens next (see the
-[implementation plan](implementation-plan.md), Phase 3a).
+Status: **confirmed** (D-035 to D-039, 2026-10-22). Progress: Phase 3a core done:
+section registry, builder API, site engine, and the dashboard's Pages, page
+editor (device preview, rich text, drag and drop), Menus and New website
+screens. Remaining in 3a: saved global sections and a version-history screen
+for pages (see the [implementation plan](implementation-plan.md)).
 
 ## Requirement (owner, 2026-10-21)
 

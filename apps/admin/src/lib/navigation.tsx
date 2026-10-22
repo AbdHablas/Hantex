@@ -1,10 +1,12 @@
 import type { Permission } from '@hantex/shared';
 import {
   Building2,
+  FileStack,
   FileText,
   History,
   LayoutDashboard,
   Mail,
+  Menu,
   Palette,
   ScrollText,
   Search,
@@ -99,6 +101,22 @@ export function buildNavigation(m: Messages, me: Me, site: MySite | undefined): 
             icon: <FileText />,
             keywords: ['launch', 'countdown', 'faq', 'categories', 'إطلاق'],
             rule: { site: 'comingSoon.view' },
+          },
+          {
+            id: 'pages',
+            label: n.pages,
+            to: `${base}/pages`,
+            icon: <FileStack />,
+            keywords: ['builder', 'sections', 'page', 'publish', 'صفحات', 'أقسام'],
+            rule: { site: 'pages.view' },
+          },
+          {
+            id: 'menus',
+            label: n.menus,
+            to: `${base}/menus`,
+            icon: <Menu />,
+            keywords: ['navigation', 'header', 'footer', 'قائمة', 'رأس', 'تذييل'],
+            rule: { site: 'pages.view' },
           },
           {
             id: 'appearance',

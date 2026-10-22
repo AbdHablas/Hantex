@@ -18,6 +18,16 @@ import './styles.css';
 const SiteOverview = lazy(() =>
   import('./routes/overview').then((module) => ({ default: module.SiteOverview })),
 );
+// So is the website builder (rich-text editor, drag and drop).
+const PagesList = lazy(() =>
+  import('./routes/pages').then((module) => ({ default: module.PagesList })),
+);
+const PageEditor = lazy(() =>
+  import('./routes/pages').then((module) => ({ default: module.PageEditor })),
+);
+const MenusEditor = lazy(() =>
+  import('./routes/menus').then((module) => ({ default: module.MenusEditor })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +65,36 @@ const router = createBrowserRouter([
             element: (
               <SitePage>
                 <ComingSoonEditor />
+              </SitePage>
+            ),
+          },
+          {
+            path: 'pages',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <PagesList />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'pages/:pageId',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <PageEditor />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'menus',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <MenusEditor />
+                </Suspense>
               </SitePage>
             ),
           },

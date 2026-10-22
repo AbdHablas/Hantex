@@ -1,8 +1,10 @@
 # Security headers for the dashboard's static files (docs/security.md). API responses set their
-# own headers in apps/api/src/middleware/security.ts. form-action allows https: because draft
-# previews post a signed form to each site's own address (src/components/document.tsx).
+# own headers in apps/api/src/middleware/security.ts. form-action and frame-src allow https:
+# because draft previews post a signed form to each site's own address, in a new tab or in the
+# page editor's device preview frame (src/components/builder/DevicePreview.tsx). Each site in
+# turn lets only the dashboard frame its previews (DASHBOARD_ORIGIN).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self' https:; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https:; connect-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self' https:; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
