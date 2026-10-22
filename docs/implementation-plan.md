@@ -112,7 +112,9 @@ Next:
 - [ ] Custom font uploads by the Owner: WOFF2, licence confirmation, validated, served from the site's domain (D-033; built with the R2 media storage in Phase 3)
 - [ ] Shared component system: tokens shared; dashboard components; public Astro components with islands; product cards, navigation, filters, search, gallery and 3D viewer for product pages (D-034, with Phase 3 catalogue)
 - [ ] Mixed Arabic/English text isolated correctly (product names, model numbers, prices, specifications); icons mirrored only where direction matters
-- [ ] Every major page checked in Arabic and English, light and dark, phone to desktop
+- [x] Automated accessibility checks (axe, D-043) on the public site (Arabic light, English dark, 404) and eight dashboard screens; fixed the countdown's list semantics and five controls whose names didn't include their visible text
+- [x] Phone-size checks: dashboard main pages at 360px without sideways scrolling; public site at 360px
+- [ ] Every major page checked in Arabic and English, light and dark, phone to desktop (continues with each new page and section)
 
 ## Phase 3: Website builder, media, catalogue and 3D Studio foundation (dashboard)
 

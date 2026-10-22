@@ -217,7 +217,6 @@ function NavSectionBlock({
   folded: boolean;
   onToggle: () => void;
 }) {
-  const { m, format } = useI18n();
   const headingId = useId();
   const panelId = useId();
   const items = section.items.map((item) =>
@@ -242,7 +241,6 @@ function NavSectionBlock({
         type="button"
         aria-expanded={!folded}
         aria-controls={panelId}
-        aria-label={format(m.nav.toggleSection, { section: section.label })}
         onClick={onToggle}
         className="group flex items-center gap-1 rounded-md px-2.5 py-1 text-start"
       >
@@ -325,7 +323,13 @@ function SiteSwitcher({ me, collapsed }: { me: Me; collapsed: boolean }) {
       trigger={
         <button
           type="button"
-          aria-label={current ? `${m.nav.currentSite}: ${bi(current.name)}` : m.nav.chooseSite}
+          aria-label={
+            collapsed
+              ? current
+                ? `${m.nav.currentSite}: ${bi(current.name)}`
+                : m.nav.chooseSite
+              : undefined
+          }
           className={cn(
             'flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-2 text-start shadow-sm transition hover:bg-surface-2',
             collapsed && 'justify-center border-transparent p-1 shadow-none',
@@ -392,7 +396,7 @@ function UserMenu({ me, collapsed, signOut }: { me: Me; collapsed: boolean; sign
       trigger={
         <button
           type="button"
-          aria-label={m.nav.userMenu}
+          aria-label={collapsed ? `${m.nav.userMenu}: ${me.name}` : undefined}
           className={cn(
             'flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface-2/60 p-2 text-start transition hover:bg-surface-2',
             collapsed && 'justify-center border-transparent bg-transparent p-0',
@@ -402,6 +406,7 @@ function UserMenu({ me, collapsed, signOut }: { me: Me; collapsed: boolean; sign
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1 leading-tight">
+                <span className="sr-only">{m.nav.userMenu}: </span>
                 <span className="block truncate text-sm font-medium">{me.name}</span>
                 <span className="block truncate text-xs text-muted" dir="ltr">
                   {me.email}
@@ -469,7 +474,7 @@ function LanguageButton() {
       <button
         type="button"
         onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
-        aria-label={m.language}
+        aria-label={`${m.language} ${locale === 'ar' ? 'EN' : 'ع'}`}
         className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition hover:bg-surface-2 hover:text-text"
       >
         <Languages className="size-4" aria-hidden />
@@ -850,13 +855,12 @@ export function Shell() {
                 <button
                   type="button"
                   onClick={() => setPaletteOpen(true)}
-                  aria-label={m.nav.search}
                   className="flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 text-sm text-muted transition hover:border-muted sm:w-56 lg:w-64"
                   aria-keyshortcuts={isMac ? 'Meta+K' : 'Control+K'}
                 >
                   <Search className="size-4" aria-hidden />
-                  <span className="hidden flex-1 text-start sm:inline">{m.nav.search}</span>
-                  <span className="hidden sm:inline">
+                  <span className="sr-only flex-1 text-start sm:not-sr-only">{m.nav.search}</span>
+                  <span aria-hidden className="hidden sm:inline">
                     <Kbd>{isMac ? '⌘K' : 'Ctrl K'}</Kbd>
                   </span>
                 </button>

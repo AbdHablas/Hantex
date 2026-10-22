@@ -59,7 +59,7 @@ environment variables, never stored in the repository).
 
 | Workflow | When | What it does |
 |----------|------|--------------|
-| `ci.yml` | Every pull request and push to `main` | Format, lint, type check, unit, database and API tests, build, Worker size check against the Free plan limit, home-page weight budget (30 KB code, 200 KB fonts), browser tests (dashboard passkeys and phone sizes, public site), dependency audit. Node.js 26, pnpm 12, PostgreSQL 18 (D-023). |
+| `ci.yml` | Every pull request and push to `main` | Format, lint, type check, unit, database and API tests, build, Worker size check against the Free plan limit, home-page weight budget (30 KB code, 200 KB fonts), browser tests (dashboard passkeys and phone sizes, public site) with axe accessibility checks, dependency audit. Node.js 26, pnpm 12, PostgreSQL 18 (D-023). |
 | `deploy.yml` | **By hand only**, in the `production` environment, which must require the owner's approval | `database`: migrations, database users and grants, standard roles, the first site. `dashboard`: builds and deploys `hantex-admin` and sets its secrets. `site`: a site's first deployment, or new secrets for it. |
 | `publish.yml` | Started by the dashboard's Publish button (D-006) | Builds **one site** from its published content with the read-only build user and deploys that site's Worker, then reports the result to the dashboard. |
 

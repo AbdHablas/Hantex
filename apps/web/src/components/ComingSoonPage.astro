@@ -136,8 +136,8 @@ const year = new Date().getUTCFullYear();
           {intro && <p class="intro rise rise-4">{intro}</p>}
           {
             launchAt && (
-              <div class="countdown-wrap rise rise-5">
-                <ol class="countdown" data-countdown={launchAt} aria-label={t.countdown.label} role="timer">
+              <div class="countdown-wrap rise rise-5" role="timer" aria-label={t.countdown.label}>
+                <ol class="countdown" data-countdown={launchAt}>
                   {units.map((unit) => (
                     <li>
                       <strong data-unit={unit}>–</strong>

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 /**
@@ -28,6 +29,19 @@ async function addAuthenticator(context: BrowserContext, page: Page) {
 test.describe.configure({ mode: 'serial' });
 
 /** Answers the dashboard's confirmation dialog; `ifAsked` when it only sometimes appears. */
+/** No serious or critical accessibility problems on the page as it is now (D-043). */
+async function expectAccessible(page: Page, label: string) {
+  await page.waitForTimeout(300);
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+  expect(
+    serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+    label,
+  ).toEqual([]);
+}
+
 async function confirm(page: Page, ifAsked = false) {
   const dialog = page.getByRole('alertdialog');
   if (ifAsked) {
@@ -56,6 +70,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   // Arabic and right-to-left by default.
   await page.goto(process.env['E2E_SETUP_LINK'] ?? '');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expectAccessible(page, 'accept invitation');
   await expect(page.getByRole('heading', { name: 'قبول الدعوة' })).toBeVisible();
   // The setup token is removed from the address bar once read.
   await expect(page).toHaveURL(/\/accept-invitation$/);
@@ -64,12 +79,14 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'إنشاء مفتاح مرور' }).click();
   await expect(page).toHaveURL(/\/s\/hantex-ultra$/);
   await expect(page.getByRole('heading', { name: 'نظرة عامة' })).toBeVisible();
+  await expectAccessible(page, 'overview');
   // No CSP violations from the interface components (menus, tooltips, charts).
   expect(cspErrors).toEqual([]);
 
   // Edit and publish the Coming Soon page.
   await page.getByRole('link', { name: 'صفحة «قريبًا»', exact: true }).click();
   const headline = page.getByRole('group', { name: 'العنوان الرئيسي' });
+  await expectAccessible(page, 'coming soon editor');
   await headline.getByLabel('الإنجليزية').fill('Coming soon to your walls');
   await page.getByRole('button', { name: 'حفظ المسودة' }).click();
   await expect(page.getByRole('status').getByText('تم الحفظ')).toBeVisible();
@@ -103,6 +120,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
 
   // Appearance: unreadable colours are reported before publishing.
   await page.getByRole('link', { name: 'المظهر', exact: true }).click();
+  await expectAccessible(page, 'appearance');
   await expect(page.getByText('كل النصوص مقروءة في الوضعين.')).toBeVisible();
   await page
     .getByRole('group', { name: 'الوضع الفاتح' })
@@ -161,6 +179,12 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'اللغة' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.getByRole('heading', { name: 'My account' })).toBeVisible();
+  await expectAccessible(page, 'account (English)');
+  await page.goto('/roles');
+  await expectAccessible(page, 'roles (English)');
+  await page.goto('/sites');
+  await expectAccessible(page, 'websites (English)');
+  await page.goto('/account');
 
   // Sign out, then back in with the same passkey.
   await page.getByRole('button', { name: 'Account menu' }).click();

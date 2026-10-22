@@ -1,5 +1,6 @@
 import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { brandTheme } from '@hantex/theme';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { createHmac } from 'node:crypto';
 import pg from 'pg';
@@ -223,3 +224,21 @@ test('an unknown address shows a bilingual "not found" page with status 404', as
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
 });
+
+for (const [path, scheme] of [
+  ['/', 'light'],
+  ['/en/', 'dark'],
+  ['/no-such-page', 'light'],
+] as const) {
+  test(`no serious accessibility problems (${path}, ${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.goto(path);
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+    expect(
+      serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+    ).toEqual([]);
+  });
+}

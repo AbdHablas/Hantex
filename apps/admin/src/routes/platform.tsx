@@ -223,7 +223,6 @@ export function Sites() {
           <Link
             key={site.key}
             to={`/s/${site.key}`}
-            aria-label={`${m.sites['open'] ?? ''}: ${bi(site.name)}`}
             className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md"
           >
             <div className="relative h-20 bg-gradient-to-br from-accent/30 via-accent-soft to-surface">

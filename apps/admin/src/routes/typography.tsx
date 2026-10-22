@@ -430,7 +430,12 @@ export function TypographyEditor({
               </h3>
               <p className="text-sm text-muted">{t.livePreviewHelp}</p>
             </div>
-            <div className="max-h-[36rem] overflow-y-auto rounded-xl border border-border bg-bg p-4">
+            <div
+              role="region"
+              aria-label={t.livePreview}
+              tabIndex={0}
+              className="max-h-[36rem] overflow-y-auto rounded-xl border border-border bg-bg p-4"
+            >
               <dl className="flex flex-col gap-4">
                 {TEXT_STYLES.map((id) => (
                   <div key={id} className="flex flex-col gap-1">
