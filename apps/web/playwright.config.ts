@@ -18,7 +18,8 @@ export default defineConfig({
   globalTeardown: './e2e/global-teardown.ts',
   workers: 1,
   retries: 0,
-  reporter: [['list']],
+  // In CI, failures also appear as annotations on the run, readable without downloading logs.
+  reporter: process.env['CI'] ? [['list'], ['github']] : [['list']],
   use: {
     baseURL: `http://localhost:${env['E2E_PORT']}`,
     trace: 'retain-on-failure',

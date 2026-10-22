@@ -40,7 +40,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['list']],
+  // In CI, failures also appear as annotations on the run, readable without downloading logs.
+  reporter: process.env['CI'] ? [['list'], ['github']] : [['list']],
   use: {
     baseURL: env['E2E_ORIGIN'],
     locale: 'ar',
