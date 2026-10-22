@@ -43,19 +43,18 @@ marked **Confirmed** once the project owner has approved it.
 | D-032 | Typography system | Confirmed | Named text styles (display, headings, body, navigation, buttons, labels, product titles, prices and specs) with separate Arabic and Latin fonts, presets, preview, publish and rollback per site |
 | D-033 | Custom fonts | Confirmed | Owner uploads WOFF2 files with a licence confirmation; validated, self-hosted from R2; no third-party font services |
 | D-034 | Component system across dashboard and public sites | Confirmed | Shared design tokens; dashboard on Radix/shadcn-style React components; public sites stay Astro with zero-JS components and small islands only where interaction needs them |
-| D-035 | Website builder model | Pending | Proposed: a structured section registry with validated settings and a page editor with live device preview; no free HTML, CSS or scripts — see `docs/website-builder.md` |
-| D-036 | Builder editing libraries | Pending | Proposed: dnd-kit for drag and drop (keyboard accessible), Tiptap for limited rich text stored as JSON |
-| D-037 | Publishing model for the builder | Pending | Proposed: drafts per item, one *Publish changes* per site with validation, versions, rollback and automatic redirects |
-| D-038 | Shared templates and global sections | Pending | Proposed: platform templates copied into a site when used; global sections shared within one site only |
-| D-039 | Builder scope and order | Pending | Proposed: Phase 3a builder core without media, 3b media library, 3c product catalogue; Coming Soon stays a site mode |
-| D-040 | Launch announcement to sign-ups | Pending | Not yet proposed |
-| D-041 | Privacy policy page | Pending | Not yet proposed |
-| D-042 | Visitor statistics | Pending | Not yet proposed |
-| D-043 | Automated accessibility checks | Pending | Proposed: axe-core in the browser tests |
+| D-035 | Website builder model | Confirmed | A structured section registry with validated settings and a page editor with live device preview; no free HTML, CSS or scripts — see `docs/website-builder.md` |
+| D-036 | Builder editing libraries | Confirmed | dnd-kit for drag and drop (keyboard accessible); Tiptap for limited rich text stored as JSON |
+| D-037 | Publishing model for the builder | Confirmed | Drafts per item; one *Publish changes* per site with validation, versions, rollback and automatic redirects |
+| D-038 | Shared templates and global sections | Confirmed | Templates copied into a site when used; global sections shared within one site only |
+| D-039 | Builder scope and order | Confirmed | 3a builder core without media, 3b media library, 3c product catalogue; Coming Soon stays a site mode |
+| D-040 | Launch announcement to sign-ups | Confirmed | Email from the dashboard through Resend, with unsubscribe links; WhatsApp numbers exported for manual sending |
+| D-041 | Privacy policy page | Confirmed | Draft written from what the platform actually does, marked for the owner's (or a lawyer's) review; published only after approval |
+| D-042 | Visitor statistics | Confirmed | Cloudflare Web Analytics: free, cookieless; figures on each website's overview |
+| D-043 | Automated accessibility checks | Confirmed | axe-core in the browser tests of the dashboard and the sites |
 
-Open: D-035 to D-043 (website builder, launch announcement, privacy policy,
-statistics, accessibility checks), asked one at a time. Builder work waits
-until D-035 to D-039 are confirmed.
+All open decisions are settled. Next: accessibility checks (D-043), then the
+website builder core (Phase 3a).
 
 ---
 
@@ -836,7 +835,7 @@ until D-035 to D-039 are confirmed.
 
 ## D-035 — Website builder model
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner chose option a)
 - **Requirement (owner):** create and manage several independent websites;
   pages, sections and menus managed visually, previewed on phone, tablet and
   desktop, and published without code (`docs/website-builder.md`).
@@ -858,7 +857,7 @@ until D-035 to D-039 are confirmed.
 
 ## D-036 — Builder editing libraries
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner chose dnd-kit and Tiptap)
 - **Options:** dnd-kit (drag and drop, works with keyboard and screen readers,
   MIT) · Tiptap (rich text on ProseMirror, MIT) stored as JSON and rendered by
   our own code · or buttons only (move up/down) and plain text with line
@@ -869,7 +868,7 @@ until D-035 to D-039 are confirmed.
 
 ## D-037 — Publishing model for the builder
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner chose option a)
 - **Options:** (a) drafts per item (page, menu, theme, settings) and one
   *Publish changes* per site that validates everything changed, records
   versions and rebuilds once · (b) each page publishes on its own, one
@@ -880,7 +879,7 @@ until D-035 to D-039 are confirmed.
 
 ## D-038 — Shared templates and global sections
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner chose copied templates)
 - **Options for templates shared across websites:** copied into the site
   when used (later template changes never affect existing sites) · linked
   with per-site overrides (template changes flow into every site using them).
@@ -890,7 +889,7 @@ until D-035 to D-039 are confirmed.
 
 ## D-039 — Builder scope and order
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner approved the order)
 - **Proposed:** Phase 3a builds the essential builder without media (guided
   new website, duplicate website, pages, sections without images, header and
   footer menus, publish changes, device preview). Phase 3b adds the media
@@ -901,19 +900,44 @@ until D-035 to D-039 are confirmed.
 
 ## D-040 — Launch announcement to sign-ups
 
-- **Status:** Pending — to be proposed
+- **Status:** Confirmed — 2026-10-22
+- **Options:** email through Resend plus a WhatsApp list export · email and
+  WhatsApp through Meta's Business API (per-message charges, verified business
+  account) · export only.
+- **Owner's choice:** email through Resend, WhatsApp export.
+- **Consequences:** the dashboard composes a bilingual announcement per site,
+  sends it in batches within Resend's free limits (checked at setup; large
+  lists are spread over days), with an unsubscribe link in every email that
+  removes the address; sending is a permission held by Owner and
+  Administrator, and each send is audited. WhatsApp numbers are exported for
+  manual sending; no paid service is used.
 
 ## D-041 — Privacy policy page
 
-- **Status:** Pending — to be proposed
+- **Status:** Confirmed — 2026-10-22
+- **Options:** a draft written by Claude for review · text from the owner or a
+  lawyer · a link to an existing policy.
+- **Owner's choice:** a draft for review.
+- **Consequences:** the draft states only what the platform actually does
+  (data collected, purpose, retention, deletion, the services involved). It
+  is clearly marked as not legal advice and needs the owner's (or a
+  lawyer's) review. It becomes a normal page in the builder and goes live only
+  after the owner approves it.
 
 ## D-042 — Visitor statistics
 
-- **Status:** Pending — to be proposed
+- **Status:** Confirmed — 2026-10-22
+- **Options:** Cloudflare Web Analytics · none · Google Analytics (cookies,
+  consent banner).
+- **Owner's choice:** Cloudflare Web Analytics.
+- **Consequences:** free and cookieless, so no consent banner; its beacon
+  script is allowed in each site's security policy; page views, top pages,
+  countries and devices per site appear on the website overview once the
+  owner's Cloudflare account is connected.
 
 ## D-043 — Automated accessibility checks
 
-- **Status:** Pending
+- **Status:** Confirmed — 2026-10-22 (owner chose to add axe)
 - **Proposed:** add `@axe-core/playwright` (MPL 2.0, free) to the browser
   tests of the dashboard and the public sites, failing on serious and
   critical problems in Arabic and English, light and dark. The owner stopped

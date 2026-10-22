@@ -120,7 +120,7 @@ Multi-website management is foundational: every module below works on the
 website chosen in the switcher, and nothing is specific to Hantex Ultra
 ([`website-builder.md`](website-builder.md)).
 
-### 3a. Website builder core *(waiting for D-035 to D-039)*
+### 3a. Website builder core *(D-035 to D-039 confirmed)*
 
 - [ ] Section registry (`packages/sections`): typed, validated settings;
       site renderers and dashboard forms; responsive by design
@@ -161,6 +161,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 - [ ] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site
+- [ ] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
+- [ ] Privacy policy page: draft for the owner's review (D-041)
+- [ ] Visitor statistics: Cloudflare Web Analytics, figures on each website's overview (D-042)
 - [ ] 3D Product Studio, stage 1 (D-029):
   - captures and capture checks;
   - provider interface;

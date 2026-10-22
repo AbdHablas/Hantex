@@ -2,8 +2,7 @@
 
 How the dashboard lets the owner create and run several independent websites
 without code: pages, sections, menus, branding, content and publishing.
-Status: **proposed** (D-035 to D-039); nothing that depends on these decisions
-is built until they are confirmed.
+Status: **confirmed** (D-035 to D-039, 2026-10-22).
 
 ## Requirement (owner, 2026-10-21)
 
