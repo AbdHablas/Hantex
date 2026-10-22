@@ -3,7 +3,8 @@
  * content, then writes
  *   - src/data/site.json   the data the pages are built from;
  *   - public/theme.css     the site's theme (design tokens, light and dark);
- *   - public/fonts/…       only the font files the theme uses, with their @font-face rules.
+ *   - public/fonts/…       only the font files the theme uses, with their @font-face rules;
+ *   - public/robots.txt, sitemap.xml and (live sites) _redirects for old page addresses.
  *
  * With HANTEX_BUILD_DATABASE_URL (the read-only `hantex_build` database user) it reads the
  * database. Without it (local development, CI) it uses the defaults, which contain no facts.
@@ -11,6 +12,18 @@
  * Usage: SITE=hantex-ultra [HANTEX_BUILD_DATABASE_URL=…] pnpm --filter @hantex/web data
  */
 import { FIRST_SITE } from '@hantex/db/worker';
+import {
+  DEFAULT_LAYOUT,
+  DEFAULT_MENUS,
+  checkSite,
+  layoutSchema,
+  localizedPath,
+  menusSchema,
+  pagePath,
+  pageSchema,
+  pagesIndexSchema,
+  type Page,
+} from '@hantex/sections';
 import {
   DEFAULT_COMING_SOON,
   DEFAULT_SITE_SETTINGS,
@@ -34,7 +47,8 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import type { SiteData } from '../src/site-data';
+import { withSlash } from '../src/builder';
+import type { BuilderContent, SiteData } from '../src/site-data';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -80,11 +94,18 @@ async function fromDatabase(url: string): Promise<SiteData> {
           [site.id, kind],
         )
       ).rows[0] ?? null;
-    const [comingSoon, settings, theme] = await Promise.all([
-      latest('coming-soon'),
-      latest('site-settings'),
-      latest('theme'),
-    ]);
+    // One query at a time: a pg client runs its queries in sequence anyway.
+    const comingSoon = await latest('coming-soon');
+    const settings = await latest('site-settings');
+    const theme = await latest('theme');
+    // The website builder's published documents (D-035): the latest version of each page, of
+    // the page index, of the menus and of the header and footer.
+    const builderRows = (
+      await client.query<{ kind: string; key: string; data: unknown }>(
+        "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('page', 'pages', 'menus', 'layout') order by kind, key, version desc",
+        [site.id],
+      )
+    ).rows;
     return {
       source: 'database',
       site: {
@@ -108,10 +129,30 @@ async function fromDatabase(url: string): Promise<SiteData> {
       comingSoon: comingSoon ? comingSoonSchema.parse(comingSoon.data) : DEFAULT_COMING_SOON,
       settings: settings ? siteSettingsSchema.parse(settings.data) : DEFAULT_SITE_SETTINGS,
       theme: theme ? themeSchema.parse(theme.data) : brandTheme,
+      builder: site.mode === 'live' ? builderContent(builderRows) : null,
     };
   } finally {
     await client.end();
   }
+}
+
+/** Published pages, re-validated; only pages listed in the index are kept. */
+function builderContent(rows: { kind: string; key: string; data: unknown }[]): BuilderContent {
+  const row = (kind: string, key = '') => rows.find((r) => r.kind === kind && r.key === key);
+  const indexRow = row('pages');
+  if (!indexRow) fail('this site is set to live, but no pages have been published');
+  const index = pagesIndexSchema.parse(indexRow.data);
+  const pages: Record<string, Page> = {};
+  for (const id of index.order) {
+    const page = row('page', id);
+    if (page) pages[id] = pageSchema.parse(page.data);
+  }
+  return {
+    index,
+    pages,
+    menus: menusSchema.parse(row('menus')?.data ?? DEFAULT_MENUS),
+    layout: layoutSchema.parse(row('layout')?.data ?? DEFAULT_LAYOUT),
+  };
 }
 
 /** Turnstile's public site key; Cloudflare's always-passing test key outside production. */
@@ -151,6 +192,7 @@ function defaults(): SiteData {
     comingSoon: DEFAULT_COMING_SOON,
     settings: DEFAULT_SITE_SETTINGS,
     theme: brandTheme,
+    builder: null,
   };
 }
 
@@ -181,9 +223,18 @@ async function fonts(theme: Theme): Promise<string> {
 const url = process.env['HANTEX_BUILD_DATABASE_URL'];
 const data = url ? await fromDatabase(url) : defaults();
 
-if (data.site.mode === 'live') {
-  // Going live needs the product templates (Phase 4) and the owner's approval of the launch.
-  fail('this site is set to live, but only the Coming Soon and maintenance pages exist so far');
+// A live site is built from its published pages, which must pass the same checks as
+// Publish changes (D-037): a visible home page, unique addresses, no broken links.
+const builder = data.site.mode === 'live' ? data.builder : null;
+if (builder) {
+  const issues = checkSite({
+    ...builder,
+    pages: new Map(Object.entries(builder.pages)),
+    locales: data.site.locales,
+  });
+  if (issues.length > 0) {
+    fail(`the published pages fail the site checks: ${issues.map((i) => i.code).join(', ')}`);
+  }
 }
 const themeCheck = validateTheme(data.theme);
 if (!publishable(themeCheck)) fail('the published theme fails the contrast or readability checks');
@@ -204,8 +255,27 @@ if (data.logo) {
 // form endpoint are never crawled. Without a connected domain there are no absolute addresses,
 // so no sitemap is written.
 const origin = data.site.primaryDomain ? `https://${data.site.primaryDomain}` : null;
-const pagePath = (locale: string) => (locale === data.site.defaultLocale ? '/' : `/${locale}/`);
 const indexable = data.site.mode !== 'maintenance';
+const builderPages = new Map(Object.entries(builder?.pages ?? {}));
+/** A builder page's address in one language, ending with a slash (src/builder.ts). */
+const builderPath = (id: string, locale: string) =>
+  withSlash(
+    localizedPath(
+      pagePath(id, builderPages, builder?.index.home ?? null),
+      locale,
+      data.site.defaultLocale,
+    ),
+  );
+/** Each indexable page's address per language: the builder's pages, or the Coming Soon page. */
+const sitemapPages: Record<string, string>[] = builder
+  ? builder.index.order
+      .filter((id) => builder.pages[id]?.visible && !builder.pages[id]?.seo.noindex)
+      .map((id) => Object.fromEntries(data.site.locales.map((l) => [l, builderPath(id, l)])))
+  : [
+      Object.fromEntries(
+        data.site.locales.map((l) => [l, l === data.site.defaultLocale ? '/' : `/${l}/`]),
+      ),
+    ];
 await writeFile(
   join(root, 'public', 'robots.txt'),
   [
@@ -219,16 +289,42 @@ await writeFile(
 const sitemapFile = join(root, 'public', 'sitemap.xml');
 await rm(sitemapFile, { force: true });
 if (origin && indexable) {
-  const alternates = data.site.locales
-    .map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${origin}${pagePath(l)}"/>`)
-    .join('\n');
-  const urls = data.site.locales
-    .map((l) => `  <url>\n    <loc>${origin}${pagePath(l)}</loc>\n${alternates}\n  </url>`)
+  const urls = sitemapPages
+    .flatMap((paths) => {
+      const alternates = data.site.locales
+        .map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${origin}${paths[l]}"/>`)
+        .join('\n');
+      return data.site.locales.map(
+        (l) => `  <url>\n    <loc>${origin}${paths[l]}</loc>\n${alternates}\n  </url>`,
+      );
+    })
     .join('\n');
   await writeFile(
     sitemapFile,
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`,
   );
+}
+
+// Old addresses of pages whose address changed (D-037) lead to the page's current address.
+const redirectsFile = join(root, 'public', '_redirects');
+await rm(redirectsFile, { force: true });
+if (builder) {
+  const current = new Set(
+    builder.index.order
+      .filter((id) => builder.pages[id]?.visible)
+      .flatMap((id) => data.site.locales.map((l) => builderPath(id, l))),
+  );
+  const lines = builder.index.redirects.flatMap(({ from, to }) => {
+    if (!builder.pages[to]?.visible) return [];
+    return data.site.locales.flatMap((l) => {
+      const oldPath = withSlash(localizedPath(from, l, data.site.defaultLocale));
+      const newPath = builderPath(to, l);
+      if (oldPath === newPath || current.has(oldPath)) return [];
+      // Both spellings of the old address, with and without the final slash.
+      return [`${oldPath.slice(0, -1)} ${newPath} 301`, `${oldPath} ${newPath} 301`];
+    });
+  });
+  if (lines.length > 0) await writeFile(redirectsFile, `${[...new Set(lines)].join('\n')}\n`);
 }
 
 await mkdir(join(root, 'src', 'data'), { recursive: true });

@@ -1,0 +1,78 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { TEXT } from '../../i18n';
+import { pick, type RenderContext } from '../../builder';
+import Icon from '../Icon.astro';
+import Heading from './Heading.astro';
+
+/** Contact details from the website's settings, shown as the section's switches allow. */
+interface Props {
+  section: SectionOf<'contact'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const c = ctx.settings.contact;
+const t = TEXT[ctx.locale];
+const address = pick(ctx, c.address);
+const hours = pick(ctx, c.hours);
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.text} id={headingId} />
+<ul class="bx-contact">
+  {
+    s.showEmail && c.email && (
+      <li>
+        <Icon name="mail" />
+        <span class="bx-contact-label">{t.email}</span>
+        <a href={`mailto:${c.email}`} dir="ltr">{c.email}</a>
+      </li>
+    )
+  }
+  {
+    s.showPhone && c.phone && (
+      <li>
+        <Icon name="phone" />
+        <span class="bx-contact-label">{t.phone}</span>
+        <a href={`tel:${c.phone}`} dir="ltr">{c.phone}</a>
+      </li>
+    )
+  }
+  {
+    s.showWhatsapp && c.whatsapp && (
+      <li>
+        <Icon name="whatsapp" />
+        <span class="bx-contact-label">WhatsApp</span>
+        <a href={`https://wa.me/${c.whatsapp.replace('+', '')}`} rel="noopener" dir="ltr">{c.whatsapp}</a>
+      </li>
+    )
+  }
+  {
+    s.showAddress && address && (
+      <li>
+        <Icon name="pin" />
+        <span class="bx-contact-label">{t.address}</span>
+        <span>{address}</span>
+      </li>
+    )
+  }
+  {
+    s.showHours && hours && (
+      <li>
+        <Icon name="clock" />
+        <span class="bx-contact-label">{t.hours}</span>
+        <span>{hours}</span>
+      </li>
+    )
+  }
+  {
+    s.showMap && c.mapUrl && (
+      <li>
+        <Icon name="globe" />
+        <span class="bx-contact-label">{t.map}</span>
+        <a href={c.mapUrl} rel="noopener">{t.map}</a>
+      </li>
+    )
+  }
+</ul>

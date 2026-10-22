@@ -1,0 +1,28 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Heading from './Heading.astro';
+
+/** Figures exactly as entered in the dashboard; nothing is counted or made up here. */
+interface Props {
+  section: SectionOf<'stats'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const items = section.settings.items.filter((i) => i.value.trim() && pick(ctx, i.label));
+---
+
+<Heading ctx={ctx} title={section.settings.title} id={headingId} />
+{
+  items.length > 0 && (
+    <dl class="bx-stats">
+      {items.map((item) => (
+        <div>
+          <dt>{pick(ctx, item.label)}</dt>
+          <dd dir="auto">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}

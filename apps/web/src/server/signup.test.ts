@@ -59,6 +59,13 @@ describe('launch sign-up endpoint', () => {
     ]);
   });
 
+  it('records the news consent wording for sign-ups from a live site', async () => {
+    const { deps, inserted } = setup();
+    await handleSignup(request({ ...valid, purpose: 'news' }), deps);
+    expect(inserted[0]?.consentVersion).toBe('news-consent-v1');
+    expect((await handleSignup(request({ ...valid, purpose: 'spam' }), deps)).status).toBe(400);
+  });
+
   it('accepts WhatsApp numbers in international form', async () => {
     const { deps, inserted } = setup();
     await handleSignup(request({ ...valid, contact: '00963 933 000 111' }), deps);

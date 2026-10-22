@@ -1,0 +1,33 @@
+---
+import type { RichInline } from '@hantex/sections';
+
+interface Props {
+  nodes: RichInline[] | undefined;
+}
+const { nodes = [] } = Astro.props;
+const external = (href: string) => href.startsWith('https:');
+---
+
+{
+  nodes.map((node) => {
+    if (node.type === 'hardBreak') return <br />;
+    const marks = node.marks ?? [];
+    const link = marks.find((m) => m.type === 'link');
+    const bold = marks.some((m) => m.type === 'bold');
+    const italic = marks.some((m) => m.type === 'italic');
+    const styled = bold ? (
+      <strong>{italic ? <em>{node.text}</em> : node.text}</strong>
+    ) : italic ? (
+      <em>{node.text}</em>
+    ) : (
+      node.text
+    );
+    return link ? (
+      <a href={link.attrs.href} rel={external(link.attrs.href) ? 'noopener' : undefined}>
+        {styled}
+      </a>
+    ) : (
+      styled
+    );
+  })
+}

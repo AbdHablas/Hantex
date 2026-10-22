@@ -1,13 +1,16 @@
 ---
 import { themeToCss } from '@hantex/theme';
 import { env } from 'cloudflare:workers';
+import { renderContext } from '../builder';
 import ComingSoonPage from '../components/ComingSoonPage.astro';
-import { verifyPreview } from '../server/preview';
+import LivePage from '../components/LivePage.astro';
+import { frameAncestors, verifyPreview } from '../server/preview';
 import { SITE } from '../site-data';
 
 /**
- * Draft preview, posted by the dashboard as a signed form. Never cached or indexed; the draft
- * theme's stylesheet is inlined with a per-response nonce.
+ * Draft preview, posted by the dashboard as a signed form: the Coming Soon page, or one page of
+ * the website builder (D-035). Never cached or indexed; the draft theme's stylesheet is inlined
+ * with a per-response nonce. Only the dashboard may show it in a frame (its device preview).
  */
 export const prerender = false;
 
@@ -25,15 +28,28 @@ if (Astro.request.method === 'POST') {
   );
 }
 const lang = new URL(Astro.request.url).searchParams.get('lang');
-const locale = SITE.site.locales.find((l) => l === lang) ?? SITE.site.defaultLocale;
 const nonce = crypto.randomUUID().replace(/-/g, '');
+const page = data?.builder && data.page && data.builder.pages[data.page.id] ? data.page : null;
+const locale =
+  SITE.site.locales.find((l) => l === (page?.locale ?? lang)) ?? SITE.site.defaultLocale;
+const ctx =
+  data?.builder && page
+    ? renderContext({
+        locale,
+        locales: SITE.site.locales,
+        defaultLocale: SITE.site.defaultLocale,
+        content: data.builder,
+        settings: data['site-settings'],
+        preview: true,
+      })
+    : null;
 
 Astro.response.headers.set('Cache-Control', 'no-store');
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 if (data) {
   Astro.response.headers.set(
     'Content-Security-Policy',
-    `default-src 'self'; style-src 'self' 'nonce-${nonce}'; script-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
+    `default-src 'self'; style-src 'self' 'nonce-${nonce}'; script-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors ${frameAncestors(env.DASHBOARD_ORIGIN)}; base-uri 'none'; form-action 'none'`,
   );
 } else {
   Astro.response.status = 403;
@@ -41,7 +57,9 @@ if (data) {
 ---
 
 {
-  data ? (
+  data && ctx && page ? (
+    <LivePage ctx={ctx} pageId={page.id} themeCss={{ css: themeToCss(data.theme), nonce }} theme={data.theme} />
+  ) : data ? (
     <ComingSoonPage
       locale={locale}
       content={data['coming-soon']}

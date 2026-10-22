@@ -1,0 +1,16 @@
+---
+import type { Bilingual } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+
+/** A section's title and introduction, when filled in. */
+interface Props {
+  ctx: RenderContext;
+  title: Bilingual;
+  intro?: Bilingual;
+  id: string;
+}
+const { ctx, title, intro, id } = Astro.props;
+---
+
+{pick(ctx, title) && <h2 class="bx-title" id={id}>{pick(ctx, title)}</h2>}
+{intro && pick(ctx, intro) && <p class="bx-intro">{pick(ctx, intro)}</p>}

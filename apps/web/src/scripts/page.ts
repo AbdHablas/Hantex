@@ -152,6 +152,7 @@ if (form) {
         consent: true,
         locale: form.dataset['locale'],
         turnstileToken: token,
+        purpose: form.dataset['purpose'] ?? 'launch',
         website: field('website'),
       }),
     })
@@ -173,5 +174,13 @@ if (form) {
         if (button) button.disabled = false;
         if (buttonLabel) buttonLabel.textContent = button?.dataset['label'] ?? '';
       });
+  });
+}
+
+/* Draft previews show one page: links to other addresses stay inside the dashboard's preview. */
+if (document.body.hasAttribute('data-preview')) {
+  document.addEventListener('click', (event) => {
+    const link = (event.target as Element | null)?.closest('a[href]');
+    if (link && !link.getAttribute('href')?.startsWith('#')) event.preventDefault();
   });
 }

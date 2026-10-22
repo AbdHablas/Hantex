@@ -1,0 +1,173 @@
+import AxeBuilder from '@axe-core/playwright';
+import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
+import { newSection, starterContent } from '@hantex/sections';
+import { brandTheme } from '@hantex/theme';
+import { expect, test } from '@playwright/test';
+import { createHmac } from 'node:crypto';
+
+/**
+ * A second website, live and made entirely of website-builder pages (D-035), built from content
+ * published in the test database and served by its own site Worker (e2e/serve.ts).
+ */
+const LIVE = `http://localhost:${process.env['E2E_LIVE_PORT'] ?? '8790'}`;
+const SOON = `http://localhost:${process.env['E2E_PORT'] ?? '8789'}`;
+
+test('the home page is built from its sections, in Arabic by default', async ({ page }) => {
+  await page.goto(`${LIVE}/`);
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('عنوان الصفحة الرئيسية');
+  await expect(page).toHaveTitle('موقع تجريبي');
+  await expect(page.getByRole('region', { name: 'المزايا' })).toContainText('ميزة أولى');
+  await page.getByRole('link', { name: 'تواصل', exact: true }).click();
+  await expect(page).toHaveURL(`${LIVE}/contact/`);
+  await expect(page.getByText('live@example.test').first()).toBeVisible();
+});
+
+test('every page has an English version linked from the Arabic one', async ({ page }) => {
+  await page.goto(`${LIVE}/who-we-are/`);
+  await expect(page.getByText('نص تجريبي عن الموقع.')).toBeVisible();
+  await page.getByRole('link', { name: 'English' }).click();
+  await expect(page).toHaveURL(`${LIVE}/en/who-we-are/`);
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+  await expect(page.getByRole('heading', { level: 2, name: 'About us' })).toBeVisible();
+  await expect(page.getByText('Test text about the website.')).toBeVisible();
+  // The menu marks the page being shown.
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Main navigation' })
+      .getByRole('link', { name: 'About us' }),
+  ).toHaveAttribute('aria-current', 'page');
+});
+
+test('a page’s old address leads to its new one', async ({ request }) => {
+  for (const [from, to] of [
+    ['/about', '/who-we-are/'],
+    ['/about/', '/who-we-are/'],
+    ['/en/about', '/en/who-we-are/'],
+  ]) {
+    const response = await request.get(`${LIVE}${from}`, { maxRedirects: 0 });
+    expect(response.status(), from).toBe(301);
+    expect(new URL(response.headers()['location'] ?? '', LIVE).pathname, from).toBe(to);
+  }
+});
+
+test('the websites are separate: the Coming Soon site has none of these pages', async ({
+  request,
+}) => {
+  expect((await request.get(`${SOON}/who-we-are/`)).status()).toBe(404);
+  expect(await (await request.get(`${LIVE}/`)).text()).not.toContain('شيء جديد قادم');
+});
+
+test('phones get a menu button and only the sections meant for them', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.goto(`${LIVE}/en/`);
+  await expect(page.getByRole('heading', { name: 'Desktop only' })).toBeHidden();
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  await expect(nav.getByRole('link', { name: 'Contact' })).toBeHidden();
+  await page.getByLabel('Menu').click();
+  await nav.getByRole('link', { name: 'Contact' }).click();
+  await expect(page).toHaveURL(`${LIVE}/en/contact/`);
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${LIVE}/en/`);
+  await expect(page.getByRole('heading', { name: 'Desktop only' })).toBeVisible();
+  await expect(page.getByLabel('Menu')).toBeHidden();
+  await expect(nav.getByRole('link', { name: 'Contact' })).toBeVisible();
+});
+
+for (const width of [360, 768, 1024, 1440]) {
+  test(`fits a ${width}px screen without sideways scrolling or CSP errors`, async ({ page }) => {
+    const cspErrors: string[] = [];
+    page.on('console', (message) => {
+      if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+    });
+    await page.setViewportSize({ width, height: 800 });
+    for (const path of ['/', '/en/', '/who-we-are/', '/en/contact/']) {
+      await page.goto(`${LIVE}${path}`);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `${path} at ${width}px`).toBe(0);
+    }
+    expect(cspErrors).toEqual([]);
+  });
+}
+
+test('the sign-up section asks for consent to news, not to a launch', async ({ page }) => {
+  await page.goto(`${LIVE}/en/`);
+  await expect(page.getByRole('region', { name: 'Stay in touch' })).toContainText(
+    'may send me news and updates',
+  );
+});
+
+test('the sitemap lists every page in every language', async ({ request }) => {
+  const sitemap = await (await request.get(`${LIVE}/sitemap.xml`)).text();
+  for (const path of [
+    '/',
+    '/en/',
+    '/who-we-are/',
+    '/en/who-we-are/',
+    '/contact/',
+    '/en/contact/',
+  ]) {
+    expect(sitemap).toContain(`<loc>https://live.example.test${path}</loc>`);
+  }
+});
+
+for (const [path, scheme] of [
+  ['/', 'light'],
+  ['/en/', 'dark'],
+  ['/en/contact/', 'light'],
+] as const) {
+  test(`no serious accessibility problems (${path}, ${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.goto(`${LIVE}${path}`);
+    const { violations } = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    const serious = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+    expect(
+      serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
+    ).toEqual([]);
+  });
+}
+
+/** base64url, as the dashboard encodes preview payloads. */
+const base64Url = (text: string) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(text)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+test('a draft page preview renders, and only the dashboard may frame it', async ({ request }) => {
+  const builder = starterContent('blank', { ar: 'موقع', en: 'Site' });
+  const home = builder.index.home!;
+  const cta = newSection('cta');
+  cta.settings.heading = { ar: 'مسودة', en: 'Draft section' };
+  builder.pages[home]!.sections.push(cta);
+  const data = {
+    'coming-soon': DEFAULT_COMING_SOON,
+    'site-settings': DEFAULT_SITE_SETTINGS,
+    theme: brandTheme,
+    builder,
+    page: { id: home, locale: 'en' },
+  };
+  const payload = base64Url(JSON.stringify({ site: 'e2e-live', data }));
+  const expires = String(Math.floor(Date.now() / 1000) + 600);
+  const signature = createHmac('sha256', process.env['E2E_PREVIEW_SECRET'] ?? '')
+    .update(`${payload}.${expires}`)
+    .digest('hex');
+
+  const response = await request.post(`${LIVE}/preview`, { form: { payload, expires, signature } });
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-security-policy']).toContain(
+    'frame-ancestors https://admin.example.test',
+  );
+  const html = await response.text();
+  expect(html).toContain('Draft section');
+  expect(html).toContain('noindex');
+  // Signed for this site only: the other site refuses it.
+  expect(
+    (await request.post(`${SOON}/preview`, { form: { payload, expires, signature } })).status(),
+  ).toBe(403);
+});

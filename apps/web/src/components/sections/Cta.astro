@@ -1,0 +1,23 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Button from './Button.astro';
+
+interface Props {
+  section: SectionOf<'cta'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+---
+
+<div class="bx-cta">
+  <div>
+    {pick(ctx, s.heading) && <h2 class="bx-title" id={headingId}>{pick(ctx, s.heading)}</h2>}
+    {pick(ctx, s.text) && <p class="bx-intro">{pick(ctx, s.text)}</p>}
+  </div>
+  <div class="bx-actions">
+    <Button button={s.button} ctx={ctx} />
+  </div>
+</div>

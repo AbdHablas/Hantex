@@ -1,7 +1,9 @@
 /**
  * Web server for the browser tests (Playwright starts it before anything else): creates a
- * throwaway database, publishes test content, builds the site from it exactly as the publish
- * workflow will (read-only build user), then serves the built Worker with `wrangler dev`.
+ * throwaway database, publishes test content, builds two sites from it exactly as the publish
+ * workflow will (read-only build user), then serves each built Worker with `wrangler dev`:
+ *   - Hantex Ultra in Coming Soon mode on E2E_PORT;
+ *   - a second, live website made with the website builder on E2E_LIVE_PORT (D-035).
  */
 import {
   APP_DB_ROLES,
@@ -11,11 +13,15 @@ import {
   documentVersions,
   ensureSite,
   runMigrations,
+  sites,
   syncStandardRoles,
 } from '@hantex/db';
+import { newSection, richDocFromText, starterContent } from '@hantex/sections';
 import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
+import { eq } from 'drizzle-orm';
 import { execFileSync, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { cp, rm } from 'node:fs/promises';
 import pg from 'pg';
 
 const env = process.env;
@@ -89,46 +95,136 @@ await db.insert(documentVersions).values([
     },
   },
 ]);
+
+// The second website: live, made of builder pages (test text only, no facts).
+const liveId = await ensureSite(db, {
+  key: 'e2e-live',
+  name: { ar: 'موقع تجريبي', en: 'Test website' },
+  locales: ['ar', 'en'],
+  defaultLocale: 'ar',
+  template: 'product-showcase',
+  domains: [{ hostname: 'live.example.test', isPrimary: true }],
+});
+await db.update(sites).set({ mode: 'live' }).where(eq(sites.id, liveId));
+const content = starterContent('business', { ar: 'موقع تجريبي', en: 'Test website' });
+const [homeId, aboutId, contactId] = content.index.order as [string, string, string];
+const home = content.pages[homeId]!;
+const hero = home.sections[0]!;
+if (hero.type === 'hero') {
+  hero.settings.heading = { ar: 'عنوان الصفحة الرئيسية', en: 'Home page heading' };
+  hero.settings.primary = {
+    label: { ar: 'تواصل', en: 'Get in touch' },
+    link: { type: 'page', pageId: contactId },
+  };
+}
+const features = newSection('features');
+features.settings.title = { ar: 'المزايا', en: 'Features' };
+features.settings.items[0]!.title = { ar: 'ميزة أولى', en: 'First feature' };
+const desktopOnly = newSection('cta');
+desktopOnly.settings.heading = { ar: 'للشاشات الكبيرة فقط', en: 'Desktop only' };
+desktopOnly.visibility = { mobile: false, tablet: false, desktop: true };
+const faq = newSection('faq');
+faq.settings.title = { ar: 'أسئلة', en: 'Questions' };
+faq.settings.items[0]!.question = { ar: 'سؤال؟', en: 'A question?' };
+faq.settings.items[0]!.answer = { ar: 'جواب.', en: 'An answer.' };
+const signup = newSection('newsletter');
+signup.settings.title = { ar: 'اشترك', en: 'Stay in touch' };
+home.sections.push(features, desktopOnly, faq, signup);
+const about = content.pages[aboutId]!;
+const text = about.sections[0]!;
+if (text.type === 'richText') {
+  text.settings.title = { ar: 'من نحن', en: 'About us' };
+  text.settings.body = {
+    ar: richDocFromText('نص تجريبي عن الموقع.'),
+    en: richDocFromText('Test text about the website.'),
+  };
+}
+// /about was this page's earlier address (Publish changes keeps it as a redirect).
+about.slug = 'who-we-are';
+content.index.redirects = [{ from: '/about', to: aboutId }];
+await db.insert(documentVersions).values([
+  { siteId: liveId, kind: 'pages', version: 1, data: content.index },
+  { siteId: liveId, kind: 'menus', version: 1, data: content.menus },
+  { siteId: liveId, kind: 'layout', version: 1, data: content.layout },
+  ...Object.entries(content.pages).map(([id, page]) => ({
+    siteId: liveId,
+    kind: 'page' as const,
+    key: id,
+    version: 1,
+    data: page,
+  })),
+  {
+    siteId: liveId,
+    kind: 'site-settings',
+    version: 1,
+    data: {
+      ...DEFAULT_SITE_SETTINGS,
+      contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'live@example.test' },
+    },
+  },
+]);
 await close();
 
-execFileSync('pnpm', ['build'], {
-  stdio: 'inherit',
-  env: {
-    ...env,
-    SITE: FIRST_SITE.key,
-    HANTEX_BUILD_DATABASE_URL: url('hantex_build', passwords.hantex_build),
-    // Cloudflare's published Turnstile test key that always fails (see the spec).
-    TURNSTILE_SITE_KEY: '2x00000000000000000000AB',
-  },
-});
-
-const port = env['E2E_PORT'] ?? '8789';
-const server = spawn(
-  'pnpm',
-  [
-    'exec',
-    'wrangler',
-    'dev',
-    '--port',
-    port,
-    '--ip',
-    '127.0.0.1',
-    '--var',
-    'TURNSTILE_SECRET_KEY:2x0000000000000000000000000000000AA',
-    '--var',
-    `PREVIEW_SIGNING_SECRET:${env['E2E_PREVIEW_SECRET'] ?? ''}`,
-  ],
-  {
+/** Builds one site and keeps its output, since every build writes to dist/. */
+async function build(site: string, out: string) {
+  execFileSync('pnpm', ['build'], {
     stdio: 'inherit',
     env: {
       ...env,
-      WRANGLER_SEND_METRICS: 'false',
-      CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: url(
-        'hantex_public_app',
-        passwords.hantex_public_app,
-      ),
+      SITE: site,
+      HANTEX_BUILD_DATABASE_URL: url('hantex_build', passwords.hantex_build),
+      // Cloudflare's published Turnstile test key that always fails (see the spec).
+      TURNSTILE_SITE_KEY: '2x00000000000000000000AB',
     },
-  },
-);
-for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => server.kill(signal));
-server.on('exit', (code) => process.exit(code ?? 0));
+  });
+  await rm(out, { recursive: true, force: true });
+  await cp('dist', out, { recursive: true });
+}
+await build('e2e-live', '.e2e/live');
+await build(FIRST_SITE.key, '.e2e/soon');
+
+function serve(dir: string, port: string, inspector: string) {
+  return spawn(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'dev',
+      '--config',
+      `${dir}/server/wrangler.json`,
+      '--port',
+      port,
+      '--ip',
+      '127.0.0.1',
+      '--inspector-port',
+      inspector,
+      '--persist-to',
+      `${dir}/state`,
+      '--var',
+      'TURNSTILE_SECRET_KEY:2x0000000000000000000000000000000AA',
+      '--var',
+      `PREVIEW_SIGNING_SECRET:${env['E2E_PREVIEW_SECRET'] ?? ''}`,
+      '--var',
+      'DASHBOARD_ORIGIN:https://admin.example.test',
+    ],
+    {
+      stdio: 'inherit',
+      env: {
+        ...env,
+        WRANGLER_SEND_METRICS: 'false',
+        CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: url(
+          'hantex_public_app',
+          passwords.hantex_public_app,
+        ),
+      },
+    },
+  );
+}
+const servers = [
+  serve('.e2e/soon', env['E2E_PORT'] ?? '8789', '9330'),
+  serve('.e2e/live', env['E2E_LIVE_PORT'] ?? '8790', '9331'),
+];
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(signal, () => servers.forEach((s) => s.kill(signal)));
+}
+for (const server of servers) server.on('exit', (code) => process.exit(code ?? 0));

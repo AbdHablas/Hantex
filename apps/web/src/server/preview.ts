@@ -1,4 +1,5 @@
-import { comingSoonSchema, siteSettingsSchema } from '@hantex/shared';
+import { layoutSchema, menusSchema, pageSchema, pagesIndexSchema, itemId } from '@hantex/sections';
+import { LOCALES, comingSoonSchema, siteSettingsSchema } from '@hantex/shared';
 import { themeSchema } from '@hantex/theme';
 import { z } from 'zod';
 import { hmacHex, timingSafeEqual } from './crypto';
@@ -14,6 +15,16 @@ const payloadSchema = z.object({
     'coming-soon': comingSoonSchema,
     'site-settings': siteSettingsSchema,
     theme: themeSchema,
+    /** Pages, menus and layout (D-035), when a page is previewed. */
+    builder: z
+      .object({
+        index: pagesIndexSchema,
+        pages: z.record(itemId, pageSchema),
+        menus: menusSchema,
+        layout: layoutSchema,
+      })
+      .optional(),
+    page: z.object({ id: itemId, locale: z.enum(LOCALES) }).optional(),
   }),
 });
 
@@ -45,4 +56,20 @@ export async function verifyPreview(
   } catch {
     return null;
   }
+}
+
+/**
+ * Who may show a preview in a frame: only the dashboard's own origin (its device preview), from
+ * the Worker's DASHBOARD_ORIGIN variable. Anything that isn't a plain https origin is ignored.
+ */
+export function frameAncestors(dashboardOrigin: string | undefined): string {
+  if (!dashboardOrigin) return "'none'";
+  try {
+    const url = new URL(dashboardOrigin);
+    const local = url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
+    if ((url.protocol === 'https:' || local) && url.origin === dashboardOrigin) return url.origin;
+  } catch {
+    // fall through
+  }
+  return "'none'";
 }

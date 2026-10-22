@@ -2,7 +2,9 @@
 
 How the dashboard lets the owner create and run several independent websites
 without code: pages, sections, menus, branding, content and publishing.
-Status: **confirmed** (D-035 to D-039, 2026-10-22).
+Status: **confirmed** (D-035 to D-039, 2026-10-22). Progress: section registry,
+builder API and site engine done; dashboard builder screens next (see the
+[implementation plan](implementation-plan.md), Phase 3a).
 
 ## Requirement (owner, 2026-10-21)
 

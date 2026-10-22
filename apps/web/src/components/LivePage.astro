@@ -1,0 +1,305 @@
+---
+import type { MenuItem } from '@hantex/sections';
+import type { Theme } from '@hantex/theme';
+import { hrefOf, pageHref, pick, type RenderContext } from '../builder';
+import { TEXT, dirOf } from '../i18n';
+import { SITE } from '../site-data';
+import Icon, { type IconName } from './Icon.astro';
+import Section from './sections/Section.astro';
+import '../styles/site.css';
+import '../styles/sections.css';
+
+/**
+ * A page made with the website builder (D-035): the site's header and menus, the page's
+ * sections in order, and the footer. Used for published pages and for draft previews.
+ */
+interface Props {
+  ctx: RenderContext;
+  pageId: string;
+  /** A draft theme's stylesheet, inlined with a nonce (previews only). */
+  themeCss?: { css: string; nonce: string };
+  theme?: Theme;
+}
+
+const { ctx, pageId, themeCss, theme = SITE.theme } = Astro.props;
+const { locale, preview, settings } = ctx;
+const page = ctx.pages.get(pageId)!;
+const layout = ctx.content.layout;
+const t = TEXT[locale];
+const site = SITE.site;
+const siteName = site.name[locale] || site.name.ar || site.name.en;
+const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+const isHome = pageId === ctx.content.index.home;
+
+const pageTitle = pick(ctx, page.title);
+const title = pick(ctx, page.seo.title) || (isHome ? pick(ctx, settings.seo.title) || siteName : `${pageTitle} — ${siteName}`);
+const description = pick(ctx, page.seo.description) || (isHome ? pick(ctx, settings.seo.description) : '');
+const noindex = preview || page.seo.noindex;
+const here = pageHref(ctx, pageId);
+
+/** Menu items with somewhere to go (or with children that do), in this language. */
+const menu = (items: MenuItem[]) =>
+  items
+    .filter((item) => item.visible && pick(ctx, item.label))
+    .map((item) => ({
+      id: item.id,
+      label: pick(ctx, item.label),
+      target: hrefOf(ctx, item.link),
+      current: item.link.type === 'page' && item.link.pageId === pageId,
+      children: item.children
+        .filter((c) => c.visible && pick(ctx, c.label))
+        .map((c) => ({ id: c.id, label: pick(ctx, c.label), target: hrefOf(ctx, c.link), current: c.link.type === 'page' && c.link.pageId === pageId }))
+        .filter((c) => c.target),
+    }))
+    .filter((item) => item.target || item.children.length > 0);
+const header = menu(ctx.content.menus.header);
+const footer = menu(ctx.content.menus.footer);
+const footerLinks = footer.filter((item) => item.children.length === 0);
+const footerGroups = footer.filter((item) => item.children.length > 0);
+const headerButton = pick(ctx, layout.header.button.label) ? hrefOf(ctx, layout.header.button.link) : null;
+
+const firstHero = page.sections.find((s) => s.type === 'hero' && pick(ctx, s.settings.heading));
+const sections = page.sections;
+
+const social = Object.entries(settings.social).filter(([, url]) => url) as [IconName, string][];
+const socialName = (network: string) => (network === 'x' ? 'X' : network.charAt(0).toUpperCase() + network.slice(1));
+const contact = settings.contact;
+const year = new Date().getUTCFullYear();
+const copyright = pick(ctx, layout.footer.copyright) || `© ${year} ${siteName}. ${t.rights}`;
+const footerText = pick(ctx, layout.footer.text);
+const showContact = layout.footer.showContact && Boolean(contact.email || contact.phone || contact.whatsapp || pick(ctx, contact.address));
+const otherLocales = ctx.locales.filter((l) => l !== locale);
+---
+
+<!doctype html>
+<html lang={locale} dir={dirOf(locale)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {!noindex && origin && <link rel="canonical" href={`${origin}${here}`} />}
+    {!noindex && origin && ctx.locales.map((l) => <link rel="alternate" hreflang={l} href={`${origin}${pageHref(ctx, pageId, l)}`} />)}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:site_name" content={siteName} />
+    {origin && <meta property="og:url" content={`${origin}${here}`} />}
+    {origin && SITE.logo && <meta property="og:image" content={`${origin}${SITE.logo.share}`} />}
+    <meta name="twitter:card" content={origin && SITE.logo ? 'summary_large_image' : 'summary'} />
+    {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    {SITE.logo && <link rel="apple-touch-icon" href={SITE.logo.touchIcon} />}
+    <link rel="stylesheet" href="/theme.css" />
+    {themeCss && <style is:inline nonce={themeCss.nonce} set:html={themeCss.css} />}
+    <script src="../scripts/theme.ts"></script>
+  </head>
+  <body data-preview={preview ? '' : undefined}>
+    <a class="skip-link" href="#main">{t.skip}</a>
+    {preview && <div class="preview-banner" role="status">{t.preview}</div>}
+    <header class:list={['site-header', 'bx-header', { 'is-static': !layout.header.sticky }]} id="top">
+      <div class="container header-inner">
+        <a class="logo" href={pageHref(ctx, ctx.content.index.home ?? pageId)} aria-label={siteName}>
+          {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <span>{siteName}</span>}
+        </a>
+        {
+          header.length > 0 && (
+            <nav class="nav-desktop" aria-label={t.mainNav}>
+              <ul class="nav-list">
+                {header.map((item) => (
+                  <li class:list={{ 'has-children': item.children.length > 0 }}>
+                    {item.target ? (
+                      <a href={item.target.href} aria-current={item.current ? 'page' : undefined} rel={item.target.external ? 'noopener' : undefined}>
+                        {item.label}
+                      </a>
+                    ) : (
+                      <span class="nav-heading" tabindex="0">{item.label}</span>
+                    )}
+                    {item.children.length > 0 && (
+                      <ul class="nav-sub">
+                        {item.children.map((child) => (
+                          <li>
+                            <a href={child.target!.href} aria-current={child.current ? 'page' : undefined} rel={child.target!.external ? 'noopener' : undefined}>
+                              {child.label}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        }
+        <div class="tools">
+          {
+            layout.header.showLanguage &&
+              otherLocales.map((l) => (
+                <a class="tool tool-text" href={pageHref(ctx, pageId, l)} hreflang={l} lang={l}>
+                  <Icon name="globe" />
+                  <span>{TEXT[l].languageName}</span>
+                </a>
+              ))
+          }
+          {
+            layout.header.showThemeToggle && theme.mode.allowToggle && (
+              <button class="tool" type="button" data-theme-toggle aria-label={t.themeToggle} title={t.themeToggle}>
+                <Icon name="moon" class="icon-moon" />
+                <Icon name="sun" class="icon-sun" />
+              </button>
+            )
+          }
+          {
+            headerButton && (
+              <a class="btn btn-primary btn-small header-button" href={headerButton.href} rel={headerButton.external ? 'noopener' : undefined}>
+                {pick(ctx, layout.header.button.label)}
+              </a>
+            )
+          }
+          {
+            header.length > 0 && (
+              <details class="nav-mobile">
+                <summary class="tool" aria-label={t.menu}>
+                  <span class="burger" aria-hidden="true"><span></span></span>
+                </summary>
+                <nav aria-label={t.mainNav}>
+                  <ul>
+                    {header.map((item) => (
+                      <li>
+                        {item.target ? (
+                          <a href={item.target.href} aria-current={item.current ? 'page' : undefined} rel={item.target.external ? 'noopener' : undefined}>
+                            {item.label}
+                          </a>
+                        ) : (
+                          <span class="nav-heading">{item.label}</span>
+                        )}
+                        {item.children.length > 0 && (
+                          <ul>
+                            {item.children.map((child) => (
+                              <li>
+                                <a href={child.target!.href} aria-current={child.current ? 'page' : undefined} rel={child.target!.external ? 'noopener' : undefined}>
+                                  {child.label}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              </details>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      {!firstHero && <h1 class="sr-only">{pageTitle || siteName}</h1>}
+      {sections.map((section) => <Section section={section} ctx={ctx} main={section === firstHero} />)}
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          {SITE.logo ? <img src={SITE.logo.lockup} alt="" width="180" height="46" /> : <p class="footer-name">{siteName}</p>}
+          {footerText && <p>{footerText}</p>}
+        </div>
+        {
+          footerLinks.length > 0 && (
+            <nav aria-label={t.footerNav}>
+              <ul class="footer-list">
+                {footerLinks.map((item) => (
+                  <li>
+                    <a href={item.target!.href} rel={item.target!.external ? 'noopener' : undefined}>
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        }
+        {
+          footerGroups.map((group) => (
+            <nav aria-label={group.label}>
+              <h2 class="footer-title">{group.label}</h2>
+              <ul class="footer-list">
+                {group.children.map((child) => (
+                  <li>
+                    <a href={child.target!.href} rel={child.target!.external ? 'noopener' : undefined}>
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))
+        }
+        {
+          showContact && (
+            <div>
+              <h2 class="footer-title">{t.contact}</h2>
+              <ul class="footer-list">
+                {contact.email && (
+                  <li>
+                    <Icon name="mail" />
+                    <a href={`mailto:${contact.email}`} dir="ltr">{contact.email}</a>
+                  </li>
+                )}
+                {contact.phone && (
+                  <li>
+                    <Icon name="phone" />
+                    <a href={`tel:${contact.phone}`} dir="ltr">{contact.phone}</a>
+                  </li>
+                )}
+                {contact.whatsapp && (
+                  <li>
+                    <Icon name="whatsapp" />
+                    <a href={`https://wa.me/${contact.whatsapp.replace('+', '')}`} rel="noopener" dir="ltr">WhatsApp</a>
+                  </li>
+                )}
+                {pick(ctx, contact.address) && (
+                  <li>
+                    <Icon name="pin" />
+                    <span>{pick(ctx, contact.address)}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )
+        }
+        {
+          layout.footer.showSocial && social.length > 0 && (
+            <div>
+              <h2 class="footer-title">{t.followUs}</h2>
+              <ul class="social">
+                {social.map(([network, url]) => (
+                  <li>
+                    <a href={url} rel="noopener" target="_blank" aria-label={socialName(network)} title={socialName(network)}>
+                      <Icon name={network} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+      <div class="container footer-bottom">
+        <p>{copyright}</p>
+        <div class="footer-links">
+          {settings.privacy.url && <a href={settings.privacy.url} rel="noopener">{t.privacyLink}</a>}
+          <a class="to-top" href="#top">
+            <Icon name="arrow-up" />
+            <span>{t.backToTop}</span>
+          </a>
+        </div>
+      </div>
+    </footer>
+    <script src="../scripts/page.ts"></script>
+  </body>
+</html>

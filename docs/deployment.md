@@ -118,6 +118,11 @@ environment variables, never stored in the repository).
 with the owner), `BACKUP_BUCKET` (default `backups`), `HEALTH_SITE_URLS`
 (space-separated), `HEALTH_DASHBOARD_URL`.
 
+**In `apps/web/wrangler.jsonc`** (not secret): `DASHBOARD_ORIGIN`, the
+dashboard's address. It is the only page allowed to show a site's draft
+previews in a frame (the page editor's device preview); keep it equal to
+`APP_ORIGIN`.
+
 **Later phases:** R2 and processing-runner credentials for the 3D Studio; one API key
 per 3D provider only after the owner approves it (D-005, D-030).
 

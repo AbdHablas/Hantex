@@ -2,7 +2,8 @@ import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { brandTheme } from '@hantex/theme';
 import { describe, expect, it } from 'vitest';
 import { hmacHex } from './crypto';
-import { verifyPreview } from './preview';
+import { starterContent } from '@hantex/sections';
+import { frameAncestors, verifyPreview } from './preview';
 
 /** base64url, as the dashboard encodes preview payloads. */
 const base64Url = (text: string) =>
@@ -60,5 +61,34 @@ describe('draft preview signatures', () => {
       later(),
     );
     expect(await verifyPreview(SECRET, bad, 'hantex-ultra')).toBeNull();
+  });
+
+  it('carries a page with its sections, and refuses sections outside the registry', async () => {
+    const starter = starterContent('business', { ar: 'موقع', en: 'Site' });
+    const builder = { ...starter };
+    const home = starter.index.home!;
+    const ok = await sign(
+      { site: 'hantex-ultra', data: { ...data, builder, page: { id: home, locale: 'en' } } },
+      later(),
+    );
+    expect((await verifyPreview(SECRET, ok, 'hantex-ultra'))?.page).toEqual({
+      id: home,
+      locale: 'en',
+    });
+    const bad = structuredClone(builder);
+    (bad.pages[home] as { sections: unknown[] }).sections.push({ type: 'html', html: '<script>' });
+    const refused = await sign({ site: 'hantex-ultra', data: { ...data, builder: bad } }, later());
+    expect(await verifyPreview(SECRET, refused, 'hantex-ultra')).toBeNull();
+  });
+});
+
+describe('preview framing', () => {
+  it('lets only the dashboard origin frame a preview', () => {
+    expect(frameAncestors(undefined)).toBe("'none'");
+    expect(frameAncestors('https://admin.example.com')).toBe('https://admin.example.com');
+    expect(frameAncestors('http://localhost:5173')).toBe('http://localhost:5173');
+    expect(frameAncestors('http://admin.example.com')).toBe("'none'");
+    expect(frameAncestors('https://a.example; script-src *')).toBe("'none'");
+    expect(frameAncestors('https://admin.example.com/path')).toBe("'none'");
   });
 });

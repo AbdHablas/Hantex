@@ -1,0 +1,24 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Button from './Button.astro';
+
+interface Props {
+  section: SectionOf<'hero'>;
+  ctx: RenderContext;
+  /** The page's first hero carries its main heading. */
+  main: boolean;
+}
+const { section, ctx, main } = Astro.props;
+const s = section.settings;
+const Heading = main ? 'h1' : 'h2';
+---
+
+<div class="bx-hero-bg" aria-hidden="true"><span class="hero-lines"></span></div>
+{pick(ctx, s.eyebrow) && <p class="bx-eyebrow">{pick(ctx, s.eyebrow)}</p>}
+{pick(ctx, s.heading) && <Heading class="bx-display">{pick(ctx, s.heading)}</Heading>}
+{pick(ctx, s.text) && <p class="bx-lead">{pick(ctx, s.text)}</p>}
+<div class="bx-actions">
+  <Button button={s.primary} ctx={ctx} />
+  <Button button={s.secondary} ctx={ctx} kind="secondary" />
+</div>

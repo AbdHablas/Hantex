@@ -32,6 +32,8 @@ apps/web/public/fonts/
 apps/web/public/brand/
 apps/web/public/robots.txt
 apps/web/public/sitemap.xml
+apps/web/public/_redirects
 
 # Local agent worktrees
 .claude/worktrees/
+apps/web/.e2e/

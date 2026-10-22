@@ -126,6 +126,7 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 
 - [ ] Section registry (`packages/sections`): typed, validated settings;
       site renderers and dashboard forms; responsive by design
+      — *done: registry, validation, site renderers; to do: dashboard forms*
 - [ ] Pages: create, rename, duplicate, reorder, hide/show, publish/unpublish,
       delete; slug, SEO and sharing fields; home page; parent page
 - [ ] Section editor: add, remove, reorder, duplicate, hide per device;
@@ -134,10 +135,13 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       statistics, contact, newsletter sign-up, category list, divider
 - [ ] Global sections per site: header, footer, saved sections
 - [ ] Menus: header and footer; links to pages and addresses; dropdowns
+      — *done: API, site header and footer with phone menu; to do: editor*
 - [ ] Publish changes: validation, versions, rollback, redirects for changed
-      slugs; one rebuild per site
+      slugs; one rebuild per site — *done: API and `_redirects`; to do: dashboard bar*
 - [ ] Guided *New website*; duplicate a website; templates copied on use
-- [ ] Site engine renders pages, menus and sections; Coming Soon stays a mode
+      — *done: API (starter or duplicate); to do: wizard*
+- [x] Site engine renders pages, menus and sections; Coming Soon stays a mode
+      (live sites, signed page previews framed only by the dashboard, sitemap)
 - [ ] Tests: isolation, permissions, validation, publishing, builder
       workflow in the browser, responsive at 360/768/1024/1440 px
 - [ ] **Acceptance:** a second website created, customised and published

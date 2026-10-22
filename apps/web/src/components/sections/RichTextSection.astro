@@ -1,0 +1,18 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { richText } from '@hantex/sections';
+import type { RenderContext } from '../../builder';
+import RichText from '../RichText.astro';
+import Heading from './Heading.astro';
+
+interface Props {
+  section: SectionOf<'richText'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const body = section.settings.body[ctx.locale];
+---
+
+<Heading ctx={ctx} title={section.settings.title} id={headingId} />
+{richText(body) && <RichText doc={body} />}

@@ -21,6 +21,8 @@ export const TEXT = {
     signupPlaceholder: 'name@example.com أو ‎+963…',
     consent:
       'أوافق على أن تتواصل معي {site} بخصوص الإطلاق عبر هذه البيانات. يمكنني طلب حذفها في أي وقت.',
+    consentNews:
+      'أوافق على أن تتواصل معي {site} بالأخبار والتحديثات عبر هذه البيانات. يمكنني طلب حذفها في أي وقت.',
     submit: 'أعلمني',
     sending: 'جارٍ الإرسال…',
     thanks: 'شكرًا لك! سنُعلمك عند الإطلاق.',
@@ -58,6 +60,15 @@ export const TEXT = {
     backToTop: 'العودة إلى الأعلى',
     rights: 'جميع الحقوق محفوظة.',
     skip: 'تخطَّ إلى المحتوى',
+    menu: 'القائمة',
+    mainNav: 'التنقل الرئيسي',
+    footerNav: 'روابط',
+    subscribe: 'اشترك',
+    email: 'البريد الإلكتروني',
+    phone: 'الهاتف',
+    address: 'العنوان',
+    hours: 'ساعات العمل',
+    map: 'عرض على الخريطة',
   },
   en: {
     languageName: 'English',
@@ -78,6 +89,8 @@ export const TEXT = {
     signupPlaceholder: 'name@example.com or +963…',
     consent:
       'I agree that {site} may contact me about its launch using these details. I can ask for them to be deleted at any time.',
+    consentNews:
+      'I agree that {site} may send me news and updates using these details. I can ask for them to be deleted at any time.',
     submit: 'Notify me',
     sending: 'Sending…',
     thanks: 'Thank you! We’ll let you know when we launch.',
@@ -115,6 +128,15 @@ export const TEXT = {
     backToTop: 'Back to top',
     rights: 'All rights reserved.',
     skip: 'Skip to content',
+    menu: 'Menu',
+    mainNav: 'Main navigation',
+    footerNav: 'Links',
+    subscribe: 'Subscribe',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    hours: 'Opening hours',
+    map: 'View on the map',
   },
 } satisfies Record<Locale, unknown>;
 

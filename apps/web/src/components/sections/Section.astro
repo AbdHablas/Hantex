@@ -1,0 +1,62 @@
+---
+import type { Section } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Cards from './Cards.astro';
+import Contact from './Contact.astro';
+import Cta from './Cta.astro';
+import Faq from './Faq.astro';
+import Features from './Features.astro';
+import Hero from './Hero.astro';
+import Newsletter from './Newsletter.astro';
+import RichTextSection from './RichTextSection.astro';
+import Stats from './Stats.astro';
+
+/**
+ * One section of a page (D-035): its registered component inside a frame that applies the
+ * section's style (theme colours, spacing, width, alignment) and the screen sizes it shows on.
+ */
+interface Props {
+  section: Section;
+  ctx: RenderContext;
+  main?: boolean;
+}
+const { section, ctx, main = false } = Astro.props;
+const { style, visibility } = section;
+const headingId = `s-${section.id}`;
+// Sections with a title are labelled by it (so they appear as page regions).
+const settings = section.settings as { title?: { ar: string; en: string }; heading?: { ar: string; en: string } };
+const title = section.type === 'cta' ? settings.heading : section.type === 'hero' ? undefined : settings.title;
+const labelled = title ? pick(ctx, title) !== '' : false;
+const hidden = !visibility.mobile && !visibility.tablet && !visibility.desktop;
+const classes = [
+  'bx',
+  `sx-${section.type}`,
+  `bg-${style.background}`,
+  `sp-${style.spacing}`,
+  `al-${style.align}`,
+  { 'hide-mobile': !visibility.mobile, 'hide-tablet': !visibility.tablet, 'hide-desktop': !visibility.desktop },
+];
+---
+
+{
+  !hidden &&
+    (section.type === 'divider' ? (
+      <div class:list={classes} id={section.anchor || undefined}>
+        <div class:list={['container', `w-${style.width}`]}>{section.settings.style === 'line' && <hr />}</div>
+      </div>
+    ) : (
+      <section class:list={classes} id={section.anchor || undefined} aria-labelledby={labelled ? headingId : undefined}>
+        <div class:list={['container', `w-${style.width}`]}>
+          {section.type === 'hero' && <Hero section={section} ctx={ctx} main={main} />}
+          {section.type === 'richText' && <RichTextSection section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'features' && <Features section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'cards' && <Cards section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'cta' && <Cta section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'faq' && <Faq section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'stats' && <Stats section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'contact' && <Contact section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'newsletter' && <Newsletter section={section} ctx={ctx} headingId={headingId} />}
+        </div>
+      </section>
+    ))
+}

@@ -4,6 +4,7 @@ import type { Theme } from '@hantex/theme';
 import { TEXT, dirOf } from '../i18n';
 import { SITE, pathFor } from '../site-data';
 import Icon, { type IconName } from './Icon.astro';
+import SignupForm from './SignupForm.astro';
 import '../styles/site.css';
 
 /**
@@ -274,61 +275,7 @@ const year = new Date().getUTCFullYear();
                 <h2 id="signup-title">{t.signupTitle}</h2>
                 <p>{t.signupIntro}</p>
               </div>
-              <form class="signup" data-signup data-method="email" data-turnstile-key={SITE.turnstileSiteKey} data-locale={locale} novalidate>
-                <div class="signup-fields">
-                  <fieldset class="segmented">
-                    <legend class="sr-only">{t.method}</legend>
-                    <label>
-                      <input type="radio" name="method" value="email" checked data-label={t.emailLabel} data-placeholder={t.emailPlaceholder} />
-                      <Icon name="mail" />
-                      <span>{t.methodEmail}</span>
-                    </label>
-                    <label>
-                      <input type="radio" name="method" value="whatsapp" data-label={t.whatsappLabel} data-placeholder={t.whatsappPlaceholder} />
-                      <Icon name="whatsapp" />
-                      <span>{t.methodWhatsapp}</span>
-                    </label>
-                  </fieldset>
-                  <label for="contact" class="field-label" data-contact-label>{t.emailLabel}</label>
-                  <div class="input-wrap">
-                    <Icon name="mail" class="input-icon icon-email" />
-                    <Icon name="whatsapp" class="input-icon icon-whatsapp" />
-                    <input id="contact" name="contact" type="text" dir="ltr" inputmode="email" autocomplete="email" required maxlength="254" placeholder={t.emailPlaceholder} aria-describedby="signup-message" />
-                  </div>
-                  <div class="honeypot" aria-hidden="true">
-                    <label for="website">Website</label>
-                    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
-                  </div>
-                  <label class="consent">
-                    <input name="consent" type="checkbox" required />
-                    <span>{t.consent.replace('{site}', siteName)}</span>
-                  </label>
-                  {
-                    (pick(settings.privacy.note) || settings.privacy.url) && (
-                      <p class="privacy">
-                        {pick(settings.privacy.note)}{' '}
-                        {settings.privacy.url && (
-                          <a href={settings.privacy.url} rel="noopener" target="_blank">
-                            {t.privacyLink}
-                          </a>
-                        )}
-                      </p>
-                    )
-                  }
-                  <div data-turnstile></div>
-                  <button type="submit" data-label={t.submit} data-sending={t.sending} disabled={preview}>
-                    <span class="spinner" aria-hidden="true"></span>
-                    <span data-button-label>{t.submit}</span>
-                  </button>
-                </div>
-                <div class="signup-done" aria-hidden="true">
-                  <span class="done-check">
-                    <Icon name="check" />
-                  </span>
-                  <p class="done-title">{t.thanksTitle}</p>
-                </div>
-                <p id="signup-message" class="message" role="status" aria-live="polite" data-messages={JSON.stringify({ thanks: t.thanks, ...t.errors })}></p>
-              </form>
+              <SignupForm locale={locale} purpose="launch" preview={preview} settings={settings} />
             </div>
           </section>
         )

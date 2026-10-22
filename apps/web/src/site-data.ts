@@ -5,8 +5,17 @@ import type {
   SiteSettings,
   SiteTemplate,
 } from '@hantex/shared';
+import type { Layout, Menus, Page, PagesIndex } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
 import data from './data/site.json';
+
+/** A website's pages, menus and header and footer (D-035), as published or as a draft preview. */
+export interface BuilderContent {
+  index: PagesIndex;
+  pages: Record<string, Page>;
+  menus: Menus;
+  layout: Layout;
+}
 
 /** One site's build data, written by scripts/site-data.ts from its published content. */
 export interface SiteData {
@@ -35,6 +44,8 @@ export interface SiteData {
     touchIcon: string;
   } | null;
   versions: { comingSoon: number | null; settings: number | null; theme: number | null };
+  /** The published pages; only for sites in live mode. */
+  builder: BuilderContent | null;
   comingSoon: ComingSoonContent;
   settings: SiteSettings;
   theme: Theme;

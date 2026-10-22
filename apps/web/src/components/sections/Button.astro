@@ -1,0 +1,22 @@
+---
+import type { Button } from '@hantex/sections';
+import { hrefOf, pick, type RenderContext } from '../../builder';
+
+/** A section's button; nothing is drawn without a label or somewhere to go. */
+interface Props {
+  button: Button;
+  ctx: RenderContext;
+  kind?: 'primary' | 'secondary';
+}
+const { button, ctx, kind = 'primary' } = Astro.props;
+const label = pick(ctx, button.label);
+const target = hrefOf(ctx, button.link);
+---
+
+{
+  label && target && (
+    <a class:list={['btn', `btn-${kind}`]} href={target.href} rel={target.external ? 'noopener' : undefined}>
+      {label}
+    </a>
+  )
+}

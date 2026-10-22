@@ -1,0 +1,38 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Icon from '../Icon.astro';
+import Heading from './Heading.astro';
+
+interface Props {
+  section: SectionOf<'faq'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const items = section.settings.items.filter((i) => pick(ctx, i.question) && pick(ctx, i.answer));
+---
+
+<Heading ctx={ctx} title={section.settings.title} id={headingId} />
+{
+  items.length > 0 && (
+    <div class="faq">
+      {items.map((item) => (
+        <details name={`faq-${section.id}`}>
+          <summary>
+            <span>{pick(ctx, item.question)}</span>
+            <Icon name="chevron" class="faq-chevron" />
+          </summary>
+          <div class="faq-answer">
+            {pick(ctx, item.answer)
+              .split('\n')
+              .filter((line) => line.trim())
+              .map((line) => (
+                <p>{line}</p>
+              ))}
+          </div>
+        </details>
+      ))}
+    </div>
+  )
+}

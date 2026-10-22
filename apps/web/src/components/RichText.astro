@@ -1,0 +1,59 @@
+---
+import type { RichDoc } from '@hantex/sections';
+import Inline from './RichInline.astro';
+
+/**
+ * Rich text (D-036) drawn from its stored data with fixed elements only: nothing in it is ever
+ * treated as HTML.
+ */
+interface Props {
+  doc: RichDoc;
+}
+const { doc } = Astro.props;
+---
+
+<div class="rich">
+  {
+    doc.content.map((block) =>
+      block.type === 'paragraph' ? (
+        <p>
+          <Inline nodes={block.content} />
+        </p>
+      ) : block.type === 'heading' ? (
+        block.attrs.level === 2 ? (
+          <h2>
+            <Inline nodes={block.content} />
+          </h2>
+        ) : (
+          <h3>
+            <Inline nodes={block.content} />
+          </h3>
+        )
+      ) : block.type === 'bulletList' ? (
+        <ul>
+          {block.content.map((item) => (
+            <li>
+              {item.content.map((p) => (
+                <p>
+                  <Inline nodes={p.content} />
+                </p>
+              ))}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ol>
+          {block.content.map((item) => (
+            <li>
+              {item.content.map((p) => (
+                <p>
+                  <Inline nodes={p.content} />
+                </p>
+              ))}
+            </li>
+          ))}
+        </ol>
+      ),
+    )
+  }
+</div>

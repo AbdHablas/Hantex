@@ -10,6 +10,10 @@
   "workers_dev": false,
   "preview_urls": false,
   "observability": { "enabled": true },
+  "vars": {
+    // The dashboard (apps/api APP_ORIGIN): the only page that may show draft previews in a frame.
+    "DASHBOARD_ORIGIN": "https://admin.hantexultra.com",
+  },
   "hyperdrive": [
     {
       // The insert-only public database user (hantex_public_app), caching disabled.

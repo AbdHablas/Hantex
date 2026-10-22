@@ -1,4 +1,4 @@
-import { CONSENT_TEXT_VERSION, normalizeContact, signupRequestSchema } from '@hantex/shared';
+import { CONSENT_VERSIONS, normalizeContact, signupRequestSchema } from '@hantex/shared';
 import { sha256Hex } from './crypto';
 
 /** What the sign-up endpoint needs from the outside world, so it can be tested without it. */
@@ -25,7 +25,7 @@ const json = (status: number, body: Record<string, unknown>) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });
 
-/** POST /api/signup — launch-notification sign-up (D-018). */
+/** POST /api/signup — launch-notification (D-018) or news sign-up. */
 export async function handleSignup(request: Request, deps: SignupDeps): Promise<Response> {
   if (request.method !== 'POST') return json(405, { error: 'method-not-allowed' });
   // Only the site's own pages may post here.
@@ -70,7 +70,7 @@ export async function handleSignup(request: Request, deps: SignupDeps): Promise<
     type: contact.type,
     value: contact.value,
     locale: body.locale,
-    consentVersion: CONSENT_TEXT_VERSION,
+    consentVersion: CONSENT_VERSIONS[body.purpose],
   });
   // The same answer for new and existing sign-ups, so nobody can test who has signed up.
   return json(200, { ok: true });

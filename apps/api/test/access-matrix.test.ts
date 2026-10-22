@@ -92,6 +92,17 @@ const SITE_ENDPOINTS: Endpoint[] = [
     needs: ['dashboard.view'],
     body: () => ({ drafts: { 'coming-soon': false, 'site-settings': false, theme: false } }),
   },
+  // Website builder (D-035 to D-037).
+  { method: 'GET', path: '/pages', needs: ['pages.view'] },
+  { method: 'GET', path: '/menus', needs: ['pages.view'] },
+  { method: 'GET', path: '/layout', needs: ['pages.view'] },
+  { method: 'GET', path: '/changes', needs: ['pages.view'] },
+  {
+    method: 'PUT',
+    path: '/menus',
+    needs: ['pages.edit'],
+    body: () => ({ header: [], footer: [] }),
+  },
   { method: 'GET', path: '/subscribers', needs: ['subscribers.view'] },
   { method: 'GET', path: '/subscribers/export', needs: ['subscribers.export'] },
   {

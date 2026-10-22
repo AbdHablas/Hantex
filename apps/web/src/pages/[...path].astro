@@ -1,0 +1,57 @@
+---
+import type { Locale } from '@hantex/shared';
+import { livePaths, renderContext } from '../builder';
+import ComingSoonPage from '../components/ComingSoonPage.astro';
+import LivePage from '../components/LivePage.astro';
+import MaintenancePage from '../components/MaintenancePage.astro';
+import { SITE } from '../site-data';
+
+/**
+ * Every address of the site. A live site has one page per builder page and language (D-035):
+ * the default language without a prefix ("/about"), the others with one ("/en/about"). Before
+ * launch there is one Coming Soon (or maintenance) page per language.
+ */
+export function getStaticPaths() {
+  const param = (path: string) => path.replace(/^\/|\/$/g, '') || undefined;
+  if (SITE.site.mode === 'live' && SITE.builder) {
+    const base = {
+      locales: SITE.site.locales,
+      defaultLocale: SITE.site.defaultLocale,
+      content: SITE.builder,
+      settings: SITE.settings,
+      preview: false,
+    };
+    return livePaths(renderContext({ ...base, locale: SITE.site.defaultLocale })).map((p) => ({
+      params: { path: param(p.path) },
+      props: { locale: p.locale, pageId: p.id },
+    }));
+  }
+  return SITE.site.locales.map((locale) => ({
+    params: { path: locale === SITE.site.defaultLocale ? undefined : locale },
+    props: { locale, pageId: null },
+  }));
+}
+
+const { locale, pageId } = Astro.props as { locale: Locale; pageId: string | null };
+const ctx =
+  pageId && SITE.builder
+    ? renderContext({
+        locale,
+        locales: SITE.site.locales,
+        defaultLocale: SITE.site.defaultLocale,
+        content: SITE.builder,
+        settings: SITE.settings,
+        preview: false,
+      })
+    : null;
+---
+
+{
+  ctx && pageId ? (
+    <LivePage ctx={ctx} pageId={pageId} />
+  ) : SITE.site.mode === 'maintenance' ? (
+    <MaintenancePage locale={locale} />
+  ) : (
+    <ComingSoonPage locale={locale} content={SITE.comingSoon} settings={SITE.settings} />
+  )
+}

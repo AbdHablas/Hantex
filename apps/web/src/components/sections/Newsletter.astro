@@ -1,0 +1,20 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import type { RenderContext } from '../../builder';
+import SignupForm from '../SignupForm.astro';
+import Heading from './Heading.astro';
+
+interface Props {
+  section: SectionOf<'newsletter'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+---
+
+<div class="bx-newsletter">
+  <div>
+    <Heading ctx={ctx} title={section.settings.title} intro={section.settings.text} id={headingId} />
+  </div>
+  <SignupForm locale={ctx.locale} purpose="news" settings={ctx.settings} preview={ctx.preview} />
+</div>

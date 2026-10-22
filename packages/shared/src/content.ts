@@ -143,7 +143,8 @@ export const siteSettingsSchema = z.strictObject({
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  seo: { title: { ar: 'Hantex Ultra', en: 'Hantex Ultra' }, description: { ar: '', en: '' } },
+  // Empty: the pages fall back to the website's own name, so a new website never shows another's.
+  seo: { title: { ar: '', en: '' }, description: { ar: '', en: '' } },
   contact: {
     phone: '',
     whatsapp: '',

@@ -1,0 +1,32 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import Icon from '../Icon.astro';
+import Heading from './Heading.astro';
+
+interface Props {
+  section: SectionOf<'features'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const items = s.items.filter((i) => pick(ctx, i.title) || pick(ctx, i.text));
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.intro} id={headingId} />
+{
+  items.length > 0 && (
+    <ul class:list={['bx-grid', `cols-${s.columns}`]}>
+      {items.map((item) => (
+        <li class="bx-feature">
+          <span class="bx-icon">
+            <Icon name={item.icon} />
+          </span>
+          {pick(ctx, item.title) && <h3>{pick(ctx, item.title)}</h3>}
+          {pick(ctx, item.text) && <p>{pick(ctx, item.text)}</p>}
+        </li>
+      ))}
+    </ul>
+  )
+}

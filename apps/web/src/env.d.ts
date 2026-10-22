@@ -7,5 +7,7 @@ declare namespace Cloudflare {
     HYPERDRIVE: Hyperdrive;
     TURNSTILE_SECRET_KEY: string;
     PREVIEW_SIGNING_SECRET: string;
+    /** The dashboard's origin, the only page allowed to frame draft previews. Not a secret. */
+    DASHBOARD_ORIGIN?: string;
   }
 }
