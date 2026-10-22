@@ -25,6 +25,7 @@ production data is never used in development or tests.
 | R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |
 | R2 bucket `studio` (private) | 3D Studio originals, CAD files, intermediate files and unapproved models ([`3d-product-studio.md`](3d-product-studio.md)) |
 | R2 bucket `backups` (private) | Encrypted nightly database exports (D-010) |
+| R2 bucket `hantex-media` (private) | The media library (D-044): each site's images under `private/<site>/`; published copies under `public/<site>/`, served by that site's Worker |
 | Turnstile | Spam protection on sign-up and sign-in |
 | Cloudflare Access (Zero Trust free) | Second lock in front of the dashboard and previews |
 | Workers Logs, Cron Triggers | Monitoring, health checks, scheduled publishing. The Free plan allows 5 Cron Triggers per account, so one shared schedule serves all sites. |
@@ -117,6 +118,9 @@ environment variables, never stored in the repository).
 `BACKUP_AGE_RECIPIENT` (the age *public* key; the private key stays offline
 with the owner), `BACKUP_BUCKET` (default `backups`), `HEALTH_SITE_URLS`
 (space-separated), `HEALTH_DASHBOARD_URL`.
+
+**Optional dashboard variable** (`apps/api`, not secret): `MEDIA_SITE_QUOTA_MB`, the most
+media each website may store (default 1024; R2's free plan has 10 GB in total).
 
 **Optional dashboard variable** (`apps/api`, not secret): `ANNOUNCEMENT_DAILY_LIMIT`, the
 most announcement emails sent per 24 hours across all websites (default 100). Set it to

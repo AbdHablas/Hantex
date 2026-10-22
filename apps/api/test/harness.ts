@@ -7,6 +7,7 @@ import { createApp } from '../src/app';
 import { createAuth } from '../src/auth/auth';
 import type { Env } from '../src/env';
 import { memorySender } from '../src/lib/email';
+import { memoryStore } from '../src/lib/media-store';
 import type { Publisher } from '../src/lib/publisher';
 
 declare module 'vitest' {
@@ -39,6 +40,7 @@ export interface Harness {
   db: Database;
   app: ReturnType<typeof createApp>;
   mail: ReturnType<typeof memorySender>;
+  media: ReturnType<typeof memoryStore>;
   dispatched: { jobId: string; siteKey: string }[];
   turnstile: { pass: boolean };
   sites: { a: string; b: string };
@@ -72,6 +74,7 @@ export async function createHarness(): Promise<Harness> {
   };
 
   const mail = memorySender();
+  const media = memoryStore();
   const dispatched: { jobId: string; siteKey: string }[] = [];
   const turnstile = { pass: true };
   const publisher: Publisher = {
@@ -84,6 +87,7 @@ export async function createHarness(): Promise<Harness> {
   const app = createApp({
     connectDb: () => Promise.resolve({ db: appDb.db, close: () => Promise.resolve() }),
     email: () => mail,
+    media: () => media,
     turnstile: () => ({ verify: () => Promise.resolve(turnstile.pass) }),
     publisher: () => publisher,
     rateLimits: false,
@@ -119,6 +123,7 @@ export async function createHarness(): Promise<Harness> {
     db: owner.db,
     app,
     mail,
+    media,
     dispatched,
     turnstile,
     sites,
@@ -142,8 +147,11 @@ export async function createHarness(): Promise<Harness> {
       const headers = new Headers();
       if (options.cookie) headers.set('cookie', options.cookie);
       if (options.origin !== null) headers.set('origin', options.origin ?? APP_ORIGIN);
-      let body: string | undefined;
-      if (options.body !== undefined) {
+      let body: string | FormData | undefined;
+      if (options.body instanceof FormData) {
+        // Uploads: the runtime sets the multipart content type and boundary.
+        body = options.body;
+      } else if (options.body !== undefined) {
         headers.set('content-type', 'application/json');
         body = JSON.stringify(options.body);
       }

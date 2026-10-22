@@ -12,6 +12,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   enrolment_tickets, email_challenges, dashboard_rate_limits,
   site_domains, document_drafts, publish_jobs, theme_presets
 TO hantex_admin_app;
+-- Media library (D-044): the files themselves are in R2.
+GRANT SELECT, INSERT, UPDATE, DELETE ON media_assets TO hantex_admin_app;
 -- Announcements (D-040): written and sent from the dashboard; deliveries are a send log.
 GRANT SELECT, INSERT, UPDATE ON announcements TO hantex_admin_app;
 GRANT SELECT, INSERT ON announcement_deliveries TO hantex_admin_app;

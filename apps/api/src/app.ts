@@ -19,6 +19,7 @@ import { siteConfigRoutes, sitesRoutes } from './routes/sites';
 import { siteStaffRoutes, staffRoutes } from './routes/staff';
 import { subscriberRoutes } from './routes/subscribers';
 import { announcementRoutes } from './routes/announcements';
+import { mediaRoutes } from './routes/media';
 
 /**
  * One site's API (`/api/sites/:siteKey/...`, D-024): every request is checked against the
@@ -34,6 +35,7 @@ function siteApi() {
     .route('/preview', previewRoutes)
     .route('/subscribers', subscriberRoutes)
     .route('/announcements', announcementRoutes)
+    .route('/media', mediaRoutes)
     .route('/publish', publishJobRoutes)
     .route('/staff', siteStaffRoutes)
     .route('/audit', siteAuditRoutes);

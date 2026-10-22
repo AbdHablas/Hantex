@@ -50,6 +50,13 @@
       "when": 1792671943409,
       "tag": "0006_unsubscribe_function",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792675775488,
+      "tag": "0007_media_assets",
+      "breakpoints": true
     }
   ]
 }

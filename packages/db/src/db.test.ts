@@ -81,6 +81,7 @@ describe('migrations', () => {
       'enrolment_tickets',
       'form_rate_limits',
       'invitations',
+      'media_assets',
       'passkeys',
       'publish_jobs',
       'recovery_codes',

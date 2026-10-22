@@ -5,6 +5,7 @@ import type { Auth } from './auth/auth';
 import type { Env } from './env';
 import type { Access } from './lib/access';
 import type { EmailSender } from './lib/email';
+import type { MediaStore } from './lib/media-store';
 import type { Publisher } from './lib/publisher';
 import type { TurnstileVerifier } from './lib/turnstile';
 
@@ -12,6 +13,7 @@ import type { TurnstileVerifier } from './lib/turnstile';
 export interface AppDeps {
   connectDb(env: Env): Promise<{ db: Database; close: () => Promise<void> }>;
   email(env: Env): EmailSender;
+  media(env: Env): MediaStore;
   turnstile(env: Env): TurnstileVerifier;
   publisher(env: Env): Publisher;
   authPlugins?: BetterAuthPlugin[];

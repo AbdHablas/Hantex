@@ -17,6 +17,10 @@ export interface Env {
    * provider's plan; set it to your Resend plan's daily limit. Default 100.
    */
   ANNOUNCEMENT_DAILY_LIMIT?: string;
+  /** The media library's R2 bucket (D-044). */
+  MEDIA?: R2Bucket;
+  /** Most media each site may store, in megabytes (default 1024; R2's free plan has 10 GB). */
+  MEDIA_SITE_QUOTA_MB?: string;
   EMAIL_FROM: string;
   RESEND_API_KEY?: string;
   TURNSTILE_SITE_KEY: string;

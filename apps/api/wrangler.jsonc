@@ -32,6 +32,9 @@
       "localConnectionString": "postgres://hantex_admin_app@127.0.0.1:54329/postgres",
     },
   ],
+  // The media library (D-044): one private bucket; each site's files under its own prefix.
+  // `wrangler dev` simulates it locally.
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "hantex-media" }],
   "vars": {
     "ENVIRONMENT": "production",
     "APP_ORIGIN": "https://admin.hantexultra.com",

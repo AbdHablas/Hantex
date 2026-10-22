@@ -492,6 +492,36 @@ export const subscribers = pgTable(
 );
 
 /**
+ * The media library (D-044): images a site's staff uploaded, already resized and stripped of
+ * camera data by the dashboard. Files live in R2 under the site's private space; a file becomes
+ * public only when published content uses it (published_at).
+ */
+export const mediaAssets = pgTable(
+  'media_assets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    kind: text('kind').notNull().default('image'),
+    /** The uploaded file's name, for finding it again; never shown on the website. */
+    name: text('name').notNull(),
+    /** Text alternative in each language, read out to people who can't see the image. */
+    alt: jsonb('alt').notNull().default({ ar: '', en: '' }),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    /** The stored widths, smallest first: [{ width, height, bytes }]. */
+    variants: jsonb('variants').notNull(),
+    bytes: integer('bytes').notNull(),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('media_assets_site_idx').on(t.siteId, t.createdAt),
+    check('media_assets_kind_check', sql`${t.kind} in ('image')`),
+  ],
+);
+
+/**
  * Announcements to a site's email sign-ups (D-040): written in the dashboard, sent in small
  * chunks within the daily sending limit, so a large list is spread over days. Each delivery is
  * recorded once per subscriber, which lets sending stop and resume without sending twice.
