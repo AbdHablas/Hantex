@@ -58,7 +58,8 @@ async function confirm(page: Page, ifAsked = false) {
 test('the first Owner sets up a passkey, publishes the Coming Soon page and signs in again', async ({
   browser,
 }) => {
-  test.setTimeout(120_000);
+  // A long journey through the whole dashboard; shared CI machines run it two to three times slower.
+  test.setTimeout(300_000);
   const context = await browser.newContext();
   const page = await context.newPage();
   await addAuthenticator(context, page);
