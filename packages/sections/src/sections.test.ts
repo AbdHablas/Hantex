@@ -1,0 +1,211 @@
+import { describe, expect, it } from 'vitest';
+import {
+  SECTIONS,
+  SECTION_TYPES,
+  checkSite,
+  localizedPath,
+  menusSchema,
+  newPage,
+  newSection,
+  pagePath,
+  pageSchema,
+  pagesIndexSchema,
+  richDocSchema,
+  sectionSchema,
+  starterContent,
+  SITE_STARTERS,
+  type Page,
+  type SiteDraft,
+} from './index';
+
+const siteName = { ar: 'هانتكس ألترا', en: 'Hantex Ultra' };
+
+describe('section registry', () => {
+  it('gives every section type valid defaults', () => {
+    for (const type of SECTION_TYPES) {
+      const section = newSection(type);
+      expect(sectionSchema.safeParse(section).success, type).toBe(true);
+      expect(SECTIONS[type].schema.safeParse(SECTIONS[type].defaults()).success, type).toBe(true);
+    }
+  });
+
+  it('refuses unknown section types and settings outside the schema', () => {
+    const unknown = { ...newSection('hero'), type: 'script' };
+    expect(sectionSchema.safeParse(unknown).success).toBe(false);
+    const extra = newSection('hero') as unknown as { settings: Record<string, unknown> };
+    extra.settings['html'] = '<script>alert(1)</script>';
+    expect(sectionSchema.safeParse(extra).success).toBe(false);
+    const style = newSection('cta') as unknown as { style: Record<string, unknown> };
+    style.style['background'] = 'url(javascript:alert(1))';
+    expect(sectionSchema.safeParse(style).success).toBe(false);
+  });
+
+  it('only allows safe links in buttons', () => {
+    const section = newSection('cta');
+    section.settings.button.link = { type: 'url', url: 'javascript:alert(1)' };
+    expect(sectionSchema.safeParse(section).success).toBe(false);
+    section.settings.button.link = { type: 'url', url: 'https://example.com/x' };
+    expect(sectionSchema.safeParse(section).success).toBe(true);
+  });
+});
+
+describe('rich text', () => {
+  it('accepts paragraphs, headings, lists and safe links', () => {
+    const doc = {
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Title' }] },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Bold', marks: [{ type: 'bold' }] },
+            { type: 'hardBreak' },
+            {
+              type: 'text',
+              text: 'link',
+              marks: [{ type: 'link', attrs: { href: 'https://example.com' } }],
+            },
+          ],
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: 'a' }] }],
+            },
+          ],
+        },
+      ],
+    };
+    expect(richDocSchema.safeParse(doc).success).toBe(true);
+  });
+
+  it('refuses HTML, scripts in links and unknown nodes or marks', () => {
+    const bad = (content: unknown[]) => richDocSchema.safeParse({ type: 'doc', content }).success;
+    expect(bad([{ type: 'html', content: '<b>x</b>' }])).toBe(false);
+    expect(
+      bad([
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'x',
+              marks: [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }],
+            },
+          ],
+        },
+      ]),
+    ).toBe(false);
+    expect(
+      bad([
+        { type: 'paragraph', content: [{ type: 'text', text: 'x', marks: [{ type: 'code' }] }] },
+      ]),
+    ).toBe(false);
+    expect(bad([{ type: 'heading', attrs: { level: 1 }, content: [] }])).toBe(false);
+  });
+});
+
+const draft = (
+  pages: [string, Page][],
+  home: string | null = pages[0]?.[0] ?? null,
+): SiteDraft => ({
+  index: { order: pages.map(([id]) => id), home, redirects: [] },
+  pages: new Map(pages),
+  menus: { header: [], footer: [] },
+  layout: starterContent('blank', siteName).layout,
+  locales: ['ar', 'en'],
+});
+
+describe('site checks', () => {
+  const page = (slug: string, extra: Partial<Page> = {}): Page => ({
+    ...newPage({ ar: slug, en: slug }, slug),
+    ...extra,
+  });
+
+  it('accepts every starter template', () => {
+    for (const starter of SITE_STARTERS) {
+      const content = starterContent(starter, siteName);
+      expect(pagesIndexSchema.safeParse(content.index).success, starter).toBe(true);
+      expect(menusSchema.safeParse(content.menus).success, starter).toBe(true);
+      for (const p of Object.values(content.pages)) {
+        expect(pageSchema.safeParse(p).success, starter).toBe(true);
+      }
+      const issues = checkSite({
+        ...content,
+        pages: new Map(Object.entries(content.pages)),
+        locales: ['ar', 'en'],
+      });
+      expect(issues, starter).toEqual([]);
+    }
+  });
+
+  it('needs a visible home page', () => {
+    expect(checkSite(draft([['home00', page('home')]], null)).map((i) => i.code)).toContain(
+      'no-home',
+    );
+    expect(
+      checkSite(draft([['home00', page('home', { visible: false })]])).map((i) => i.code),
+    ).toContain('home-hidden');
+  });
+
+  it('refuses duplicate and reserved addresses, and pages nested too deep', () => {
+    const issues = checkSite(
+      draft([
+        ['home00', page('home')],
+        ['about1', page('about')],
+        ['about2', page('about')],
+        ['api000', page('api')],
+        ['parent', page('parent')],
+        ['child0', page('child', { parentId: 'parent' })],
+        ['grand0', page('grand', { parentId: 'child0' })],
+      ]),
+    ).map((i) => `${i.code}:${i.target}`);
+    expect(issues).toContain('duplicate-address:about2');
+    expect(issues).toContain('reserved-address:api000');
+    expect(issues).toContain('nested-too-deep:grand0');
+    expect(issues).not.toContain('nested-too-deep:child0');
+  });
+
+  it('needs a title in every language the site uses', () => {
+    const issues = checkSite(
+      draft([['home00', page('home', { title: { ar: 'الرئيسية', en: '' } })]]),
+    );
+    expect(issues).toContainEqual({ code: 'missing-title', target: 'home00', detail: 'en' });
+  });
+
+  it('finds links in menus and sections to pages that are hidden or gone', () => {
+    const site = draft([
+      ['home00', page('home')],
+      ['hidden', page('hidden', { visible: false })],
+    ]);
+    site.menus.header.push({
+      id: 'menu01',
+      label: { ar: 'م', en: 'm' },
+      link: { type: 'page', pageId: 'hidden' },
+      visible: true,
+      children: [],
+    });
+    const cta = newSection('cta');
+    cta.settings.button.link = { type: 'page', pageId: 'gone00' };
+    site.pages.get('home00')!.sections.push(cta);
+    const targets = checkSite(site)
+      .filter((i) => i.code === 'broken-link')
+      .map((i) => i.target);
+    expect(targets).toEqual(['menu:header:menu01', 'page:home00']);
+  });
+
+  it('builds addresses per language, the home page at the root', () => {
+    const pages = new Map<string, Page>([
+      ['home00', page('home')],
+      ['prod00', page('products')],
+      ['switch', page('switches', { parentId: 'prod00' })],
+    ]);
+    expect(pagePath('home00', pages, 'home00')).toBe('/');
+    expect(pagePath('switch', pages, 'home00')).toBe('/products/switches');
+    expect(localizedPath('/products', 'en', 'ar')).toBe('/en/products');
+    expect(localizedPath('/', 'en', 'ar')).toBe('/en/');
+    expect(localizedPath('/products', 'ar', 'ar')).toBe('/products');
+  });
+});
