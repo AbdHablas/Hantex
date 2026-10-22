@@ -36,6 +36,20 @@
       "when": 1792658247535,
       "tag": "0004_saved_sections",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792671942244,
+      "tag": "0005_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792671943409,
+      "tag": "0006_unsubscribe_function",
+      "breakpoints": true
     }
   ]
 }

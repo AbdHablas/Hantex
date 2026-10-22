@@ -491,6 +491,49 @@ export const subscribers = pgTable(
   ],
 );
 
+/**
+ * Announcements to a site's email sign-ups (D-040): written in the dashboard, sent in small
+ * chunks within the daily sending limit, so a large list is spread over days. Each delivery is
+ * recorded once per subscriber, which lets sending stop and resume without sending twice.
+ */
+export const announcements = pgTable(
+  'announcements',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    /** { subject: {ar, en}, body: {ar, en} }, validated by the API. */
+    content: jsonb('content').notNull(),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    status: text('status').notNull().default('sending'),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('announcements_site_idx').on(t.siteId, t.createdAt),
+    check('announcements_status_check', sql`${t.status} in ('sending', 'finished', 'cancelled')`),
+  ],
+);
+
+export const announcementDeliveries = pgTable(
+  'announcement_deliveries',
+  {
+    announcementId: uuid('announcement_id')
+      .notNull()
+      .references(() => announcements.id, { onDelete: 'cascade' }),
+    // An unsubscribe removes the sign-up and its delivery records.
+    subscriberId: uuid('subscriber_id')
+      .notNull()
+      .references(() => subscribers.id, { onDelete: 'cascade' }),
+    status: text('status').notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.announcementId, t.subscriberId] }),
+    index('announcement_deliveries_sent_idx').on(t.sentAt),
+    check('announcement_deliveries_status_check', sql`${t.status} in ('sent', 'failed')`),
+  ],
+);
+
 /** Fixed-window rate limits for public endpoints, per site, shared across Worker instances. */
 export const formRateLimits = pgTable(
   'form_rate_limits',

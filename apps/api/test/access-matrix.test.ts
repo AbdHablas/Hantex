@@ -104,6 +104,7 @@ const SITE_ENDPOINTS: Endpoint[] = [
     body: () => ({ header: [], footer: [] }),
   },
   { method: 'GET', path: '/subscribers', needs: ['subscribers.view'] },
+  { method: 'GET', path: '/announcements', needs: ['subscribers.announce'] },
   { method: 'GET', path: '/subscribers/export', needs: ['subscribers.export'] },
   {
     method: 'GET',

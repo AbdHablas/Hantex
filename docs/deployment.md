@@ -102,7 +102,7 @@ environment variables, never stored in the repository).
 | `DATABASE_URL` | deploy (database) | Neon owner connection, for migrations only |
 | `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD` | deploy (database) | Passwords for the four least-privilege database users |
 | `HANTEX_BUILD_DATABASE_URL` | deploy (site), publish | Connection as the read-only build user |
-| `BETTER_AUTH_SECRET`, `TOKEN_HASH_SECRET`, `PREVIEW_SIGNING_SECRET` | deploy | Random secrets (32 bytes or more) |
+| `BETTER_AUTH_SECRET`, `TOKEN_HASH_SECRET`, `PREVIEW_SIGNING_SECRET`, `UNSUBSCRIBE_SECRET` | deploy | Random secrets (32 bytes or more); the preview and unsubscribe secrets go to the dashboard and every site Worker |
 | `TURNSTILE_SECRET_KEY` | deploy | Turnstile secret key |
 | `RESEND_API_KEY` | deploy (dashboard) | Email sending (D-009) |
 | `PUBLISH_TRIGGER_TOKEN` | deploy (dashboard) | GitHub fine-grained token for this repository with Actions: read and write only |
@@ -117,6 +117,11 @@ environment variables, never stored in the repository).
 `BACKUP_AGE_RECIPIENT` (the age *public* key; the private key stays offline
 with the owner), `BACKUP_BUCKET` (default `backups`), `HEALTH_SITE_URLS`
 (space-separated), `HEALTH_DASHBOARD_URL`.
+
+**Optional dashboard variable** (`apps/api`, not secret): `ANNOUNCEMENT_DAILY_LIMIT`, the
+most announcement emails sent per 24 hours across all websites (default 100). Set it to
+your Resend plan's daily limit, which you can see in Resend's dashboard; it couldn't be
+checked from the build environment.
 
 **In `apps/web/wrangler.jsonc`** (not secret): `DASHBOARD_ORIGIN`, the
 dashboard's address. It is the only page allowed to show a site's draft

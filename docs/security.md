@@ -95,6 +95,11 @@ end.
 - Draft previews may be framed only by the dashboard (`DASHBOARD_ORIGIN`),
   for the page editor's device preview; the dashboard allows `https:` frames
   for that reason and nothing else changes.
+- Announcement emails (D-040) carry a one-click unsubscribe link signed with
+  `UNSUBSCRIBE_SECRET`; the site Worker checks it, asks for confirmation (link
+  scanners remove nothing) and removes the sign-up through the database
+  function `unsubscribe(site, subscriber)`, the only removal the public
+  database user can do: one sign-up of its own site, nothing readable.
 - Visitor statistics are cookieless and collected only on published pages of
   a website whose settings hold a Web Analytics token; previews never count.
 - State-changing requests require the same origin (Origin header check) in

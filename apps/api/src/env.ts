@@ -10,6 +10,13 @@ export interface Env {
   TOKEN_HASH_SECRET: string;
   /** Shared with the site Workers to sign draft previews (rendered on each site's primary domain). */
   PREVIEW_SIGNING_SECRET: string;
+  /** Shared with the site Workers to sign the unsubscribe links in announcement emails (D-040). */
+  UNSUBSCRIBE_SECRET: string;
+  /**
+   * Most announcement emails sent per 24 hours across all sites, to stay within the email
+   * provider's plan; set it to your Resend plan's daily limit. Default 100.
+   */
+  ANNOUNCEMENT_DAILY_LIMIT?: string;
   EMAIL_FROM: string;
   RESEND_API_KEY?: string;
   TURNSTILE_SITE_KEY: string;

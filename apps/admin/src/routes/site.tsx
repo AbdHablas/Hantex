@@ -24,6 +24,7 @@ import {
   VersionHistory,
   useDocumentEditor,
 } from '../components/document';
+import { Announcements } from '../components/Announcements';
 import { api, sitePath } from '../lib/api';
 import { useI18n } from '../lib/i18n';
 import { useCurrentSite } from '../lib/session';
@@ -563,16 +564,31 @@ export function Subscribers() {
         intro={m.subscribers.intro}
         actions={
           can('subscribers.export') && (
-            <a
-              href={`/api${sitePath(siteKey, '/subscribers/export')}`}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-surface px-4 font-medium hover:bg-bg"
-            >
-              <Download className="size-4" aria-hidden />
-              {m.subscribers.export}
-            </a>
+            <>
+              <a
+                href={`/api${sitePath(siteKey, '/subscribers/export')}`}
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-surface px-4 font-medium hover:bg-bg"
+              >
+                <Download className="size-4" aria-hidden />
+                {m.subscribers.export}
+              </a>
+              {/* WhatsApp numbers, for sending the announcement by hand (D-040). */}
+              <a
+                href={`/api${sitePath(siteKey, '/subscribers/export?type=whatsapp')}`}
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-surface px-4 font-medium hover:bg-bg"
+              >
+                <Download className="size-4" aria-hidden />
+                {m.announce.exportWhatsapp}
+              </a>
+            </>
           )
         }
       />
+      {can('subscribers.announce') && !site.archived && (
+        <div className="mb-5">
+          <Announcements />
+        </div>
+      )}
       <Card>
         <div className="mb-4 max-w-sm">
           <Field label={m.search}>

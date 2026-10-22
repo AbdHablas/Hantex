@@ -12,6 +12,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
   enrolment_tickets, email_challenges, dashboard_rate_limits,
   site_domains, document_drafts, publish_jobs, theme_presets
 TO hantex_admin_app;
+-- Announcements (D-040): written and sent from the dashboard; deliveries are a send log.
+GRANT SELECT, INSERT, UPDATE ON announcements TO hantex_admin_app;
+GRANT SELECT, INSERT ON announcement_deliveries TO hantex_admin_app;
 -- Sites are archived, never deleted (D-024).
 GRANT SELECT, INSERT, UPDATE ON sites TO hantex_admin_app;
 -- Published versions are immutable; the audit log is append-only.
@@ -24,6 +27,8 @@ GRANT SELECT, DELETE ON subscribers TO hantex_admin_app;
 GRANT INSERT (site_id, contact_type, contact_value, locale, consent_version) ON subscribers TO hantex_public_app;
 GRANT SELECT, INSERT, UPDATE ON form_rate_limits TO hantex_public_app;
 GRANT SELECT ON document_versions TO hantex_public_app;
+-- One-click unsubscribe: removes one sign-up of the site, nothing else (migration 0006).
+GRANT EXECUTE ON FUNCTION unsubscribe(uuid, uuid) TO hantex_public_app;
 
 -- Static site build: published content and theme, and the site's own configuration.
 GRANT SELECT ON document_versions, sites, site_domains TO hantex_build;

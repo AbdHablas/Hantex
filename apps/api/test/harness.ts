@@ -25,6 +25,7 @@ export const env: Env = {
   BETTER_AUTH_SECRET: randomBytes(32).toString('base64url'),
   TOKEN_HASH_SECRET: randomBytes(32).toString('base64url'),
   PREVIEW_SIGNING_SECRET: randomBytes(32).toString('base64url'),
+  UNSUBSCRIBE_SECRET: 'test-unsubscribe-secret',
   EMAIL_FROM: 'Dashboard <dashboard@example.test>',
   TURNSTILE_SITE_KEY: 'test-site-key',
   TURNSTILE_SECRET_KEY: 'test-secret',

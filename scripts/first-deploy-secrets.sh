@@ -26,7 +26,7 @@ repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 echo "Repository: $repo"
 
 names=(DATABASE_URL HANTEX_ADMIN_APP_PASSWORD HANTEX_PUBLIC_APP_PASSWORD HANTEX_BUILD_PASSWORD
-  HANTEX_BACKUP_PASSWORD BETTER_AUTH_SECRET TOKEN_HASH_SECRET PREVIEW_SIGNING_SECRET
+  HANTEX_BACKUP_PASSWORD BETTER_AUTH_SECRET TOKEN_HASH_SECRET PREVIEW_SIGNING_SECRET UNSUBSCRIBE_SECRET
   PUBLISH_CALLBACK_SECRET HANTEX_BUILD_DATABASE_URL BACKUP_DATABASE_URL)
 existing=$(gh secret list --repo "$repo" --json name --jq '.[].name')
 for name in "${names[@]}"; do
@@ -70,6 +70,7 @@ put HANTEX_BACKUP_PASSWORD "$backup_pw"
 put BETTER_AUTH_SECRET "$(random)"
 put TOKEN_HASH_SECRET "$(random)"
 put PREVIEW_SIGNING_SECRET "$(random)"
+put UNSUBSCRIBE_SECRET "$(random)"
 put PUBLISH_CALLBACK_SECRET "$(random)"
 put HANTEX_BUILD_DATABASE_URL "$(as_user hantex_build "$build_pw")"
 put BACKUP_DATABASE_URL "$(as_user hantex_backup "$backup_pw")"

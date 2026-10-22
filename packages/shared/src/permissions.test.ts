@@ -7,7 +7,7 @@ import {
   permissionsOf,
 } from './permissions';
 
-// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035).
+// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035, D-040).
 const EXPECTED: Record<string, string[]> = {
   owner: Object.keys(PERMISSIONS),
   administrator: [
@@ -22,6 +22,7 @@ const EXPECTED: Record<string, string[]> = {
     'subscribers.view',
     'subscribers.export',
     'subscribers.delete',
+    'subscribers.announce',
     'appearance.edit',
     'appearance.publish',
     'staff.view',

@@ -167,7 +167,11 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 - [ ] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site
-- [ ] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
+- [x] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
+      — *Sign-ups page: write once, send in chunks within ANNOUNCEMENT_DAILY_LIMIT,
+      one-click unsubscribe on the website; WhatsApp numbers exported. Resend's
+      current limits and headers support to be confirmed at setup (resend.com is
+      unreachable from the build environment).*
 - [x] Privacy policy page: draft for the owner's review (D-041) — *New page → Privacy policy
       draft: a hidden page in both languages stating only what the platform does, with
       [placeholders] for company details, database region and retention; goes live only

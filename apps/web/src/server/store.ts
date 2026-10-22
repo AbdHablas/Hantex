@@ -29,5 +29,13 @@ export function signupStore(client: Pick<pg.Client, 'query'>, siteId: string) {
         [siteId, row.type, row.value, row.locale, row.consentVersion],
       );
     },
+    /** Removes one sign-up of this site, through the only function the public user may call. */
+    async unsubscribe(subscriberId: string): Promise<boolean> {
+      const result = await client.query<{ removed: boolean }>(
+        'select unsubscribe($1, $2) as removed',
+        [siteId, subscriberId],
+      );
+      return result.rows[0]?.removed === true;
+    },
   };
 }

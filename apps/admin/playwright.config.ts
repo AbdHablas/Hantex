@@ -28,6 +28,7 @@ const vars = {
   BETTER_AUTH_SECRET: secret(),
   TOKEN_HASH_SECRET: secret(),
   PREVIEW_SIGNING_SECRET: secret(),
+  UNSUBSCRIBE_SECRET: secret(),
   EMAIL_FROM: 'Dashboard <dashboard@example.test>',
   // Cloudflare's published Turnstile test keys (always pass).
   TURNSTILE_SITE_KEY: '1x00000000000000000000AA',

@@ -24,6 +24,7 @@ export const RESERVED_SLUGS = [
   'en',
   'api',
   'preview',
+  'unsubscribe',
   'brand',
   'fonts',
   'media',

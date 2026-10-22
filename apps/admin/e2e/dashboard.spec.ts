@@ -288,6 +288,30 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   }
   await page.setViewportSize({ width: 1280, height: 800 });
 
+  // Launch announcement (D-040): prepared in English only, sent within the daily limit.
+  await page.goto('/s/hantex-ultra/subscribers');
+  const announce = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'Announcement email' }) });
+  await announce
+    .getByRole('group', { name: 'Subject' })
+    .getByLabel('English')
+    .fill('We have launched');
+  await announce
+    .getByRole('group', { name: 'Message' })
+    .getByLabel('English')
+    .fill('Come and see.');
+  await announce.getByRole('button', { name: 'Prepare announcement' }).click();
+  await expect(announce.getByText('Not finished')).toBeVisible();
+  await expectAccessible(page, 'sign-ups with an announcement');
+  await announce.getByRole('button', { name: 'Send', exact: true }).click();
+  await confirm(page);
+  await expect(announce.getByText('Everyone has received the announcement.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Export WhatsApp numbers' })).toHaveAttribute(
+    'href',
+    /type=whatsapp/,
+  );
+
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');
   await expect(page.getByText('No pages yet')).toBeVisible();

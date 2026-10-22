@@ -51,35 +51,51 @@ export const subscriberRoutes = new Hono<AppEnv>()
     },
   )
 
-  .get('/export', requirePermission('subscribers.export'), async (c) => {
-    const v = c.var;
-    const rows = await v.db
-      .select()
-      .from(subscribers)
-      .where(eq(subscribers.siteId, v.site.id))
-      .orderBy(subscribers.createdAt);
-    const lines = [
-      ['contact', 'type', 'language', 'consent_version', 'signed_up_at'].map(csvCell).join(','),
-      ...rows.map((r) =>
-        [r.contactValue, r.contactType, r.locale, r.consentVersion, r.createdAt.toISOString()]
-          .map(csvCell)
-          .join(','),
-      ),
-    ];
-    await writeAudit(
-      v.db,
-      auditActor(v),
-      { action: 'subscribers.exported', siteId: v.site.id, details: { count: rows.length } },
-      v.requestId,
-    );
-    // Byte order mark so spreadsheet programs read Arabic text correctly.
-    return new Response(`\uFEFF${lines.join('\r\n')}\r\n`, {
-      headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${v.site.key}-signups-${new Date().toISOString().slice(0, 10)}.csv"`,
-      },
-    });
-  })
+  .get(
+    '/export',
+    requirePermission('subscribers.export'),
+    // ?type=whatsapp: only WhatsApp numbers, for sending the announcement by hand (D-040).
+    validate('query', z.strictObject({ type: z.enum(['email', 'whatsapp']).optional() })),
+    async (c) => {
+      const v = c.var;
+      const { type } = c.req.valid('query');
+      const rows = await v.db
+        .select()
+        .from(subscribers)
+        .where(
+          and(
+            eq(subscribers.siteId, v.site.id),
+            type ? eq(subscribers.contactType, type) : undefined,
+          ),
+        )
+        .orderBy(subscribers.createdAt);
+      const lines = [
+        ['contact', 'type', 'language', 'consent_version', 'signed_up_at'].map(csvCell).join(','),
+        ...rows.map((r) =>
+          [r.contactValue, r.contactType, r.locale, r.consentVersion, r.createdAt.toISOString()]
+            .map(csvCell)
+            .join(','),
+        ),
+      ];
+      await writeAudit(
+        v.db,
+        auditActor(v),
+        {
+          action: 'subscribers.exported',
+          siteId: v.site.id,
+          details: { count: rows.length, type: type ?? 'all' },
+        },
+        v.requestId,
+      );
+      // Byte order mark so spreadsheet programs read Arabic text correctly.
+      return new Response(`\uFEFF${lines.join('\r\n')}\r\n`, {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${v.site.key}-${type ?? 'all'}-signups-${new Date().toISOString().slice(0, 10)}.csv"`,
+        },
+      });
+    },
+  )
 
   .delete(
     '/:id',

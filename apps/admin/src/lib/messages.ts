@@ -235,6 +235,33 @@ const en = {
     whatsapp: 'WhatsApp',
   },
 
+  announce: {
+    title: 'Announcement email',
+    intro:
+      '{recipients} email sign-ups. Up to {limit} emails go out per day across all websites ({today} in the last 24 hours); larger lists continue the next day.',
+    needsDomain:
+      'Add a main domain in General settings first: every email links to an unsubscribe page on this website.',
+    subject: 'Subject',
+    body: 'Message',
+    bodyHelp:
+      'Plain text; each line becomes a paragraph. Each person receives their own language, or the other one if theirs is empty. An unsubscribe link is added automatically.',
+    create: 'Prepare announcement',
+    inProgress: 'Not finished',
+    progress: '{sent} of {total} sent · {failed} failed',
+    send: 'Send',
+    continue: 'Continue sending',
+    sendConfirm: 'Send this announcement to {recipients} email sign-ups? This can’t be undone.',
+    cancel: 'Cancel announcement',
+    cancelConfirm: 'Stop this announcement? People who already received it are not affected.',
+    finished: 'Everyone has received the announcement.',
+    limitReached:
+      'Today’s sending limit is reached. {remaining} people are still waiting: continue tomorrow.',
+    sentCount: '{sent} sent · {failed} failed',
+    statusFinished: 'Sent',
+    statusCancelled: 'Cancelled',
+    exportWhatsapp: 'Export WhatsApp numbers',
+  },
+
   staff: {
     title: 'Team',
     platformTitle: 'People',
@@ -782,6 +809,8 @@ const en = {
     'site-issues': 'Some pages or menus need fixing before publishing.',
     'unknown-site': 'That website doesn’t exist or you can’t open it.',
     'unknown-preset': 'That theme no longer exists.',
+    'announcement-in-progress': 'Finish or cancel the current announcement first.',
+    'announcement-finished': 'This announcement is already finished or cancelled.',
   } as Record<string, string>,
 };
 
@@ -1014,6 +1043,32 @@ const ar: Messages = {
     deleteConfirm: 'حذف هذا الاشتراك نهائيًا؟ افعل ذلك عندما يطلب الشخص إزالته.',
     email: 'البريد الإلكتروني',
     whatsapp: 'واتساب',
+  },
+
+  announce: {
+    title: 'رسالة إعلان بالبريد',
+    intro:
+      '{recipients} مشتركًا بالبريد. تُرسل حتى {limit} رسالة يوميًا لكل المواقع ({today} خلال آخر 24 ساعة)؛ تُستكمل القوائم الأكبر في اليوم التالي.',
+    needsDomain:
+      'أضف نطاقًا رئيسيًا في الإعدادات العامة أولًا: كل رسالة فيها رابط لإلغاء الاشتراك على هذا الموقع.',
+    subject: 'الموضوع',
+    body: 'الرسالة',
+    bodyHelp:
+      'نص عادي؛ كل سطر فقرة. يتلقى كل شخص لغته، أو اللغة الأخرى إن كانت لغته فارغة. يُضاف رابط إلغاء الاشتراك تلقائيًا.',
+    create: 'تجهيز الإعلان',
+    inProgress: 'لم يكتمل',
+    progress: 'أُرسلت {sent} من {total} · تعذّر {failed}',
+    send: 'إرسال',
+    continue: 'متابعة الإرسال',
+    sendConfirm: 'إرسال هذا الإعلان إلى {recipients} مشتركًا بالبريد؟ لا يمكن التراجع عن ذلك.',
+    cancel: 'إلغاء الإعلان',
+    cancelConfirm: 'إيقاف هذا الإعلان؟ لا يتأثر من وصلهم بالفعل.',
+    finished: 'وصل الإعلان إلى الجميع.',
+    limitReached: 'بلغت حد الإرسال اليومي. ما زال {remaining} شخصًا بالانتظار: تابع غدًا.',
+    sentCount: 'أُرسلت {sent} · تعذّر {failed}',
+    statusFinished: 'أُرسل',
+    statusCancelled: 'أُلغي',
+    exportWhatsapp: 'تصدير أرقام واتساب',
   },
 
   staff: {
@@ -1548,6 +1603,8 @@ const ar: Messages = {
     'site-issues': 'بعض الصفحات أو القوائم تحتاج إلى إصلاح قبل النشر.',
     'unknown-site': 'هذا الموقع غير موجود أو لا يمكنك فتحه.',
     'unknown-preset': 'تلك السمة لم تعد موجودة.',
+    'announcement-in-progress': 'أكمل الإعلان الحالي أو ألغه أولًا.',
+    'announcement-finished': 'هذا الإعلان اكتمل أو أُلغي بالفعل.',
   },
 };
 

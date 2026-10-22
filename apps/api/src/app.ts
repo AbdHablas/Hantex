@@ -18,6 +18,7 @@ import { roleRoutes } from './routes/roles';
 import { siteConfigRoutes, sitesRoutes } from './routes/sites';
 import { siteStaffRoutes, staffRoutes } from './routes/staff';
 import { subscriberRoutes } from './routes/subscribers';
+import { announcementRoutes } from './routes/announcements';
 
 /**
  * One site's API (`/api/sites/:siteKey/...`, D-024): every request is checked against the
@@ -32,6 +33,7 @@ function siteApi() {
     .route('/', builderRoutes)
     .route('/preview', previewRoutes)
     .route('/subscribers', subscriberRoutes)
+    .route('/announcements', announcementRoutes)
     .route('/publish', publishJobRoutes)
     .route('/staff', siteStaffRoutes)
     .route('/audit', siteAuditRoutes);

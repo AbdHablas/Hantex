@@ -12,6 +12,7 @@ env['E2E_DATABASE'] ??= `hantex_web_e2e_${process.pid}`;
 env['E2E_BUILD_PASSWORD'] ??= randomBytes(16).toString('hex');
 env['E2E_PUBLIC_PASSWORD'] ??= randomBytes(16).toString('hex');
 env['E2E_PREVIEW_SECRET'] ??= randomBytes(32).toString('base64url');
+env['E2E_UNSUBSCRIBE_SECRET'] ??= randomBytes(32).toString('base64url');
 
 export default defineConfig({
   testDir: 'e2e',

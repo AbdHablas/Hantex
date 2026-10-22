@@ -1,6 +1,7 @@
 // A public site's Worker, "site-<key>" (D-028). The publish workflow builds one site and deploys
 // it under that site's name. Not deployed: domains and deployment need the owner's approval.
-// Secrets (PREVIEW_SIGNING_SECRET, TURNSTILE_SECRET_KEY) are Worker secrets, never here.
+// Secrets (PREVIEW_SIGNING_SECRET, UNSUBSCRIBE_SECRET, TURNSTILE_SECRET_KEY) are Worker secrets,
+// never here.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "site-hantex-ultra",

@@ -38,6 +38,7 @@ or extended later without rebuilding anything.
 | Sign-ups and enquiries: view | ✓ | ✓ | — | ✓ | — | — |
 | Sign-ups and enquiries: export (CSV) | ✓ | ✓ | — | ✓ | — | — |
 | Sign-ups and enquiries: delete (e.g. on request) | ✓ | ✓ | — | — | — | — |
+| Sign-ups: send announcement emails (D-040) | ✓ | ✓ | — | — | — | — |
 | Pages, sections and menus: view *(D-035)* | ✓ | ✓ | ✓ | View | ✓ | View |
 | Pages, sections, menus, header and footer: edit drafts *(D-035)* | ✓ | ✓ | ✓ | — | ✓ | — |
 | Website settings: SEO & contact (contact details, social links, SEO defaults, privacy note) | ✓ | ✓ | View | View | — | View |

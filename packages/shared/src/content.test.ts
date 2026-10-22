@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { announcementLocale, announcementSchema } from './announcements';
 import {
   DEFAULT_COMING_SOON,
   DEFAULT_SITE_SETTINGS,
@@ -126,5 +127,32 @@ describe('site settings', () => {
     });
     expect(siteSettingsSchema.safeParse(contact('+963933123456')).success).toBe(true);
     expect(siteSettingsSchema.safeParse(contact('0933123456')).success).toBe(false);
+  });
+});
+
+describe('announcements (D-040)', () => {
+  const a = (subject: { ar: string; en: string }, body: { ar: string; en: string }) => ({
+    subject,
+    body,
+  });
+
+  it('needs at least one complete language, and no half-written one', () => {
+    expect(
+      announcementSchema.safeParse(a({ ar: 'خبر', en: '' }, { ar: 'نص', en: '' })).success,
+    ).toBe(true);
+    expect(announcementSchema.safeParse(a({ ar: '', en: '' }, { ar: '', en: '' })).success).toBe(
+      false,
+    );
+    expect(
+      announcementSchema.safeParse(a({ ar: 'خبر', en: 'News' }, { ar: 'نص', en: '' })).success,
+    ).toBe(false);
+  });
+
+  it('sends each subscriber their language, or the other one when theirs is empty', () => {
+    const both = a({ ar: 'خبر', en: 'News' }, { ar: 'نص', en: 'Text' });
+    const arabicOnly = a({ ar: 'خبر', en: '' }, { ar: 'نص', en: '' });
+    expect(announcementLocale(both, 'en')).toBe('en');
+    expect(announcementLocale(arabicOnly, 'en')).toBe('ar');
+    expect(announcementLocale(both, 'ar')).toBe('ar');
   });
 });

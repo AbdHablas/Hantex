@@ -3,6 +3,8 @@ export interface EmailMessage {
   subject: string;
   text: string;
   html: string;
+  /** Extra headers, e.g. List-Unsubscribe for announcements (D-040). */
+  headers?: Record<string, string>;
 }
 
 export interface EmailSender {
@@ -22,6 +24,7 @@ export function resendSender(apiKey: string, from: string): EmailSender {
           subject: message.subject,
           text: message.text,
           html: message.html,
+          ...(message.headers ? { headers: message.headers } : {}),
         }),
       });
       if (!response.ok) throw new Error(`Email provider responded with status ${response.status}`);
@@ -60,7 +63,47 @@ function bilingual(subject: string, ar: string[], en: string[]): Omit<EmailMessa
   };
 }
 
+/** One language only, in its own direction (announcements go out in the subscriber's language). */
+function single(
+  subject: string,
+  lang: 'ar' | 'en',
+  lines: string[],
+  footer: string[],
+): Omit<EmailMessage, 'to'> {
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const paragraphs = (items: string[]) => items.map((l) => `<p>${escapeHtml(l)}</p>`).join('');
+  return {
+    subject,
+    text: [...lines, '', '—', ...footer].join('\n'),
+    html: `<!doctype html><html lang="${lang}" dir="${dir}"><body style="font-family:system-ui,sans-serif;line-height:1.6">${paragraphs(lines)}<hr><div style="font-size:0.85em;color:#555">${paragraphs(footer)}</div></body></html>`,
+  };
+}
+
 export const emailTemplates = {
+  /** An announcement to a website's sign-ups (D-040), with the unsubscribe link in the footer. */
+  announcement(input: {
+    lang: 'ar' | 'en';
+    subject: string;
+    body: string;
+    siteName: string;
+    unsubscribeUrl: string;
+  }) {
+    const lines = input.body
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l !== '');
+    const footer =
+      input.lang === 'ar'
+        ? [
+            `تصلك هذه الرسالة لأنك اشتركت في أخبار ${input.siteName}.`,
+            `لإلغاء الاشتراك: ${input.unsubscribeUrl}`,
+          ]
+        : [
+            `You're receiving this because you signed up for news from ${input.siteName}.`,
+            `Unsubscribe: ${input.unsubscribeUrl}`,
+          ];
+    return single(input.subject, input.lang, lines, footer);
+  },
   invitation(input: {
     inviter: string;
     roleAr: string;

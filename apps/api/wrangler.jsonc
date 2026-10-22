@@ -1,6 +1,7 @@
 // Dashboard Worker "hantex-admin" (docs/deployment.md). Not deployed: deployment, the custom
 // domain and Cloudflare Access are set up only with the owner's approval.
-// Secrets (BETTER_AUTH_SECRET, TOKEN_HASH_SECRET, PREVIEW_SIGNING_SECRET, TURNSTILE_SECRET_KEY,
+// Secrets (BETTER_AUTH_SECRET, TOKEN_HASH_SECRET, PREVIEW_SIGNING_SECRET, UNSUBSCRIBE_SECRET,
+// TURNSTILE_SECRET_KEY,
 // RESEND_API_KEY, PUBLISH_*) are Worker secrets, never in this file.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",

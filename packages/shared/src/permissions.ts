@@ -83,6 +83,15 @@ export const PERMISSIONS = {
     sensitive: 'destructive',
     label: { en: 'Delete launch sign-ups', ar: 'حذف المشتركين' },
   },
+  'subscribers.announce': {
+    scope: 'site',
+    group: 'customers',
+    sensitive: 'personal-data',
+    label: {
+      en: 'Send announcements to email sign-ups',
+      ar: 'إرسال إعلانات إلى المشتركين بالبريد',
+    },
+  },
   'appearance.edit': {
     scope: 'site',
     group: 'appearance',
@@ -213,6 +222,7 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
       'subscribers.view',
       'subscribers.export',
       'subscribers.delete',
+      'subscribers.announce',
       'appearance.edit',
       'appearance.publish',
       'staff.view',

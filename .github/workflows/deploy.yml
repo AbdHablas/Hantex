@@ -69,6 +69,7 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           TOKEN_HASH_SECRET: ${{ secrets.TOKEN_HASH_SECRET }}
           PREVIEW_SIGNING_SECRET: ${{ secrets.PREVIEW_SIGNING_SECRET }}
+          UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           PUBLISH_TRIGGER_TOKEN: ${{ secrets.PUBLISH_TRIGGER_TOKEN }}
@@ -85,7 +86,7 @@ jobs:
             --var "PUBLISH_REPOSITORY:$GITHUB_REPOSITORY" \
             --var "PUBLISH_WORKFLOW:publish.yml" \
             --var "PUBLISH_REF:main"
-          for name in BETTER_AUTH_SECRET TOKEN_HASH_SECRET PREVIEW_SIGNING_SECRET TURNSTILE_SECRET_KEY RESEND_API_KEY PUBLISH_TRIGGER_TOKEN PUBLISH_CALLBACK_SECRET; do
+          for name in BETTER_AUTH_SECRET TOKEN_HASH_SECRET PREVIEW_SIGNING_SECRET UNSUBSCRIBE_SECRET TURNSTILE_SECRET_KEY RESEND_API_KEY PUBLISH_TRIGGER_TOKEN PUBLISH_CALLBACK_SECRET; do
             if [ -n "${!name}" ]; then printf '%s' "${!name}" | pnpm exec wrangler secret put "$name"; fi
           done
 
@@ -102,6 +103,7 @@ jobs:
           WRANGLER_SEND_METRICS: 'false'
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           PREVIEW_SIGNING_SECRET: ${{ secrets.PREVIEW_SIGNING_SECRET }}
+          UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
           SITE_HYPERDRIVE_ID: ${{ vars.SITE_HYPERDRIVE_ID }}
         run: |
           [[ "$SITE" =~ ^[a-z0-9](-?[a-z0-9])+$ ]] || { echo "Invalid site key"; exit 1; }
@@ -109,6 +111,6 @@ jobs:
           cd apps/web
           node ../../scripts/set-hyperdrive.mjs dist/server/wrangler.json "$SITE_HYPERDRIVE_ID"
           pnpm exec wrangler deploy --name "site-$SITE"
-          for name in TURNSTILE_SECRET_KEY PREVIEW_SIGNING_SECRET; do
+          for name in TURNSTILE_SECRET_KEY PREVIEW_SIGNING_SECRET UNSUBSCRIBE_SECRET; do
             printf '%s' "${!name}" | pnpm exec wrangler secret put "$name" --name "site-$SITE"
           done

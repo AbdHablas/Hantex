@@ -1,0 +1,99 @@
+---
+import { env } from 'cloudflare:workers';
+import pg from 'pg';
+import { TEXT, dirOf } from '../i18n';
+import { handleUnsubscribe, type UnsubscribeState } from '../server/unsubscribe';
+import { signupStore } from '../server/store';
+import { SITE } from '../site-data';
+import '../styles/site.css';
+
+/**
+ * Unsubscribe from announcement emails (D-040), on the website's own address. The visitor's
+ * language isn't known from the link, so the page speaks every language the site has.
+ */
+export const prerender = false;
+
+let client: pg.Client | null = null;
+let state: UnsubscribeState = 'invalid';
+try {
+  state = await handleUnsubscribe(Astro.request, {
+    siteId: SITE.site.id,
+    secret: env.UNSUBSCRIBE_SECRET,
+    remove: async (subscriberId) => {
+      client = new pg.Client({ connectionString: env.HYPERDRIVE.connectionString });
+      await client.connect();
+      return signupStore(client, SITE.site.id ?? '').unsubscribe(subscriberId);
+    },
+  });
+} catch (error) {
+  console.error('unsubscribe failed', error instanceof Error ? error.name : 'unknown');
+  state = 'invalid';
+  Astro.response.status = 500;
+} finally {
+  const open = client as pg.Client | null;
+  if (open) await open.end().catch(() => undefined);
+}
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+Astro.response.headers.set(
+  'Content-Security-Policy',
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+);
+if (state === 'invalid' && Astro.response.status === 200) Astro.response.status = 400;
+
+const locales = [
+  SITE.site.defaultLocale,
+  ...SITE.site.locales.filter((l) => l !== SITE.site.defaultLocale),
+];
+const first = locales[0] ?? 'ar';
+const siteName = SITE.site.name[first] || SITE.site.name.ar || SITE.site.name.en;
+const action = new URL(Astro.request.url);
+---
+
+<!doctype html>
+<html lang={first} dir={dirOf(first)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{siteName} — {TEXT[first].unsubscribeTitle}</title>
+    {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body>
+    <main class="maintenance">
+      <div class="maintenance-card">
+        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p class="footer-name">{siteName}</p>}
+        {
+          locales.map((l, i) => (
+            <div class={i > 0 ? 'not-found-other' : undefined} lang={l} dir={dirOf(l)}>
+              {i === 0 ? (
+                <h1>{state === 'done' ? TEXT[l].unsubscribedTitle : TEXT[l].unsubscribeTitle}</h1>
+              ) : (
+                <h2>{state === 'done' ? TEXT[l].unsubscribedTitle : TEXT[l].unsubscribeTitle}</h2>
+              )}
+              <p>
+                {state === 'done'
+                  ? TEXT[l].unsubscribedText
+                  : state === 'confirm'
+                    ? TEXT[l].unsubscribeConfirm
+                    : TEXT[l].unsubscribeInvalid}
+              </p>
+            </div>
+          ))
+        }
+        {
+          state === 'confirm' && (
+            <form method="post" action={`${action.pathname}${action.search}`}>
+              <button class="cta" type="submit">
+                {locales.map((l) => TEXT[l].unsubscribeButton).join(' · ')}
+              </button>
+            </form>
+          )
+        }
+      </div>
+    </main>
+  </body>
+</html>

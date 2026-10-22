@@ -284,6 +284,7 @@ await writeFile(
   [
     'User-agent: *',
     indexable ? 'Disallow: /preview' : 'Disallow: /',
+    ...(indexable ? ['Disallow: /unsubscribe'] : []),
     ...(indexable ? ['Disallow: /api/'] : []),
     ...(origin && indexable ? [`Sitemap: ${origin}/sitemap.xml`] : []),
     '',

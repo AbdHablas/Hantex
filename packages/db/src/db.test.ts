@@ -70,6 +70,8 @@ describe('migrations', () => {
     );
     expect(result.rows.map((r) => r.table_name)).toEqual([
       'accounts',
+      'announcement_deliveries',
+      'announcements',
       'audit_log',
       'auth_rate_limits',
       'dashboard_rate_limits',
@@ -417,6 +419,33 @@ describe('least-privilege database users', () => {
     await expect(asRole('hantex_public_app', 'select * from users')).rejects.toThrow(
       permissionDenied,
     );
+  });
+
+  it('lets the public site remove exactly one sign-up of its own site, through unsubscribe() only', async () => {
+    const owner = await db.execute<{ id: string }>(
+      sql`insert into subscribers (site_id, contact_type, contact_value, locale, consent_version) values (${siteA}, 'email', 'leave@example.test', 'en', 'v1') returning id`,
+    );
+    const id = owner.rows[0]!.id;
+    // The wrong site can't remove it; the right one can, once.
+    const call = 'select unsubscribe($1, $2) as removed';
+    const otherSite = await db.execute<{ id: string }>(
+      sql`select id from sites where id <> ${siteA} limit 1`,
+    );
+    if (otherSite.rows[0]) {
+      expect((await asRole('hantex_public_app', call, [otherSite.rows[0].id, id])).rows[0]).toEqual(
+        {
+          removed: false,
+        },
+      );
+    }
+    expect((await asRole('hantex_public_app', call, [siteA, id])).rows[0]).toEqual({
+      removed: true,
+    });
+    expect((await asRole('hantex_public_app', call, [siteA, id])).rows[0]).toEqual({
+      removed: false,
+    });
+    // The dashboard user can't call it; it deletes through its own, audited route.
+    await expect(asRole('hantex_admin_app', call, [siteA, id])).rejects.toThrow(permissionDenied);
   });
 
   it('keeps the audit log append-only for the dashboard', async () => {

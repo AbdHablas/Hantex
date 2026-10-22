@@ -5,3 +5,4 @@ export * from './rules';
 export * from './signup';
 export * from './assignments';
 export * from './sites';
+export * from './announcements';

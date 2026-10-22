@@ -242,3 +242,37 @@ for (const [path, scheme] of [
     ).toEqual([]);
   });
 }
+
+test('an unsubscribe link asks first, then removes the sign-up (D-040)', async ({ page }) => {
+  const client = new pg.Client({ connectionString: databaseUrl() });
+  await client.connect();
+  const site = await client.query<{ id: string }>(
+    `select id from sites where key = 'hantex-ultra'`,
+  );
+  const siteId = site.rows[0]!.id;
+  const added = await client.query<{ id: string }>(
+    `insert into subscribers (site_id, contact_type, contact_value, locale, consent_version)
+     values ($1, 'email', 'leaving@example.test', 'en', 'signup-consent-v1') returning id`,
+    [siteId],
+  );
+  const subscriberId = added.rows[0]!.id;
+  const token = createHmac('sha256', process.env['E2E_UNSUBSCRIBE_SECRET'] ?? '')
+    .update(`unsubscribe:${siteId}:${subscriberId}`)
+    .digest('hex');
+
+  // A tampered link changes nothing.
+  const bad = await page.goto(`/unsubscribe?s=${subscriberId}&t=${'0'.repeat(64)}`);
+  expect(bad?.status()).toBe(400);
+  await expect(page.getByText('This link isn’t valid.')).toBeVisible();
+
+  const response = await page.goto(`/unsubscribe?s=${subscriberId}&t=${token}`);
+  expect(response?.headers()['cache-control']).toBe('no-store');
+  // Opening the link (as mail scanners do) removes nothing.
+  let rows = await client.query('select 1 from subscribers where id = $1', [subscriberId]);
+  expect(rows.rowCount).toBe(1);
+  await page.getByRole('button', { name: /Unsubscribe/ }).click();
+  await expect(page.getByRole('heading', { name: 'You’re unsubscribed' })).toBeVisible();
+  rows = await client.query('select 1 from subscribers where id = $1', [subscriberId]);
+  expect(rows.rowCount).toBe(0);
+  await client.end();
+});

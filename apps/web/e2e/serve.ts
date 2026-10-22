@@ -213,6 +213,8 @@ function serve(dir: string, port: string, inspector: string) {
       '--var',
       `PREVIEW_SIGNING_SECRET:${env['E2E_PREVIEW_SECRET'] ?? ''}`,
       '--var',
+      `UNSUBSCRIBE_SECRET:${env['E2E_UNSUBSCRIBE_SECRET'] ?? ''}`,
+      '--var',
       'DASHBOARD_ORIGIN:https://admin.example.test',
     ],
     {
