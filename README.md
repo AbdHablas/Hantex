@@ -10,6 +10,7 @@ was approved by the owner on 2026-10-21. The first deployment is being
 prepared; nothing is live yet. Next: Phase 3 (media, product catalogue and the
 3D Studio foundation).
 
+- [`docs/PROJECT.md`](docs/PROJECT.md): **the whole project in one document**
 - [`docs/development.md`](docs/development.md): local setup, checks, layout
 - [`docs/DECISIONS.md`](docs/DECISIONS.md): decision log
 - [`docs/implementation-plan.md`](docs/implementation-plan.md): phases and checklist
