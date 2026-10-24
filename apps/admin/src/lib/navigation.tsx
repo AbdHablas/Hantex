@@ -3,6 +3,7 @@ import {
   Building2,
   FileStack,
   FileText,
+  Images,
   History,
   LayoutDashboard,
   Mail,
@@ -117,6 +118,14 @@ export function buildNavigation(m: Messages, me: Me, site: MySite | undefined): 
             icon: <Menu />,
             keywords: ['navigation', 'header', 'footer', 'قائمة', 'رأس', 'تذييل'],
             rule: { site: 'pages.view' },
+          },
+          {
+            id: 'media',
+            label: n.media,
+            to: `${base}/media`,
+            icon: <Images />,
+            keywords: ['images', 'photos', 'upload', 'صور', 'وسائط'],
+            rule: { site: 'media.view' },
           },
           {
             id: 'appearance',

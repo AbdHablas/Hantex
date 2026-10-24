@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { deflateSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
@@ -40,6 +41,39 @@ async function expectAccessible(page: Page, label: string) {
     serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),
     label,
   ).toEqual([]);
+}
+
+/** A solid-colour PNG, built here so the upload test needs no image file in the repository. */
+function png(width: number, height: number) {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (data: Buffer) => {
+    let c = 0xffffffff;
+    for (const byte of data) c = crcTable[(c ^ byte) & 0xff]! ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+    const out = Buffer.alloc(body.length + 8);
+    out.writeUInt32BE(data.length, 0);
+    body.copy(out, 4);
+    out.writeUInt32BE(crc(body), body.length + 4);
+    return out;
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header.set([8, 2, 0, 0, 0], 8); // 8-bit RGB
+  const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(width * 3, 0x5a)]);
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: height }, () => row)))),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
 }
 
 async function confirm(page: Page, ifAsked = false) {
@@ -314,6 +348,32 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
     'href',
     /type=whatsapp/,
   );
+
+  // Media library (D-044): the image is resized to WebP in the browser, then described.
+  await page.goto('/s/hantex-ultra/media');
+  await expect(page.getByText('No images yet.')).toBeVisible();
+  await page
+    .getByLabel('Upload images')
+    .setInputFiles({ name: 'switch.png', mimeType: 'image/png', buffer: png(640, 480) });
+  await expect(page.getByText('Images uploaded: 1.')).toBeVisible();
+  await expectAccessible(page, 'media library');
+  await page.getByRole('button', { name: /switch\.png/ }).click();
+  const details = page.getByRole('dialog', { name: 'Image details' });
+  await expect(details.getByText('640 × 480 px')).toBeVisible();
+  await expect
+    .poll(() => details.getByRole('img').evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBe(640);
+  await details
+    .getByRole('group', { name: /Description for people/ })
+    .getByLabel('English')
+    .fill('A grey square');
+  await details.getByRole('button', { name: 'Save' }).click();
+  await expect(details).toBeHidden();
+  await expect(page.getByRole('button', { name: /A grey square/ })).toBeVisible();
+  await page.getByRole('button', { name: /switch\.png/ }).click();
+  await details.getByRole('button', { name: 'Delete image' }).click();
+  await confirm(page);
+  await expect(page.getByText('No images yet.')).toBeVisible();
 
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');

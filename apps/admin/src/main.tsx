@@ -25,6 +25,9 @@ const PagesList = lazy(() =>
 const PageEditor = lazy(() =>
   import('./routes/pages').then((module) => ({ default: module.PageEditor })),
 );
+const MediaLibrary = lazy(() =>
+  import('./routes/media').then((module) => ({ default: module.MediaLibrary })),
+);
 const MenusEditor = lazy(() =>
   import('./routes/menus').then((module) => ({ default: module.MenusEditor })),
 );
@@ -84,6 +87,16 @@ const router = createBrowserRouter([
               <SitePage>
                 <Suspense fallback={<Loading />}>
                   <PageEditor />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'media',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <MediaLibrary />
                 </Suspense>
               </SitePage>
             ),

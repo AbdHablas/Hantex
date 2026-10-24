@@ -150,8 +150,12 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 ### 3b. Media
 
 - [ ] Media library on R2:
-  - private uploads with signed links;
-  - image processing and metadata removal;
+  - [x] private storage, checked uploads, per-site quota (API, step 1);
+  - [x] Media page: images resized to WebP on the device, which removes camera and location
+        details (D-044); description in both languages; deletion by Owner and Administrator
+        (step 2);
+  - [ ] public copies on publish, served from each site's `/media/`; signed links in previews;
+        images in use can't be deleted (step 3);
   - SVG sanitiser;
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).

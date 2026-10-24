@@ -20,8 +20,17 @@ export async function api<T>(
   const response = await fetch(`/api${path}`, {
     method: init.method ?? 'GET',
     credentials: 'same-origin',
-    headers: init.body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: init.body === undefined ? null : JSON.stringify(init.body),
+    // Uploads (FormData) set their own multipart content type.
+    headers:
+      init.body === undefined || init.body instanceof FormData
+        ? {}
+        : { 'Content-Type': 'application/json' },
+    body:
+      init.body === undefined
+        ? null
+        : init.body instanceof FormData
+          ? init.body
+          : JSON.stringify(init.body),
     signal: init.signal ?? null,
   });
   if (!response.ok) {
