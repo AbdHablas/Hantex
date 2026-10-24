@@ -231,10 +231,13 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   const english = page.getByRole('textbox', { name: 'Text (English)' });
   await english.click();
   await page.keyboard.type('We make switches. ');
-  await page
+  const bold = page
     .getByRole('toolbar', { name: 'Text formatting (Text (English))' })
-    .getByRole('button', { name: 'Bold' })
-    .click();
+    .getByRole('button', { name: 'Bold' });
+  await bold.click();
+  // Type only once bold is on and the cursor is back in the text.
+  await expect(bold).toHaveAttribute('aria-pressed', 'true');
+  await expect(english).toBeFocused();
   await page.keyboard.type('Quality first.');
   await expect(english.locator('strong')).toHaveText('Quality first.');
   await page.getByRole('button', { name: 'Save draft' }).click();
