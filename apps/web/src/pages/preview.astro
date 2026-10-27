@@ -38,7 +38,7 @@ const ctx =
         locale,
         locales: SITE.site.locales,
         defaultLocale: SITE.site.defaultLocale,
-        content: data.builder,
+        content: { ...data.builder, media: data.media ?? {} },
         settings: data['site-settings'],
         preview: true,
       })

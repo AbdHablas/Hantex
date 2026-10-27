@@ -17,8 +17,10 @@ export interface Env {
    * provider's plan; set it to your Resend plan's daily limit. Default 100.
    */
   ANNOUNCEMENT_DAILY_LIMIT?: string;
-  /** The media library's R2 bucket (D-044). */
+  /** The media library's private R2 bucket (D-044): every upload; only this API reads it. */
   MEDIA?: R2Bucket;
+  /** The public R2 bucket the site Workers serve `/media/` from: published and preview copies. */
+  MEDIA_PUBLIC?: R2Bucket;
   /** Most media each site may store, in megabytes (default 1024; R2's free plan has 10 GB). */
   MEDIA_SITE_QUOTA_MB?: string;
   EMAIL_FROM: string;

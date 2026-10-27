@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   ICONS,
   bilingual,
+  imageRefSchema,
   emptyText,
   itemId,
   linkSchema,
@@ -51,6 +52,8 @@ export type Field =
   | { kind: 'link'; key: string; label: Bilingual }
   | { kind: 'icon'; key: string; label: Bilingual }
   | { kind: 'toggle'; key: string; label: Bilingual }
+  /** One image from the website's media library. */
+  | { kind: 'image'; key: string; label: Bilingual }
   | {
       kind: 'select';
       key: string;
@@ -167,11 +170,37 @@ const newsletterSchema = z.strictObject({
 
 const dividerSchema = z.strictObject({ style: z.enum(['line', 'space']) });
 
+const imageSchema = z.strictObject({
+  image: imageRefSchema,
+  caption: bilingual(200),
+  link: linkSchema,
+});
+
+const imageTextSchema = z.strictObject({
+  image: imageRefSchema,
+  title: bilingual(120),
+  text: bilingual(800),
+  button: buttonSchema,
+  /** Which side the image is on, in the page's reading direction. */
+  imageSide: z.enum(['start', 'end']),
+});
+
+const galleryItem = z.strictObject({ id: itemId, image: imageRefSchema, caption: bilingual(200) });
+const gallerySchema = z.strictObject({
+  title: bilingual(120),
+  intro: bilingual(400),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+  items: z.array(galleryItem).min(1).max(24),
+});
+
 const id = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
 
 export const SECTION_TYPES = [
   'hero',
   'richText',
+  'image',
+  'imageText',
+  'gallery',
   'features',
   'cards',
   'cta',
@@ -231,6 +260,79 @@ export const SECTIONS = {
     schema: richTextSchema,
     defaults: () => ({ title: emptyText(), body: { ar: emptyRichDoc(), en: emptyRichDoc() } }),
     fields: [titleField, { kind: 'rich', key: 'body', label: L('Text', 'النص') }],
+  }),
+  image: define({
+    name: L('Image', 'صورة'),
+    description: L('One image with a caption.', 'صورة واحدة مع تعليق.'),
+    icon: 'Image',
+    category: 'content',
+    schema: imageSchema,
+    defaults: () => ({ image: null, caption: emptyText(), link: { type: 'none' as const } }),
+    fields: [
+      { kind: 'image', key: 'image', label: L('Image', 'الصورة') },
+      { kind: 'text', key: 'caption', label: L('Caption', 'التعليق'), max: 200 },
+      { kind: 'link', key: 'link', label: L('Link', 'الرابط') },
+    ],
+  }),
+  imageText: define({
+    name: L('Image and text', 'صورة ونص'),
+    description: L('An image beside a heading, text and a button.', 'صورة بجانب عنوان ونص وزر.'),
+    icon: 'PanelLeft',
+    category: 'content',
+    schema: imageTextSchema,
+    defaults: () => ({
+      image: null,
+      title: emptyText(),
+      text: emptyText(),
+      button: noButton(),
+      imageSide: 'start' as const,
+    }),
+    fields: [
+      { kind: 'image', key: 'image', label: L('Image', 'الصورة') },
+      titleField,
+      { kind: 'text', key: 'text', label: L('Text', 'النص'), max: 800, multiline: true },
+      { kind: 'button', key: 'button', label: L('Button', 'الزر') },
+      {
+        kind: 'select',
+        key: 'imageSide',
+        label: L('Image side', 'جهة الصورة'),
+        options: [
+          { value: 'start', label: L('Before the text', 'قبل النص') },
+          { value: 'end', label: L('After the text', 'بعد النص') },
+        ],
+      },
+    ],
+  }),
+  gallery: define({
+    name: L('Gallery', 'معرض صور'),
+    description: L('A grid of images with captions.', 'شبكة صور مع تعليقات.'),
+    icon: 'Images',
+    category: 'content',
+    schema: gallerySchema,
+    defaults: () => ({
+      title: emptyText(),
+      intro: emptyText(),
+      columns: 3 as const,
+      items: [{ id: id(), image: null, caption: emptyText() }],
+    }),
+    fields: [
+      titleField,
+      introField,
+      columnsField,
+      {
+        kind: 'list',
+        key: 'items',
+        label: L('Images', 'الصور'),
+        itemLabel: L('Image', 'صورة'),
+        min: 1,
+        max: 24,
+        newItem: () => ({ id: id(), image: null, caption: emptyText() }),
+        fields: [
+          { kind: 'image', key: 'image', label: L('Image', 'الصورة') },
+          { kind: 'text', key: 'caption', label: L('Caption', 'التعليق'), max: 200 },
+        ],
+      },
+    ],
   }),
   features: define({
     name: L('Features', 'المزايا'),
@@ -460,6 +562,9 @@ const variant = <T extends SectionType | 'saved', S extends z.ZodType>(type: T, 
 const contentVariants = [
   variant('hero', heroSchema),
   variant('richText', richTextSchema),
+  variant('image', imageSchema),
+  variant('imageText', imageTextSchema),
+  variant('gallery', gallerySchema),
   variant('features', featuresSchema),
   variant('cards', cardsSchema),
   variant('cta', ctaSchema),

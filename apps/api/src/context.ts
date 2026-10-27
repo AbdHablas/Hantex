@@ -14,6 +14,7 @@ export interface AppDeps {
   connectDb(env: Env): Promise<{ db: Database; close: () => Promise<void> }>;
   email(env: Env): EmailSender;
   media(env: Env): MediaStore;
+  publicMedia(env: Env): MediaStore;
   turnstile(env: Env): TurnstileVerifier;
   publisher(env: Env): Publisher;
   authPlugins?: BetterAuthPlugin[];

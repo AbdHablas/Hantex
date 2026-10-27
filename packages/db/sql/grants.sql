@@ -34,6 +34,8 @@ GRANT EXECUTE ON FUNCTION unsubscribe(uuid, uuid) TO hantex_public_app;
 
 -- Static site build: published content and theme, and the site's own configuration.
 GRANT SELECT ON document_versions, sites, site_domains TO hantex_build;
+-- What pages need to draw published images (D-044); not who uploaded them or their file names.
+GRANT SELECT (id, site_id, width, height, variants, alt, published_at) ON media_assets TO hantex_build;
 
 -- Nightly backups (D-010): read-only.
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO hantex_backup;

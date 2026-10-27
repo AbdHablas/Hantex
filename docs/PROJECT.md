@@ -94,7 +94,8 @@ admin.hantexultra.com ── Cloudflare Access (second lock)
        └─ Hono API ── Better Auth (passkeys)
             │  permission checked per website on every request
             ├──► Hyperdrive ──► PostgreSQL 18   one database, data scoped by website
-            ├──► R2 "hantex-media" (private)   media library
+            ├──► R2 "hantex-media" (private)   media library uploads
+            ├──► R2 "hantex-media-public"      published images, read by the site Workers
             └──► GitHub Actions: build and deploy one website on publish
 ```
 
@@ -293,7 +294,7 @@ The main data:
 
 **Media library** (Phase 3b)
 - **Step 1 (done):** private R2 bucket `hantex-media`, with keys of the form
-  `private|public/<site>/<asset>/<width>.webp`.
+  `private/<site>/<asset>/<width>.webp`.
 - **Step 2 (done):** the Media page.
   - Each image is stored at up to four widths (480, 960, 1600 and 2400 px),
     never larger than the original.
@@ -301,12 +302,16 @@ The main data:
     (`MEDIA_SITE_QUOTA_MB`, 1 GB by default).
   - Uploading is open to Owner, Administrator, Content Manager and Editor;
     deleting to Owner and Administrator only.
-- **Step 3 (next):**
-  - copy images to public storage when content using them is published, and
-    serve them from each website's own `/media/` address;
-  - signed links in previews;
-  - block deleting images that are in use;
-  - image, image-and-text and gallery sections.
+- **Step 3:**
+  - *(done)* image, image-and-text and gallery sections;
+  - *(done)* when *Publish changes* publishes pages that use an image, it is
+    copied to the public bucket `hantex-media-public`, and the website's own
+    Worker serves it at `/media/<image>/<width>.webp`, cached for a year;
+  - *(done)* previews show unpublished images through signed links that
+    expire with the preview;
+  - *(done)* images used by any page, draft or published, can't be deleted,
+    and publishing refuses pages that use an image no longer in the library;
+  - *(next)* choosing images in the section editor.
 
 **Backups (D-010):** the database host's built-in restore, plus nightly
 encrypted exports to R2 (30 daily and 12 monthly copies). The workflow is

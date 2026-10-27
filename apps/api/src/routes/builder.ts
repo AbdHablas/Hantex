@@ -3,6 +3,7 @@ import {
   checkSite,
   itemId,
   layoutSchema,
+  mediaIds,
   menusSchema,
   newPage,
   pageSchema,
@@ -27,6 +28,7 @@ import {
   saveDraft,
 } from '../lib/documents';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
+import { libraryIds, publishMedia } from '../lib/media-library';
 import { startRebuild } from '../lib/rebuild';
 import { draftContent, newRedirects, publishedContent, sameData } from '../lib/site-content';
 import { validate } from '../lib/validate';
@@ -392,7 +394,11 @@ export const builderRoutes = new Hono<AppEnv>()
     const content = await draftContent(v.db, v.site.id);
     return c.json({
       items: items.map(({ kind, key, allowed }) => ({ kind, key, allowed })),
-      issues: checkSite({ ...content, locales: v.site.locales }),
+      issues: checkSite({
+        ...content,
+        locales: v.site.locales,
+        media: await libraryIds(v.db, v.site.id),
+      }),
     });
   })
 
@@ -429,7 +435,11 @@ export const builderRoutes = new Hono<AppEnv>()
       let redirects: PagesIndex['redirects'] = [];
       if (touchesBuilder) {
         const next = await draftContent(v.db, v.site.id);
-        const issues = checkSite({ ...next, locales: v.site.locales });
+        const issues = checkSite({
+          ...next,
+          locales: v.site.locales,
+          media: await libraryIds(v.db, v.site.id),
+        });
         if (issues.length > 0) throw conflict('site-issues', { issues });
         redirects = newRedirects(await publishedContent(v.db, v.site.id), next);
       }
@@ -466,6 +476,16 @@ export const builderRoutes = new Hono<AppEnv>()
         }
       });
 
+      // The images the published pages now use become public before the site is rebuilt.
+      if (touchesBuilder) {
+        const live = await publishedContent(v.db, v.site.id);
+        await publishMedia(
+          v.db,
+          { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
+          v.site,
+          mediaIds([...live.pages.values(), live.saved]),
+        );
+      }
       const { job, result } = await startRebuild(c);
       await writeAudit(
         v.db,

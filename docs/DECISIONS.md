@@ -958,6 +958,13 @@ then the general product catalogue (Phase 3c, D-045).
   dimensions) and stores it in the site's private R2 space. Free; the Workers
   free plan's CPU limit rules out resizing on the server anyway. SVG logos are
   sanitised; fonts follow D-033.
+- **Implementation (2026-10-27):** two R2 buckets. `hantex-media` (private,
+  dashboard Worker only) holds every upload; `hantex-media-public` holds copies
+  of images that *published* pages use, which each site's Worker serves at
+  `/media/<image>/<width>.webp`, plus preview copies reachable only through
+  signed, expiring links. Site Workers get read access to the public bucket
+  only, so a site can never read unpublished uploads. Images any page uses
+  (draft or published) can't be deleted.
 
 ## D-045 — General catalogue
 

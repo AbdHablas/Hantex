@@ -64,3 +64,41 @@ export const ICONS = [
   'bell',
 ] as const;
 export type IconName = (typeof ICONS)[number];
+
+/** An image from the website's media library (D-044), or null for none yet. */
+export const imageRefSchema = z.strictObject({ mediaId: z.uuid() }).nullable();
+export type ImageRef = z.infer<typeof imageRefSchema>;
+
+/**
+ * What a site needs to draw one media library image: its size, the stored widths and the
+ * description in each language. Builds read it from the database; previews receive it signed.
+ */
+export const mediaInfoSchema = z.strictObject({
+  width: z.number().int().min(1).max(4096),
+  height: z.number().int().min(1).max(4096),
+  widths: z.array(z.number().int().min(10).max(4096)).min(1).max(8),
+  alt: bilingual(250),
+  /** Previews only: a signed link to a copy of an image that isn't published yet. */
+  preview: z.strictObject({ expires: z.number().int(), signature: z.string().max(128) }).optional(),
+});
+export type MediaInfo = z.infer<typeof mediaInfoSchema>;
+export const mediaMapSchema = z.record(z.uuid(), mediaInfoSchema);
+export type MediaMap = z.infer<typeof mediaMapSchema>;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Every media library image that some content uses (any `{ mediaId }` inside it). */
+export function mediaIds(value: unknown, into: Set<string> = new Set()): Set<string> {
+  if (Array.isArray(value)) {
+    for (const item of value) mediaIds(item, into);
+  } else if (value && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      if (key === 'mediaId' && typeof item === 'string' && UUID.test(item)) {
+        into.add(item.toLowerCase());
+      } else {
+        mediaIds(item, into);
+      }
+    }
+  }
+  return into;
+}

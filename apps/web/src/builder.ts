@@ -4,7 +4,9 @@ import {
   pagePath,
   type Bilingual,
   type ContentSection,
+  type ImageRef,
   type Link,
+  type MediaInfo,
   type Page,
 } from '@hantex/sections';
 import type { BuilderContent } from './site-data';
@@ -26,6 +28,42 @@ export interface RenderContext {
 
 export function renderContext(options: Omit<RenderContext, 'pages'>): RenderContext {
   return { ...options, pages: new Map(Object.entries(options.content.pages)) };
+}
+
+/** A media library image as drawn: its size, alternative text and every stored width. */
+export interface Picture {
+  src: string;
+  srcset: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
+/**
+ * The address of one stored width of an image (D-044): `/media/<id>/<width>.webp` once it is
+ * published, or a signed, short-lived link to a preview copy in draft previews.
+ */
+export function mediaSrc(id: string, info: MediaInfo, width: number): string {
+  if (!info.preview) return `/media/${id}/${width}.webp`;
+  const { expires, signature } = info.preview;
+  return `/media/preview/${id}/${width}.webp?expires=${expires}&signature=${signature}`;
+}
+
+/** An image ready to draw, or null when none is chosen or it isn't available. */
+export function pictureOf(ctx: RenderContext, image: ImageRef): Picture | null {
+  if (!image) return null;
+  const info = ctx.content.media?.[image.mediaId];
+  if (!info) return null;
+  const widths = [...info.widths].sort((a, b) => a - b);
+  // A middle width for browsers that ignore srcset; srcset lets the others pick.
+  const fallback = widths.find((w) => w >= 960) ?? widths.at(-1)!;
+  return {
+    src: mediaSrc(image.mediaId, info, fallback),
+    srcset: widths.map((w) => `${mediaSrc(image.mediaId, info, w)} ${w}w`).join(', '),
+    width: info.width,
+    height: info.height,
+    alt: pick(ctx, info.alt),
+  };
 }
 
 /** Pages a visitor can open: listed in the index and visible. */

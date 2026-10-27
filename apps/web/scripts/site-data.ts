@@ -19,11 +19,14 @@ import {
   checkSite,
   layoutSchema,
   localizedPath,
+  mediaIds,
+  mediaInfoSchema,
   menusSchema,
   pagePath,
   pageSchema,
   pagesIndexSchema,
   savedSectionsSchema,
+  type MediaMap,
   type Page,
 } from '@hantex/sections';
 import {
@@ -108,6 +111,8 @@ async function fromDatabase(url: string): Promise<SiteData> {
         [site.id],
       )
     ).rows;
+    const builder = site.mode === 'live' ? builderContent(builderRows) : null;
+    if (builder) builder.media = await publishedMedia(client, site.id, builder);
     return {
       source: 'database',
       site: {
@@ -131,7 +136,7 @@ async function fromDatabase(url: string): Promise<SiteData> {
       comingSoon: comingSoon ? comingSoonSchema.parse(comingSoon.data) : DEFAULT_COMING_SOON,
       settings: settings ? siteSettingsSchema.parse(settings.data) : DEFAULT_SITE_SETTINGS,
       theme: theme ? themeSchema.parse(theme.data) : brandTheme,
-      builder: site.mode === 'live' ? builderContent(builderRows) : null,
+      builder,
     };
   } finally {
     await client.end();
@@ -156,6 +161,41 @@ function builderContent(rows: { kind: string; key: string; data: unknown }[]): B
     layout: layoutSchema.parse(row('layout')?.data ?? DEFAULT_LAYOUT),
     saved: savedSectionsSchema.parse(row('saved-sections')?.data ?? DEFAULT_SAVED_SECTIONS),
   };
+}
+
+/**
+ * The published media library images the pages use (D-044): their sizes, stored widths and
+ * descriptions. The files themselves are served by the site Worker from the public bucket.
+ */
+async function publishedMedia(
+  client: pg.Client,
+  siteId: string,
+  builder: BuilderContent,
+): Promise<MediaMap> {
+  const ids = [...mediaIds([Object.values(builder.pages), builder.saved])];
+  if (ids.length === 0) return {};
+  const rows = (
+    await client.query<{
+      id: string;
+      width: number;
+      height: number;
+      variants: { width: number }[];
+      alt: unknown;
+    }>(
+      'select id, width, height, variants, alt from media_assets where site_id = $1 and id = any($2::uuid[]) and published_at is not null',
+      [siteId, ids],
+    )
+  ).rows;
+  const media: MediaMap = {};
+  for (const row of rows) {
+    media[row.id] = mediaInfoSchema.parse({
+      width: row.width,
+      height: row.height,
+      widths: row.variants.map((v) => v.width),
+      alt: row.alt,
+    });
+  }
+  return media;
 }
 
 /** Turnstile's public site key; Cloudflare's always-passing test key outside production. */
@@ -234,6 +274,8 @@ if (builder) {
     ...builder,
     pages: new Map(Object.entries(builder.pages)),
     locales: data.site.locales,
+    // Every image the pages use must be published (copied to the public bucket).
+    media: new Set(Object.keys(builder.media ?? {})),
   });
   if (issues.length > 0) {
     fail(`the published pages fail the site checks: ${issues.map((i) => i.code).join(', ')}`);

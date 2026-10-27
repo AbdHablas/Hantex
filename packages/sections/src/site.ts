@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { RESERVED_SLUGS, bilingual, emptyText, itemId, linkSchema, slugSchema } from './primitives';
+import {
+  RESERVED_SLUGS,
+  bilingual,
+  emptyText,
+  itemId,
+  linkSchema,
+  mediaIds,
+  slugSchema,
+} from './primitives';
 import type { Bilingual, Link } from './primitives';
 import { contentSectionSchema, sectionSchema } from './registry';
 
@@ -144,7 +152,8 @@ export interface SiteIssue {
     | 'nested-too-deep'
     | 'missing-title'
     | 'broken-link'
-    | 'missing-saved-section';
+    | 'missing-saved-section'
+    | 'missing-image';
   /** The page or menu item concerned. */
   target: string;
   detail?: string;
@@ -158,6 +167,8 @@ export interface SiteDraft {
   /** Saved sections the pages may reference; none when left out. */
   saved?: SavedSections;
   locales: readonly string[];
+  /** The website's media library images; when given, images that no longer exist are reported. */
+  media?: ReadonlySet<string>;
 }
 
 /**
@@ -231,6 +242,19 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
   for (const savedId of used) {
     const item = saved.get(savedId);
     if (item) for (const link of linksInSection(item.section)) checkLink(link, `saved:${savedId}`);
+  }
+  if (site.media) {
+    const checkImages = (value: unknown, target: string) => {
+      for (const mediaId of mediaIds(value)) {
+        if (!site.media?.has(mediaId))
+          issues.push({ code: 'missing-image', target, detail: mediaId });
+      }
+    };
+    for (const pageId of index.order) {
+      const page = pages.get(pageId);
+      if (page?.visible) checkImages(page, `page:${pageId}`);
+    }
+    for (const savedId of used) checkImages(saved.get(savedId), `saved:${savedId}`);
   }
   return issues;
 }

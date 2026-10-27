@@ -141,8 +141,11 @@ end.
 - **Accepted files:** an allow-list of types and sizes, checked by content,
   not just by extension. Files are stored under random keys in R2 and served
   with safe content types.
-- **Uploads go straight to private storage.** They use short-lived, signed,
-  single-object upload links and never pass through a public bucket.
+- **Uploads go straight to private storage.** Images (D-044) are uploaded through the
+  dashboard API into a private bucket only the dashboard Worker can read. An image is
+  copied to the public bucket only when published pages use it; previews of unpublished
+  images use separate copies served only through links signed for that site and image,
+  which expire with the preview. Site Workers can read the public bucket only.
 - **Photos:** location and other metadata (EXIF/GPS) are removed. Image
   dimensions are limited, to protect against decompression bombs.
 - **SVG:** parsed and rebuilt from an allow-list. Scripts, event handlers,

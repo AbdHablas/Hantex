@@ -1,6 +1,9 @@
 /**
  * Media file storage (D-044): Cloudflare R2 in production and `wrangler dev`, memory in tests.
- * Keys are `private/<siteId>/<assetId>/<width>.webp`; published copies live under `public/`.
+ * Two buckets: the private one, which only this API can read, holds every upload under
+ * `private/<siteId>/<assetId>/<width>.webp`; the public one, which the site Workers read, holds
+ * copies of published images under `sites/<siteKey>/…` and short-lived preview copies under
+ * `preview/<siteKey>/…` (removed by the bucket's lifecycle rule, docs/deployment.md).
  */
 export interface StoredFile {
   body: ReadableStream | ArrayBuffer;
@@ -11,15 +14,26 @@ export interface StoredFile {
 export interface MediaStore {
   put(key: string, body: ArrayBuffer, contentType: string): Promise<void>;
   get(key: string): Promise<StoredFile | null>;
+  has(key: string): Promise<boolean>;
   delete(keys: string[]): Promise<void>;
 }
 
-export const mediaKey = (
-  space: 'private' | 'public',
-  siteId: string,
-  assetId: string,
-  width: number,
-) => `${space}/${siteId}/${assetId}/${width}.webp`;
+export const privateKey = (siteId: string, assetId: string, width: number) =>
+  `private/${siteId}/${assetId}/${width}.webp`;
+export const publicKey = (siteKey: string, assetId: string, width: number) =>
+  `sites/${siteKey}/${assetId}/${width}.webp`;
+export const previewKey = (siteKey: string, assetId: string, width: number) =>
+  `preview/${siteKey}/${assetId}/${width}.webp`;
+
+/** Copies one file between buckets (R2 bindings have no server-side copy). */
+export async function copyFile(from: MediaStore, fromKey: string, to: MediaStore, toKey: string) {
+  const file = await from.get(fromKey);
+  if (!file) return false;
+  const body =
+    file.body instanceof ArrayBuffer ? file.body : await new Response(file.body).arrayBuffer();
+  await to.put(toKey, body, file.contentType);
+  return true;
+}
 
 export function r2Store(bucket: R2Bucket): MediaStore {
   return {
@@ -34,6 +48,9 @@ export function r2Store(bucket: R2Bucket): MediaStore {
         contentType: object.httpMetadata?.contentType ?? 'application/octet-stream',
         size: object.size,
       };
+    },
+    async has(key) {
+      return (await bucket.head(key)) !== null;
     },
     async delete(keys) {
       if (keys.length > 0) await bucket.delete(keys);
@@ -53,6 +70,9 @@ export function memoryStore(): MediaStore & { files: Map<string, StoredFile> } {
     get(key) {
       const file = files.get(key);
       return Promise.resolve(file ? { ...file, body: (file.body as ArrayBuffer).slice(0) } : null);
+    },
+    has(key) {
+      return Promise.resolve(files.has(key));
     },
     delete(keys) {
       for (const key of keys) files.delete(key);

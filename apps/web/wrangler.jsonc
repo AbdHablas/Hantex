@@ -15,6 +15,9 @@
     // The dashboard (apps/api APP_ORIGIN): the only page that may show draft previews in a frame.
     "DASHBOARD_ORIGIN": "https://admin.hantexultra.com",
   },
+  // Published media library images (D-044), served as /media/<id>/<width>.webp. The dashboard
+  // API writes this bucket; site Workers only read it.
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "hantex-media-public" }],
   "hyperdrive": [
     {
       // The insert-only public database user (hantex_public_app), caching disabled.

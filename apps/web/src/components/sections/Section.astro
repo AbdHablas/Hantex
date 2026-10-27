@@ -6,7 +6,10 @@ import Contact from './Contact.astro';
 import Cta from './Cta.astro';
 import Faq from './Faq.astro';
 import Features from './Features.astro';
+import Gallery from './Gallery.astro';
 import Hero from './Hero.astro';
+import Image from './Image.astro';
+import ImageText from './ImageText.astro';
 import Newsletter from './Newsletter.astro';
 import RichTextSection from './RichTextSection.astro';
 import Stats from './Stats.astro';
@@ -49,6 +52,9 @@ const classes = [
         <div class:list={['container', `w-${style.width}`]}>
           {section.type === 'hero' && <Hero section={section} ctx={ctx} main={main} />}
           {section.type === 'richText' && <RichTextSection section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'image' && <Image section={section} ctx={ctx} />}
+          {section.type === 'imageText' && <ImageText section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'gallery' && <Gallery section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'features' && <Features section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'cards' && <Cards section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'cta' && <Cta section={section} ctx={ctx} headingId={headingId} />}

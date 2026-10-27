@@ -1,0 +1,26 @@
+---
+import type { Picture } from '../../builder';
+
+/**
+ * A media library image (D-044): every stored width in srcset so the browser loads the smallest
+ * that fits, with the real size reserved so the page doesn't jump while it loads.
+ */
+interface Props {
+  picture: Picture;
+  sizes: string;
+  class?: string;
+}
+const { picture, sizes, class: className } = Astro.props;
+---
+
+<img
+  class:list={['bx-img', className]}
+  src={picture.src}
+  srcset={picture.srcset}
+  sizes={sizes}
+  width={picture.width}
+  height={picture.height}
+  alt={picture.alt}
+  loading="lazy"
+  decoding="async"
+/>

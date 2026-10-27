@@ -17,6 +17,10 @@ const app = createApp({
     if (!env.MEDIA) throw new Error('The MEDIA bucket binding is not configured');
     return r2Store(env.MEDIA);
   },
+  publicMedia: (env) => {
+    if (!env.MEDIA_PUBLIC) throw new Error('The MEDIA_PUBLIC bucket binding is not configured');
+    return r2Store(env.MEDIA_PUBLIC);
+  },
   turnstile: (env) => cloudflareTurnstile(env.TURNSTILE_SECRET_KEY),
   publisher: (env) =>
     env.PUBLISH_TRIGGER_TOKEN && env.PUBLISH_REPOSITORY

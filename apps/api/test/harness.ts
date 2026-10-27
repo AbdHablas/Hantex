@@ -41,6 +41,7 @@ export interface Harness {
   app: ReturnType<typeof createApp>;
   mail: ReturnType<typeof memorySender>;
   media: ReturnType<typeof memoryStore>;
+  publicMedia: ReturnType<typeof memoryStore>;
   dispatched: { jobId: string; siteKey: string }[];
   turnstile: { pass: boolean };
   sites: { a: string; b: string };
@@ -75,6 +76,7 @@ export async function createHarness(): Promise<Harness> {
 
   const mail = memorySender();
   const media = memoryStore();
+  const publicMedia = memoryStore();
   const dispatched: { jobId: string; siteKey: string }[] = [];
   const turnstile = { pass: true };
   const publisher: Publisher = {
@@ -88,6 +90,7 @@ export async function createHarness(): Promise<Harness> {
     connectDb: () => Promise.resolve({ db: appDb.db, close: () => Promise.resolve() }),
     email: () => mail,
     media: () => media,
+    publicMedia: () => publicMedia,
     turnstile: () => ({ verify: () => Promise.resolve(turnstile.pass) }),
     publisher: () => publisher,
     rateLimits: false,
@@ -124,6 +127,7 @@ export async function createHarness(): Promise<Harness> {
     app,
     mail,
     media,
+    publicMedia,
     dispatched,
     turnstile,
     sites,

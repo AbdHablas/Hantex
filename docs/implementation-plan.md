@@ -154,12 +154,14 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] Media page: images resized to WebP on the device, which removes camera and location
         details (D-044); description in both languages; deletion by Owner and Administrator
         (step 2);
-  - [ ] public copies on publish, served from each site's `/media/`; signed links in previews;
+  - [x] public copies on publish, served from each site's `/media/`; signed links in previews;
         images in use can't be deleted (step 3);
+  - [ ] choosing images in the section editor;
   - SVG sanitiser;
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).
 - [ ] Image, gallery, video and image-and-text sections; sharing images per page
+      — *image, image-and-text and gallery done; video and sharing images to come*
 
 ### 3c. Catalogue and studio
 

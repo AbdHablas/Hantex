@@ -501,6 +501,17 @@ describe('least-privilege database users', () => {
     await expect(asRole('hantex_build', 'select * from subscribers')).rejects.toThrow(
       permissionDenied,
     );
+    // Published images: only what a page needs to draw them, not file names or uploaders.
+    await asRole(
+      'hantex_build',
+      'select id, width, height, variants, alt, published_at from media_assets',
+    );
+    await expect(asRole('hantex_build', 'select name from media_assets')).rejects.toThrow(
+      permissionDenied,
+    );
+    await expect(asRole('hantex_build', 'select created_by from media_assets')).rejects.toThrow(
+      permissionDenied,
+    );
   });
 
   it('gives the backup user read access to everything and nothing else', async () => {

@@ -1,13 +1,14 @@
 import { siteDomains } from '@hantex/db/worker';
 import { and, eq, ne } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { itemId } from '@hantex/sections';
+import { itemId, mediaIds } from '@hantex/sections';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { DOCUMENTS, KINDS, currentDraft, latestPublished } from '../lib/documents';
 import { conflict, forbidden, notFound } from '../lib/errors';
 import { draftContent, publishedContent } from '../lib/site-content';
-import { signPreview } from '../lib/preview';
+import { previewMedia } from '../lib/media-library';
+import { PREVIEW_TTL_SECONDS, signPreview } from '../lib/preview';
 import { validate } from '../lib/validate';
 import { requirePermission } from '../middleware/session';
 
@@ -80,6 +81,15 @@ export const previewRoutes = new Hono<AppEnv>().post(
         saved: content.saved,
       };
       if (page) data['page'] = { id: page, locale: locale ?? v.site.defaultLocale };
+      // The images the shown page uses, with signed links to copies of unpublished ones.
+      data['media'] = await previewMedia(
+        v.db,
+        { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
+        v.site,
+        c.env.PREVIEW_SIGNING_SECRET,
+        mediaIds([page ? content.pages.get(page) : null, content.saved]),
+        Math.floor(Date.now() / 1000) + PREVIEW_TTL_SECONDS,
+      );
     }
     const fields = await signPreview(c.env.PREVIEW_SIGNING_SECRET, { site: v.site.key, data });
     return c.json({ action: `https://${primary.hostname}/preview`, fields });

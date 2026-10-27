@@ -4,6 +4,7 @@ import {
   SECTION_TYPES,
   checkSite,
   localizedPath,
+  mediaIds,
   menusSchema,
   newPage,
   newSection,
@@ -250,5 +251,43 @@ describe('privacy policy draft (D-041)', () => {
     expect(en).toContain('Hantex Ultra');
     expect(ar).toContain('مسودة للمراجعة');
     expect(ar).toContain('هانتكس ألترا');
+  });
+});
+
+describe('media library images', () => {
+  const A = '0b6f5d0e-3c1a-4c2e-9a51-2f4d8e7b6a10';
+  const B = '1b6f5d0e-3c1a-4c2e-9a51-2f4d8e7b6a10';
+  const withImages = (): Page => {
+    const image = newSection('image');
+    image.settings.image = { mediaId: A };
+    const gallery = newSection('gallery');
+    gallery.settings.items[0]!.image = { mediaId: B.toUpperCase() };
+    return { ...newPage({ ar: 'ص', en: 'P' }, 'home'), sections: [image, gallery] };
+  };
+
+  it('finds every image some content uses, and nothing else', () => {
+    expect([...mediaIds(withImages())].sort()).toEqual([A, B]);
+    // Text that happens to look like an id is not an image.
+    const text = newSection('richText');
+    text.settings.title = { ar: A, en: A };
+    expect(mediaIds(text).size).toBe(0);
+    expect(mediaIds({ mediaId: 'not-an-id' }).size).toBe(0);
+  });
+
+  it('accepts sections without an image yet, and refuses anything but a media id', () => {
+    expect(sectionSchema.safeParse(newSection('imageText')).success).toBe(true);
+    const bad = newSection('image') as { settings: { image: unknown } };
+    bad.settings.image = { mediaId: 'https://example.com/x.png' };
+    expect(sectionSchema.safeParse(bad).success).toBe(false);
+    bad.settings.image = { mediaId: A, src: '/x.png' };
+    expect(sectionSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('reports published pages that use images missing from the library', () => {
+    const site = draft([['home00', withImages()]]);
+    expect(checkSite(site).map((i) => i.code)).not.toContain('missing-image');
+    const issues = checkSite({ ...site, media: new Set([A]) });
+    expect(issues).toEqual([{ code: 'missing-image', target: 'page:home00', detail: B }]);
+    expect(checkSite({ ...site, media: new Set([A, B]) })).toEqual([]);
   });
 });

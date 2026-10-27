@@ -5,7 +5,9 @@ import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
 import { badRequest, conflict, notFound } from '../lib/errors';
-import { mediaKey } from '../lib/media-store';
+import { usesOf, type Variant } from '../lib/media-library';
+import { previewKey, privateKey, publicKey } from '../lib/media-store';
+import { draftContent, publishedContent } from '../lib/site-content';
 import { validate } from '../lib/validate';
 import { readWebp } from '../lib/webp';
 import { requirePermission } from '../middleware/session';
@@ -32,12 +34,6 @@ const metaSchema = z.strictObject({
   name: z.string().trim().min(1).max(120),
   alt: bilingual,
 });
-
-export interface Variant {
-  width: number;
-  height: number;
-  bytes: number;
-}
 
 const quotaBytes = (env: AppEnv['Bindings']) => {
   const mb = Number(env.MEDIA_SITE_QUOTA_MB ?? 1024);
@@ -150,7 +146,7 @@ export const mediaRoutes = new Hono<AppEnv>()
     const id = crypto.randomUUID();
     const store = v.deps.media(c.env);
     for (const file of files) {
-      await store.put(mediaKey('private', v.site.id, id, file.width), file.data, 'image/webp');
+      await store.put(privateKey(v.site.id, id, file.width), file.data, 'image/webp');
     }
     await v.db.insert(mediaAssets).values({
       id,
@@ -191,7 +187,7 @@ export const mediaRoutes = new Hono<AppEnv>()
         .from(mediaAssets)
         .where(and(eq(mediaAssets.id, id), eq(mediaAssets.siteId, v.site.id)));
       if (!row || !(row.variants as Variant[]).some((x) => x.width === width)) throw notFound();
-      const stored = await v.deps.media(c.env).get(mediaKey('private', v.site.id, id, width));
+      const stored = await v.deps.media(c.env).get(privateKey(v.site.id, id, width));
       if (!stored) throw notFound();
       return new Response(stored.body, {
         headers: {
@@ -226,20 +222,22 @@ export const mediaRoutes = new Hono<AppEnv>()
   .delete('/:id', requirePermission('media.delete'), idParam, async (c) => {
     const v = c.var;
     const { id } = c.req.valid('param');
+    // Images that pages use, as drafts or as published, stay until those pages stop using them.
+    const draft = usesOf(await draftContent(v.db, v.site.id), id);
+    const live = usesOf(await publishedContent(v.db, v.site.id), id);
+    const pages = [...new Map([...draft.pages, ...live.pages].map((p) => [p.id, p])).values()];
+    const saved = [...new Map([...draft.saved, ...live.saved].map((s) => [s.id, s])).values()];
+    if (pages.length > 0 || saved.length > 0) throw conflict('media-in-use', { pages, saved });
     const [row] = await v.db
       .delete(mediaAssets)
       .where(and(eq(mediaAssets.id, id), eq(mediaAssets.siteId, v.site.id)))
       .returning();
     if (!row) throw notFound();
     const widths = (row.variants as Variant[]).map((x) => x.width);
+    await v.deps.media(c.env).delete(widths.map((w) => privateKey(v.site.id, id, w)));
     await v.deps
-      .media(c.env)
-      .delete(
-        widths.flatMap((w) => [
-          mediaKey('private', v.site.id, id, w),
-          mediaKey('public', v.site.id, id, w),
-        ]),
-      );
+      .publicMedia(c.env)
+      .delete(widths.flatMap((w) => [publicKey(v.site.key, id, w), previewKey(v.site.key, id, w)]));
     await writeAudit(
       v.db,
       auditActor(v),

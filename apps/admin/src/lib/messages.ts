@@ -672,6 +672,7 @@ const en = {
     'issue.missing-title': 'A page has no title in {detail}.',
     'issue.broken-link': 'A link leads to a page that is hidden or deleted.',
     'issue.missing-saved-section': 'A page uses a saved section that no longer exists.',
+    'issue.missing-image': 'A page uses an image that is no longer in the media library.',
     issueWhere: 'In: {where}',
     // Menus and layout
     menusTitle: 'Menus, header & footer',
@@ -1505,6 +1506,7 @@ const ar: Messages = {
     'issue.missing-title': 'صفحة بلا عنوان باللغة {detail}.',
     'issue.broken-link': 'رابط يؤدي إلى صفحة مخفية أو محذوفة.',
     'issue.missing-saved-section': 'صفحة تستخدم قسمًا محفوظًا لم يعد موجودًا.',
+    'issue.missing-image': 'صفحة تستخدم صورة لم تعد في مكتبة الوسائط.',
     issueWhere: 'في: {where}',
     menusTitle: 'القوائم والرأس والتذييل',
     menusIntro: 'ما يراه الزوار أعلى كل صفحة من صفحات هذا الموقع وأسفلها.',

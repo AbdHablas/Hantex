@@ -1,0 +1,30 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { hrefOf, pick, pictureOf, type RenderContext } from '../../builder';
+import Picture from './Picture.astro';
+
+interface Props {
+  section: SectionOf<'image'>;
+  ctx: RenderContext;
+}
+const { section, ctx } = Astro.props;
+const s = section.settings;
+const picture = pictureOf(ctx, s.image);
+const caption = pick(ctx, s.caption);
+const target = hrefOf(ctx, s.link);
+---
+
+{
+  picture && (
+    <figure class="bx-figure">
+      {target ? (
+        <a href={target.href} rel={target.external ? 'noopener' : undefined}>
+          <Picture picture={picture} sizes="(min-width: 75rem) 72rem, 100vw" />
+        </a>
+      ) : (
+        <Picture picture={picture} sizes="(min-width: 75rem) 72rem, 100vw" />
+      )}
+      {caption && <figcaption>{caption}</figcaption>}
+    </figure>
+  )
+}

@@ -1,0 +1,35 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, pictureOf, type RenderContext } from '../../builder';
+import Heading from './Heading.astro';
+import Picture from './Picture.astro';
+
+interface Props {
+  section: SectionOf<'gallery'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const items = s.items.flatMap((item) => {
+  const picture = pictureOf(ctx, item.image);
+  return picture ? [{ id: item.id, picture, caption: pick(ctx, item.caption) }] : [];
+});
+const sizes = `(min-width: 64rem) ${Math.ceil(72 / s.columns)}rem, (min-width: 40rem) 50vw, 100vw`;
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.intro} id={headingId} />
+{
+  items.length > 0 && (
+    <ul class:list={['bx-grid', 'bx-gallery', `cols-${s.columns}`]}>
+      {items.map((item) => (
+        <li>
+          <figure class="bx-figure">
+            <Picture picture={item.picture} sizes={sizes} />
+            {item.caption && <figcaption>{item.caption}</figcaption>}
+          </figure>
+        </li>
+      ))}
+    </ul>
+  )
+}

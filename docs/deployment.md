@@ -25,7 +25,8 @@ production data is never used in development or tests.
 | R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |
 | R2 bucket `studio` (private) | 3D Studio originals, CAD files, intermediate files and unapproved models ([`3d-product-studio.md`](3d-product-studio.md)) |
 | R2 bucket `backups` (private) | Encrypted nightly database exports (D-010) |
-| R2 bucket `hantex-media` (private) | The media library (D-044): each site's images under `private/<site>/`; published copies under `public/<site>/`, served by that site's Worker |
+| R2 bucket `hantex-media` (private) | The media library (D-044): every upload, under `private/<site id>/<image>/<width>.webp`. Bound to the dashboard Worker only (`MEDIA`) |
+| R2 bucket `hantex-media-public` | Copies of published images under `sites/<site key>/…`, which each site's Worker serves as `/media/<image>/<width>.webp`, and short-lived preview copies under `preview/<site key>/…`, served only through signed links. The dashboard Worker writes it (`MEDIA_PUBLIC`); site Workers read it (`MEDIA`). No public bucket address or custom domain is needed. **Lifecycle rule (added once by the owner):** delete objects under `preview/` after 1 day |
 | Turnstile | Spam protection on sign-up and sign-in |
 | Cloudflare Access (Zero Trust free) | Second lock in front of the dashboard and previews |
 | Workers Logs, Cron Triggers | Monitoring, health checks, scheduled publishing. The Free plan allows 5 Cron Triggers per account, so one shared schedule serves all sites. |

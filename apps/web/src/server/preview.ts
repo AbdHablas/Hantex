@@ -1,6 +1,7 @@
 import {
   itemId,
   layoutSchema,
+  mediaMapSchema,
   menusSchema,
   pageSchema,
   pagesIndexSchema,
@@ -33,6 +34,8 @@ const payloadSchema = z.object({
       })
       .optional(),
     page: z.object({ id: itemId, locale: z.enum(LOCALES) }).optional(),
+    /** The images the previewed page uses (D-044). */
+    media: mediaMapSchema.optional(),
   }),
 });
 
@@ -64,6 +67,24 @@ export async function verifyPreview(
   } catch {
     return null;
   }
+}
+
+/**
+ * Checks a preview image link (apps/api/src/lib/media-library.ts): signed for this site and
+ * image, and not yet expired.
+ */
+export async function verifyPreviewMedia(
+  secret: string,
+  siteKey: string,
+  mediaId: string,
+  expires: string | null,
+  signature: string | null,
+  now = Date.now(),
+): Promise<boolean> {
+  const at = Number(expires);
+  if (!secret || !signature || !Number.isInteger(at) || at * 1000 < now) return false;
+  const expected = await hmacHex(secret, `media:${siteKey}:${mediaId}:${at}`);
+  return timingSafeEqual(signature, expected);
 }
 
 /**

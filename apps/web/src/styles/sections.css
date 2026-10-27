@@ -606,3 +606,40 @@
   border: 0;
   border-top: 1px solid var(--s-border);
 }
+
+/* Images from the media library (D-044). */
+.bx-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+}
+.bx-figure {
+  margin: 0;
+}
+.bx-figure figcaption {
+  margin-top: 0.5rem;
+  color: var(--s-muted);
+  font-size: 0.9375rem;
+  text-align: start;
+}
+.bx-gallery .bx-img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+/* Image and text: stacked on phones, side by side from tablets; the image leads or follows. */
+.bx-split {
+  display: grid;
+  gap: 1.5rem;
+  align-items: center;
+}
+@media (min-width: 48rem) {
+  .bx-split:not(.no-img) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3rem;
+  }
+  .bx-split.img-end .bx-split-img {
+    order: 2;
+  }
+}
