@@ -1,8 +1,8 @@
 import { createPoolDb } from '../client';
 import { FIRST_SITE, ensureSite, syncStandardRoles } from '../seed';
-import { requireEnv } from './env';
+import { ownerDatabaseUrl } from './env';
 
-const { db, close } = createPoolDb(requireEnv('DATABASE_URL'), 1);
+const { db, close } = createPoolDb(ownerDatabaseUrl(), 1);
 try {
   await syncStandardRoles(db);
   console.info('Standard roles are in place.');

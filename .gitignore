@@ -37,3 +37,4 @@ apps/web/public/_redirects
 # Local agent worktrees
 .claude/worktrees/
 apps/web/.e2e/
+.neon

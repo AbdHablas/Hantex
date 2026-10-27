@@ -1,6 +1,6 @@
 import { createPoolDb } from '../client';
 import { createOwnerSetupInvitation, SETUP_INVITATION_HOURS } from '../setup-owner';
-import { requireEnv } from './env';
+import { ownerDatabaseUrl, requireEnv } from './env';
 
 // Usage: DATABASE_URL=… APP_ORIGIN=https://admin.hantexultra.com pnpm --filter @hantex/db setup-owner owner@example.com
 // Prints the setup link once. Send it to the Owner privately; it is not stored anywhere.
@@ -10,7 +10,7 @@ if (!email) {
   process.exit(1);
 }
 
-const { db, close } = createPoolDb(requireEnv('DATABASE_URL'), 1);
+const { db, close } = createPoolDb(ownerDatabaseUrl(), 1);
 try {
   const { link, expiresAt } = await createOwnerSetupInvitation(db, {
     email,

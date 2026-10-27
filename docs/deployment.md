@@ -55,6 +55,16 @@ minutes idle (the first request after a quiet spell wakes it), 5 GB network
 transfer a month ([Neon plans](https://neon.com/docs/introduction/plans)).
 Files are in R2, so the database holds only content and settings.
 
+**Linked project:** `neon.ts` declares the Neon services (Postgres only), and
+`neon init` links this repository to the Hantex project (`.neon`,
+git-ignored). `neon deploy` applies `neon.ts` to the linked branch and writes
+`DATABASE_URL` (pooled), `DATABASE_URL_UNPOOLED` (direct) and `NEON_BRANCH`
+to `.env.local`, which is git-ignored and never committed. The database
+scripts (`migrate`, `roles`, `seed`, `setup-owner`) use the direct
+connection from it when none is set in the environment, and print the Neon
+branch they are about to change. The production branch is in AWS
+`us-east-2`.
+
 Branches: production, preview, development. Database users with least
 privilege: migrations (schema changes), dashboard (read/write), public site
 (insert sign-ups, read published content only), backups (read-only).
