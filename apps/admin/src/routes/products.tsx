@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Copy,
   EyeOff,
+  FileSpreadsheet,
   FileText,
   FolderTree,
   History,
@@ -23,6 +24,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { DocumentsField } from '../components/catalogue/DocumentsField';
+import { SheetDialog } from '../components/catalogue/SheetDialog';
 import { BilingualField } from '../components/document';
 import { ImageField } from '../components/builder/ImageField';
 import { PublishBar } from '../components/builder/PublishBar';
@@ -168,6 +170,7 @@ export function ProductsList() {
   const { site, siteKey, can } = useCurrentSite();
   const listing = useCatalogue();
   const [creating, setCreating] = useState(false);
+  const [sheet, setSheet] = useState(false);
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
   // The order shown while a reorder is being saved, so the row doesn't jump back.
@@ -220,15 +223,23 @@ export function ProductsList() {
         title={t.productsTitle}
         intro={t.productsIntro}
         actions={
-          editable &&
           structure.categories.length > 0 && (
-            <Button onClick={() => setCreating(true)}>
-              <Plus aria-hidden />
-              {t.newProduct}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => setSheet(true)}>
+                <FileSpreadsheet aria-hidden />
+                {t.sheetButton}
+              </Button>
+              {editable && (
+                <Button onClick={() => setCreating(true)}>
+                  <Plus aria-hidden />
+                  {t.newProduct}
+                </Button>
+              )}
+            </div>
           )
         }
       />
+      <SheetDialog open={sheet} onClose={() => setSheet(false)} />
       <div className="grid gap-5">
         <PublishBar />
         <ErrorText error={error} />

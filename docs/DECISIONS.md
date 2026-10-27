@@ -1037,8 +1037,28 @@ then the general product catalogue (Phase 3c, D-045).
   a product start unverified. Every catalogue change that reads and writes
   back the catalogue, and *Publish changes* itself, holds a per-site lock (a
   Postgres advisory lock), so simultaneous saves can't lose products and what
-  is checked is exactly what is published. Still to come: CSV/Excel import
-  and export, and the public product pages (Phase 4).
+  is checked is exactly what is published.
+- **Implementation note (catalogue stage 3, 2026-10-28):** products and
+  variants can be exported and imported as Excel (.xlsx) or CSV, one row per
+  variant (columns in `docs/product-catalogue.md`).
+  - **Matching.** Rows match products by id, or by address when the id is
+    empty; other rows add new products, which start hidden. Only the columns in
+    the file change. Photos, documents and certificate verification are never in
+    the file and are kept. Variants match by id or code. An import never deletes
+    a product.
+  - **Two checks.** The dashboard reads the file and checks every row with the
+    same shared code the API uses (`packages/sections`, `catalogue-sheet.ts`),
+    listing problems by row and column; nothing is saved until the file is
+    clean. The API then saves in batches of 100 products under the catalogue
+    lock. Each product is checked by the product form's own schema and
+    references, and one problem refuses its whole batch. Running the same file
+    again is safe: saved products then show as unchanged.
+  - **Files.** Excel files are read and written in the browser with the small
+    `fflate` zip library (MIT), instead of a large spreadsheet package. Written
+    workbooks hold inline text and numbers only, never formulas. CSV cells that
+    could run as formulas get a leading `'`, which an import removes. Reading
+    and writing were checked against openpyxl and LibreOffice.
+  - **Still to come:** the public product pages (Phase 4).
 
 ## D-046 — Videos
 

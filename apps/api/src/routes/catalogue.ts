@@ -9,9 +9,11 @@ import {
   finishSchema,
   itemId,
   keepVerification,
+  mergeSheetProduct,
   newProduct,
   productSchema,
   seriesSchema,
+  sheetImportSchema,
   slugSchema,
   type Catalogue,
   type DocumentRef,
@@ -254,6 +256,120 @@ export const catalogueRoutes = new Hono<AppEnv>()
         await saveDraft(tx, v.site.id, 'catalogue', { ...catalogue, products }, v.access.userId);
       });
       return c.json({ ok: true });
+    },
+  )
+
+  /* ------------------------------------- Spreadsheet import/export ------------------------------------- */
+
+  /** Everything a spreadsheet export needs, and what an import is compared with (D-045). */
+  .get('/export', requirePermission('catalogue.view'), async (c) => {
+    const content = await draftCatalogue(c.var.db, c.var.site.id);
+    return c.json({
+      catalogue: content.catalogue,
+      products: Object.fromEntries(
+        content.catalogue.products
+          .filter((id) => content.products.has(id))
+          .map((id) => [id, content.products.get(id)]),
+      ),
+    });
+  })
+
+  /**
+   * Products read from a spreadsheet, a batch at a time. Each is merged into its draft (or
+   * created) and checked as a save from the product form is; one problem refuses the whole batch.
+   */
+  .post(
+    '/import',
+    requirePermission('catalogue.edit'),
+    sizeLimit(4 * 1024 * 1024),
+    validate('json', sheetImportSchema),
+    async (c) => {
+      const v = c.var;
+      const { items } = c.req.valid('json');
+      const result = await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const content = await draftCatalogue(tx, v.site.id);
+        const catalogue = content.catalogue;
+        const order = [...catalogue.products];
+        const bySlug = new Map([...content.products].map(([id, p]) => [p.slug, id]));
+        const categories = new Set(catalogue.categories.map((x) => x.id));
+        const seriesIds = new Set(catalogue.series.map((x) => x.id));
+        const seen = new Set<string>();
+        const counts = { created: 0, updated: 0, unchanged: 0 };
+        for (const [index, item] of items.entries()) {
+          if (item.id !== null && !content.products.has(item.id)) {
+            throw badRequest('unknown-product', { index });
+          }
+          const id = item.id ?? (item.slug !== undefined ? bySlug.get(item.slug) : undefined);
+          const key = id ?? `new:${item.slug ?? ''}`;
+          if (seen.has(key)) throw badRequest('duplicate-product', { index });
+          seen.add(key);
+          const existing = id ? (content.products.get(id) ?? null) : null;
+          const merged = mergeSheetProduct(existing, item, newId);
+          if (!merged.ok) throw badRequest(merged.problem, { index });
+          const parsed = productSchema.safeParse(merged.product);
+          if (!parsed.success) {
+            throw badRequest('invalid-input', {
+              index,
+              issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
+            });
+          }
+          const product = parsed.data;
+          if (![product.categoryId, ...product.extraCategoryIds].every((x) => categories.has(x))) {
+            throw badRequest('unknown-category', { index });
+          }
+          if (product.seriesId !== null && !seriesIds.has(product.seriesId)) {
+            throw badRequest('unknown-series', { index });
+          }
+          if (existing && sameData(existing, product)) {
+            counts.unchanged++;
+            continue;
+          }
+          const productId = id ?? newId();
+          if (!id) {
+            if (order.length >= MAX_PRODUCTS) throw conflict('too-many-products');
+            order.push(productId);
+            bySlug.set(product.slug, productId);
+            seen.add(productId);
+            counts.created++;
+          } else {
+            counts.updated++;
+          }
+          const documents = keepVerification(existing?.documents ?? [], product.documents);
+          await saveDraft(
+            tx,
+            v.site.id,
+            'product',
+            { ...product, documents },
+            v.access.userId,
+            productId,
+          );
+        }
+        if (counts.created > 0) {
+          await saveDraft(
+            tx,
+            v.site.id,
+            'catalogue',
+            { ...catalogue, products: order },
+            v.access.userId,
+          );
+        }
+        return counts;
+      });
+      if (result.created + result.updated > 0) {
+        await writeAudit(
+          v.db,
+          auditActor(v),
+          {
+            action: 'catalogue.imported',
+            siteId: v.site.id,
+            targetType: 'catalogue',
+            targetId: v.site.key,
+            details: result,
+          },
+          v.requestId,
+        );
+      }
+      return c.json(result);
     },
   )
 

@@ -4,10 +4,10 @@
 structure below (D-026). **Made general on 2026-10-22 (D-045):** the same catalogue serves
 any kind of product on any website; everything specific to switches and sockets below
 is a *template* or Hantex Ultra's own data, never built into the code. No prices or online ordering. The dashboard side is built in Phase 3
-and the public pages in Phase 4. **Built so far (stages 1 and 2):** categories, attribute groups and
+and the public pages in Phase 4. **Built so far (stages 1 to 3):** categories, attribute groups and
 attributes with starter sets, finishes, series, products and variants in the dashboard, PDF files
-attached as documents with certificate verification, and drafts, versions and checks before
-publishing. Import/export and the public pages are still to come.
+attached as documents with certificate verification, drafts, versions and checks before
+publishing, and CSV/Excel import and export. The public pages are still to come.
 
 ## Business context
 
@@ -118,7 +118,23 @@ team.
 - **Certifications and compliance marks** appear only when a supporting
   document is attached and an Owner or Administrator has marked it verified.
 - **Bulk entry:** products and variants can be imported and exported as
-  CSV/Excel, with the same validation as the forms.
+  CSV/Excel, with the same validation as the forms. *Built (stage 3):* one row
+  per variant, or one row for a product without variants. The columns are
+  `product_id`, `address`, names, `category` and `extra_categories` (category
+  addresses), `series` (its address), summaries, descriptions, `visible`
+  (yes/no), `variant_id`, `code`, `finish` (its name in either language), the
+  variant names, and one column per attribute, written as `Name (unit) [id]`,
+  or `[id:ar]` and `[id:en]` for text. Rows are matched by `product_id`, or by
+  `address` when that is empty, and anything else becomes a new, hidden
+  product. Only the columns in the file change: an empty cell clears the field,
+  and a column left out keeps it. Photos and documents are not in the file and
+  are kept. Variants are matched by `variant_id` or by code, so they keep their
+  photos too. An import never deletes a product. The dashboard reads the file,
+  shows every problem with its row and column, and saves nothing until the file
+  is clean. The API then saves in batches of 100 products and checks each batch
+  again, like a save from the product form. Exported CSV cells that a
+  spreadsheet program could run as a formula start with `'`; the Excel file
+  holds plain text and numbers only.
 
 ## New permissions (per site, planned)
 

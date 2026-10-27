@@ -5,4 +5,5 @@ export * from './site';
 export * from './templates';
 export * from './privacy';
 export * from './catalogue';
+export * from './catalogue-sheet';
 export * from './catalogue-templates';

@@ -180,7 +180,7 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
         checks — *stage 1, done*
   - [x] series, and documents (PDF datasheets, guides, certificates) with
         certificate verification by Owner or Administrator — *stage 2, done*
-  - [ ] CSV/Excel import and export
+  - [x] CSV/Excel import and export, checked row by row and saved as drafts — *stage 3, done*
 - [ ] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site

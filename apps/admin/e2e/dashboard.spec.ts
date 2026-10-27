@@ -562,6 +562,38 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByText(/^Verified on /)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Remove verification' })).toBeVisible();
 
+  // Spreadsheets: the catalogue downloads as CSV or Excel, and an import is checked row by row
+  // before anything is saved.
+  await page.goto('/s/second-site/products');
+  await page.getByRole('button', { name: 'Import and export' }).click();
+  const sheetDialog = page.getByRole('dialog', { name: 'Import and export products' });
+  const csvDownload = page.waitForEvent('download');
+  await sheetDialog.getByRole('button', { name: 'Download CSV file' }).click();
+  const csvFile = await csvDownload;
+  expect(csvFile.suggestedFilename()).toMatch(/^second-site-products-\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(await readFile(await csvFile.path(), 'utf8')).toContain('"HX-1001"');
+  const xlsxDownload = page.waitForEvent('download');
+  await sheetDialog.getByRole('button', { name: 'Download Excel file' }).click();
+  const xlsx = await readFile(await (await xlsxDownload).path());
+  expect(xlsx.subarray(0, 2).toString('latin1')).toBe('PK');
+  const sheet = (finish: string) => ({
+    name: 'products.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      `address,name_en,name_ar,category,code,finish\nswitch-two,Two-gang switch,مفتاح خطين,switches,HX-1002,${finish}\n`,
+    ),
+  });
+  await sheetDialog.getByLabel('Choose an Excel or CSV file').setInputFiles(sheet('Red'));
+  await expect(sheetDialog.getByText(/No finish is named “Red”/)).toBeVisible();
+  await expect(sheetDialog.getByRole('button', { name: 'Import changes' })).toBeHidden();
+  await sheetDialog.getByLabel('Choose an Excel or CSV file').setInputFiles(sheet('White'));
+  await expect(sheetDialog.getByText(/1 new · 0 changed · 0 unchanged/)).toBeVisible();
+  await expectAccessible(page, 'spreadsheet dialog');
+  await sheetDialog.getByRole('button', { name: 'Import changes' }).click();
+  await expect(page.getByText('Import finished: 1 new and 0 changed products.')).toBeVisible();
+  await sheetDialog.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByText('Two-gang switch')).toBeVisible();
+
   // A finish a series or product uses can't be removed from the structure.
   await page.goto('/s/second-site/catalogue');
   await page.getByRole('tab', { name: 'Finishes' }).click();
@@ -572,11 +604,11 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Discard changes' }).click();
 
   await page.goto('/s/second-site/products');
-  await expect(page.getByText('Not published')).toBeVisible();
+  await expect(page.getByText('Not published')).toHaveCount(2);
   await page.getByRole('button', { name: 'Publish changes' }).click();
   await confirm(page);
   await expect(page.getByText('Changes published.')).toBeVisible();
-  await expect(page.getByText('Not published')).toBeHidden();
+  await expect(page.getByText('Not published')).toHaveCount(0);
   await expectAccessible(page, 'products');
 
   // The first website is unchanged: its pages are its own.
