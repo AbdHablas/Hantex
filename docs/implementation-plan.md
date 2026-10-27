@@ -160,8 +160,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - SVG sanitiser;
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).
-- [ ] Image, gallery, video and image-and-text sections; sharing images per page
-      — *image, image-and-text, gallery and sharing images done; video to come*
+- [x] Image, gallery, video and image-and-text sections; sharing images per page
+      — *done; videos are YouTube or Vimeo links, click to play (D-046)*
 
 ### 3c. Catalogue and studio
 

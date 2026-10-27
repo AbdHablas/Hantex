@@ -4,6 +4,7 @@ import {
   type Bilingual,
   type Field as RegistryField,
   type ImageRef,
+  type VideoRef,
   type Link,
   type RichDoc,
   type ContentSection,
@@ -18,6 +19,7 @@ import { Button, Field, IconButton, Input, Select } from '../ui';
 import { ImageField } from './ImageField';
 import { LinkField } from './LinkField';
 import { RichTextField } from './RichTextField';
+import { VideoField } from './VideoField';
 
 /**
  * A section's settings form, made from the section registry (D-035): every field kind the
@@ -104,6 +106,15 @@ function FieldControl({
         <ImageField
           label={label}
           value={value as ImageRef}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+    case 'video':
+      return (
+        <VideoField
+          label={label}
+          value={value as VideoRef}
           onChange={onChange}
           disabled={disabled}
         />

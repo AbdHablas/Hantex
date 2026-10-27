@@ -52,7 +52,7 @@ const en = (site: string): Block[] => [
     ],
   },
   {
-    p: 'This website sets no cookies. If you choose the light or dark look, that choice is kept in your own browser only.',
+    p: 'This website sets no cookies of its own. If you choose the light or dark look, that choice is kept in your own browser only.',
   },
   { h: 'Why we use it' },
   {
@@ -65,6 +65,7 @@ const en = (site: string): Block[] => [
       'Neon: our database, in [region].',
       'Resend: sending our emails, when we email you.',
       'WhatsApp: if you gave a WhatsApp number, we message you from our business account.',
+      'YouTube or Vimeo: only on pages with a video, and only after you press play. From then on, the video service receives technical information about your connection and may store data in your browser, under its own privacy policy.',
     ],
   },
   { h: 'How long we keep it' },
@@ -102,7 +103,7 @@ const ar = (site: string): Block[] => [
     ],
   },
   {
-    p: 'لا يضع هذا الموقع ملفات تعريف ارتباط. إذا اخترت الوضع الفاتح أو الداكن، يُحفظ اختيارك في متصفحك أنت فقط.',
+    p: 'لا يضع هذا الموقع ملفات تعريف ارتباط خاصة به. إذا اخترت الوضع الفاتح أو الداكن، يُحفظ اختيارك في متصفحك أنت فقط.',
   },
   { h: 'لماذا نستخدمها' },
   {
@@ -115,6 +116,7 @@ const ar = (site: string): Block[] => [
       'Neon: قاعدة بياناتنا، في [المنطقة].',
       'Resend: إرسال رسائلنا البريدية عندما نراسلك.',
       'واتساب: إذا أعطيتنا رقم واتساب، نراسلك من حسابنا التجاري.',
+      'يوتيوب أو فيميو: في الصفحات التي فيها فيديو فقط، وبعد أن تضغط على التشغيل فقط. عندها تتلقى خدمة الفيديو معلومات تقنية عن اتصالك وقد تخزّن بيانات في متصفحك، وفق سياسة الخصوصية الخاصة بها.',
     ],
   },
   { h: 'مدة الاحتفاظ' },

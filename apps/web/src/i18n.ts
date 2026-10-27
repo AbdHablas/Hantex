@@ -67,6 +67,11 @@ export const TEXT = {
     unsubscribedText: 'حذفنا بريدك من قائمتنا ولن تصلك رسائل أخرى منا.',
     unsubscribeInvalid: 'هذا الرابط غير صالح. إن أردت إلغاء الاشتراك فراسلنا.',
     menu: 'القائمة',
+    playVideo: 'تشغيل الفيديو',
+    videoFrom: {
+      youtube: 'يُشغَّل من يوتيوب عند الضغط عليه.',
+      vimeo: 'يُشغَّل من فيميو عند الضغط عليه.',
+    },
     mainNav: 'التنقل الرئيسي',
     footerNav: 'روابط',
     subscribe: 'اشترك',
@@ -143,6 +148,11 @@ export const TEXT = {
       'We deleted your address from our list. You won’t receive any more emails from us.',
     unsubscribeInvalid: 'This link isn’t valid. If you want to unsubscribe, please write to us.',
     menu: 'Menu',
+    playVideo: 'Play video',
+    videoFrom: {
+      youtube: 'Plays from YouTube when you press it.',
+      vimeo: 'Plays from Vimeo when you press it.',
+    },
     mainNav: 'Main navigation',
     footerNav: 'Links',
     subscribe: 'Subscribe',

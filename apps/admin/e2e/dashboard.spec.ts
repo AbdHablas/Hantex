@@ -397,6 +397,18 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await picker.getByRole('button', { name: /plate\.png/ }).click();
   await expect(picker).toBeHidden();
   await expect(imageField.getByText('plate.png')).toBeVisible();
+  // A video section takes a YouTube or Vimeo link, nothing else (D-046).
+  await page.getByRole('button', { name: 'Add section' }).click();
+  await page
+    .getByRole('dialog', { name: 'Choose a section' })
+    .getByRole('button', { name: /^Video\s*A YouTube/ })
+    .click();
+  const videoLink = page.getByLabel('Video link');
+  const notVideo = page.getByText('That isn’t a YouTube or Vimeo video link.');
+  await videoLink.fill('https://example.com/watch?v=dQw4w9WgXcQ');
+  await expect(notVideo).toBeVisible();
+  await videoLink.fill('https://youtu.be/dQw4w9WgXcQ');
+  await expect(notVideo).toBeHidden();
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
   await page.goto('/s/second-site/media');

@@ -315,7 +315,7 @@ The main data:
     library; the Media page says which pages use an image it won't delete;
   - *(done)* a sharing picture per page (shown in link previews), falling back
     to the website's own share card;
-  - *(next)* video sections.
+  - *(done)* video sections: YouTube or Vimeo links, click to play (D-046).
 
 **Backups (D-010):** the database host's built-in restore, plus nightly
 encrypted exports to R2 (30 daily and 12 monthly copies). The workflow is
@@ -414,6 +414,7 @@ project most:
 | D-043 | axe accessibility checks in browser tests |
 | D-044 | Images processed in the browser before upload; server re-checks |
 | D-045 | General catalogue for any kind of product |
+| D-046 | Videos: YouTube or Vimeo links, click to play |
 
 ## 15. Open items
 
@@ -459,7 +460,7 @@ pnpm build
 
 | Document | Contents |
 |----------|----------|
-| [`DECISIONS.md`](DECISIONS.md) | Decision log, D-001 to D-045 |
+| [`DECISIONS.md`](DECISIONS.md) | Decision log, D-001 to D-046 |
 | [`implementation-plan.md`](implementation-plan.md) | Phases and checklist |
 | [`architecture.md`](architecture.md) | Architecture and stack |
 | [`multi-site.md`](multi-site.md) | One dashboard for many websites |

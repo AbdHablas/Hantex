@@ -89,7 +89,9 @@ end.
 ### Browser and HTTP
 
 - Strict Content-Security-Policy (no inline scripts except hashed ones;
-  Turnstile and Cloudflare Web Analytics (D-042) allowed explicitly),
+  Turnstile and Cloudflare Web Analytics (D-042) allowed explicitly; the only
+  frames allowed besides Turnstile are the YouTube and Vimeo players (D-046),
+  created only after a visitor presses play),
   `frame-ancestors 'none'`, HSTS, `X-Content-Type-Options`,
   `Referrer-Policy`, `Permissions-Policy`, Cross-Origin-Opener-Policy.
 - Draft previews may be framed only by the dashboard (`DASHBOARD_ORIGIN`),

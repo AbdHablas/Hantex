@@ -652,6 +652,9 @@ const en = {
     addLink: 'Link',
     linkPrompt: 'Link address (https://…, mailto:, tel: or /page)',
     linkInvalid: 'That link isn’t allowed. Use https://, mailto:, tel: or a path such as /contact.',
+    videoHelp:
+      'Paste the link from YouTube or Vimeo. The player loads only when a visitor presses play.',
+    videoInvalid: 'That isn’t a YouTube or Vimeo video link.',
     textToolbar: 'Text formatting ({language})',
     // Preview
     preview: 'Preview',
@@ -1500,6 +1503,9 @@ const ar: Messages = {
     linkPrompt: 'عنوان الرابط (‎https://…‎ أو mailto: أو tel: أو ‎/page)',
     linkInvalid:
       'هذا الرابط غير مسموح. استخدم ‎https://‎ أو mailto: أو tel: أو مسارًا مثل ‎/contact.',
+    videoHelp:
+      'الصق الرابط من يوتيوب أو فيميو. لا يُحمَّل المشغّل إلا عندما يضغط الزائر على التشغيل.',
+    videoInvalid: 'هذا ليس رابط فيديو من يوتيوب أو فيميو.',
     textToolbar: 'تنسيق النص ({language})',
     preview: 'المعاينة',
     previewIntro: 'الموقع الحقيقي، من مسودتك المحفوظة.',

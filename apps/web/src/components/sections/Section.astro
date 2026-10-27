@@ -13,6 +13,7 @@ import ImageText from './ImageText.astro';
 import Newsletter from './Newsletter.astro';
 import RichTextSection from './RichTextSection.astro';
 import Stats from './Stats.astro';
+import Video from './Video.astro';
 
 /**
  * One section of a page (D-035): its registered component inside a frame that applies the
@@ -28,7 +29,9 @@ const { style, visibility } = section;
 const headingId = `s-${section.id}`;
 // Sections with a title are labelled by it (so they appear as page regions).
 const settings = section.settings as { title?: { ar: string; en: string }; heading?: { ar: string; en: string } };
-const title = section.type === 'cta' ? settings.heading : section.type === 'hero' ? undefined : settings.title;
+// (A video's title names the video, not the section.)
+const title =
+  section.type === 'cta' ? settings.heading : section.type === 'hero' || section.type === 'video' ? undefined : settings.title;
 const labelled = title ? pick(ctx, title) !== '' : false;
 const hidden = !visibility.mobile && !visibility.tablet && !visibility.desktop;
 const classes = [
@@ -55,6 +58,7 @@ const classes = [
           {section.type === 'image' && <Image section={section} ctx={ctx} />}
           {section.type === 'imageText' && <ImageText section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'gallery' && <Gallery section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'video' && <Video section={section} ctx={ctx} />}
           {section.type === 'features' && <Features section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'cards' && <Cards section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'cta' && <Cta section={section} ctx={ctx} headingId={headingId} />}

@@ -184,3 +184,31 @@ if (document.body.hasAttribute('data-preview')) {
     if (link && !link.getAttribute('href')?.startsWith('#')) event.preventDefault();
   });
 }
+
+/*
+ * Videos (D-046): the provider's player is loaded only when the visitor presses play. Only the
+ * two players the Content-Security-Policy allows are ever framed.
+ */
+const VIDEO_PLAYERS = ['https://www.youtube-nocookie.com', 'https://player.vimeo.com'];
+for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-video]')) {
+  link.addEventListener('click', (event) => {
+    let src: URL;
+    try {
+      src = new URL(link.dataset['video'] ?? '');
+    } catch {
+      return;
+    }
+    if (!VIDEO_PLAYERS.includes(src.origin)) return;
+    event.preventDefault();
+    const frame = document.createElement('iframe');
+    frame.src = src.toString();
+    frame.title = link.dataset['videoTitle'] ?? '';
+    frame.className = 'bx-video-frame';
+    frame.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+    frame.allowFullscreen = true;
+    // YouTube's player refuses to play without the page's origin as referrer.
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    link.replaceWith(frame);
+    frame.focus();
+  });
+}

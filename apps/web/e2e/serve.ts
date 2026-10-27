@@ -130,9 +130,12 @@ const faq = newSection('faq');
 faq.settings.title = { ar: 'أسئلة', en: 'Questions' };
 faq.settings.items[0]!.question = { ar: 'سؤال؟', en: 'A question?' };
 faq.settings.items[0]!.answer = { ar: 'جواب.', en: 'An answer.' };
+const video = newSection('video');
+video.settings.video = { provider: 'youtube', id: 'dQw4w9WgXcQ' };
+video.settings.title = { ar: 'فيديو تجريبي', en: 'A test video' };
 const signup = newSection('newsletter');
 signup.settings.title = { ar: 'اشترك', en: 'Stay in touch' };
-home.sections.push(features, desktopOnly, faq, signup);
+home.sections.push(features, desktopOnly, faq, video, signup);
 const about = content.pages[aboutId]!;
 const text = about.sections[0]!;
 if (text.type === 'richText') {

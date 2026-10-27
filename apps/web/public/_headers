@@ -1,7 +1,9 @@
 # Security headers for the site's static pages (docs/security.md). Draft previews set their own.
 # cloudflareinsights.com: Cloudflare Web Analytics (D-042), loaded only when a site has a token.
+# youtube-nocookie.com, player.vimeo.com: video players (D-046), framed only after a visitor
+# presses play (VIDEO_FRAME_ORIGINS in packages/sections).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY

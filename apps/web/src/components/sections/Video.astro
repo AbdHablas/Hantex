@@ -1,0 +1,53 @@
+---
+import { videoEmbedUrl, videoPageUrl, type SectionOf } from '@hantex/sections';
+import { pick, pictureOf, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import Picture from './Picture.astro';
+
+/**
+ * A YouTube or Vimeo video (D-046), click to play: until a visitor presses it, the page shows
+ * only the cover image and loads nothing from the video service. Pressing it swaps in the
+ * provider's player (src/scripts/page.ts); without JavaScript, it opens the video's own page.
+ */
+interface Props {
+  section: SectionOf<'video'>;
+  ctx: RenderContext;
+}
+const { section, ctx } = Astro.props;
+const s = section.settings;
+const t = TEXT[ctx.locale];
+const video = s.video;
+const picture = pictureOf(ctx, s.poster);
+const title = pick(ctx, s.title);
+const caption = pick(ctx, s.caption);
+const label = title ? `${t.playVideo}: ${title}` : t.playVideo;
+---
+
+{
+  video && (
+    <figure class="bx-figure bx-video">
+      {ctx.preview ? (
+        <div class="bx-video-play" role="img" aria-label={label}>
+          {picture ? <Picture picture={{ ...picture, alt: '' }} sizes="(min-width: 75rem) 72rem, 100vw" /> : <span class="bx-video-blank" />}
+          <span class="bx-video-icon" aria-hidden="true" />
+        </div>
+      ) : (
+        <a
+          class="bx-video-play"
+          href={videoPageUrl(video)}
+          rel="noopener"
+          aria-label={label}
+          data-video={videoEmbedUrl(video)}
+          data-video-title={title || t.playVideo}
+        >
+          {picture ? <Picture picture={{ ...picture, alt: '' }} sizes="(min-width: 75rem) 72rem, 100vw" /> : <span class="bx-video-blank" />}
+          <span class="bx-video-icon" aria-hidden="true" />
+        </a>
+      )}
+      <figcaption>
+        {caption && <span class="bx-video-caption">{caption}</span>}
+        <span class="bx-video-note">{t.videoFrom[video.provider]}</span>
+      </figcaption>
+    </figure>
+  )
+}

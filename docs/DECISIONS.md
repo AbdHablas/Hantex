@@ -54,6 +54,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-043 | Automated accessibility checks | Confirmed | axe-core in the browser tests of the dashboard and the sites |
 | D-044 | Image processing | Confirmed | In the dashboard, before upload: resized to a few widths, WebP, camera and location data removed; the server re-checks every file |
 | D-045 | General catalogue | Confirmed | Any kind of product on any website: categories, attributes and page templates are data per site; switches and sockets are Hantex Ultra's first categories, not built in |
+| D-046 | Videos | Confirmed | YouTube or Vimeo links, click to play: a cover image until pressed, then the provider's privacy-friendlier player |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -979,4 +980,20 @@ then the general product catalogue (Phase 3c, D-045).
   to general ones (e.g. lighting, generic product). Hantex Ultra keeps
   Switches and Sockets as its first, *main* categories as the owner named
   them; another website can lead with entirely different products.
+
+## D-046 — Videos
+
+- **Status:** Confirmed — 2026-10-27
+- **Options:** YouTube or Vimeo links, click to play · video files uploaded to
+  R2 and played by the site · Cloudflare Stream (paid, from about US$5 a month).
+- **Owner's choice:** YouTube or Vimeo, click to play.
+- **Consequences:** a video section stores only the service and the video's id,
+  read from a pasted link; never a free address or embed code. Until a visitor
+  presses play, the page shows a cover image from the media library (or a plain
+  panel) and contacts neither service; pressing it loads
+  `www.youtube-nocookie.com` or `player.vimeo.com` (with `dnt=1`), the only
+  players the sites' Content-Security-Policy allows to be framed. Without
+  JavaScript, the cover links to the video's own page. Free; no video storage.
+  The privacy policy draft names YouTube and Vimeo as services used only after
+  pressing play.
 

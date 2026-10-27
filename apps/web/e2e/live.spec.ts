@@ -242,3 +242,35 @@ test('media library images are drawn from the site’s own /media/ address', asy
     'A test picture',
   );
 });
+
+test('a video loads nothing from YouTube until the visitor presses play', async ({ page }) => {
+  const youtube: string[] = [];
+  const cspErrors: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+  });
+  page.on('request', (r) => {
+    if (/youtube/.test(new URL(r.url()).hostname)) youtube.push(r.url());
+  });
+  // The player itself can't load in the test; only what the page asks for matters.
+  await page.route(/youtube-nocookie\.com/, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<title>player</title>' }),
+  );
+  await page.goto(`${LIVE}/en/`);
+  const play = page.getByRole('link', { name: 'Play video: A test video' });
+  await expect(play).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  await expect(page.getByText('Plays from YouTube when you press it.')).toBeVisible();
+  await play.scrollIntoViewIfNeeded();
+  expect(youtube).toEqual([]);
+
+  await play.click();
+  const frame = page.locator('iframe[title="A test video"]');
+  await expect(frame).toHaveAttribute(
+    'src',
+    /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1/,
+  );
+  await expect(play).toHaveCount(0);
+  await expect.poll(() => youtube.length).toBeGreaterThan(0);
+  // The site's Content-Security-Policy lets this player, and only the video players, be framed.
+  expect(cspErrors).toEqual([]);
+});

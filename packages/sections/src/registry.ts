@@ -3,6 +3,7 @@ import {
   ICONS,
   bilingual,
   imageRefSchema,
+  videoRefSchema,
   emptyText,
   itemId,
   linkSchema,
@@ -54,6 +55,8 @@ export type Field =
   | { kind: 'toggle'; key: string; label: Bilingual }
   /** One image from the website's media library. */
   | { kind: 'image'; key: string; label: Bilingual }
+  /** A YouTube or Vimeo video, pasted as a link (D-046). */
+  | { kind: 'video'; key: string; label: Bilingual }
   | {
       kind: 'select';
       key: string;
@@ -185,6 +188,15 @@ const imageTextSchema = z.strictObject({
   imageSide: z.enum(['start', 'end']),
 });
 
+const videoSchema = z.strictObject({
+  video: videoRefSchema,
+  /** Names the video for screen readers and the play button. */
+  title: bilingual(120),
+  /** Shown until the visitor presses play; without one, a plain panel. */
+  poster: imageRefSchema,
+  caption: bilingual(200),
+});
+
 const galleryItem = z.strictObject({ id: itemId, image: imageRefSchema, caption: bilingual(200) });
 const gallerySchema = z.strictObject({
   title: bilingual(120),
@@ -201,6 +213,7 @@ export const SECTION_TYPES = [
   'image',
   'imageText',
   'gallery',
+  'video',
   'features',
   'cards',
   'cta',
@@ -332,6 +345,23 @@ export const SECTIONS = {
           { kind: 'text', key: 'caption', label: L('Caption', 'التعليق'), max: 200 },
         ],
       },
+    ],
+  }),
+  video: define({
+    name: L('Video', 'فيديو'),
+    description: L(
+      'A YouTube or Vimeo video that loads when pressed.',
+      'فيديو من يوتيوب أو فيميو يُحمَّل عند الضغط عليه.',
+    ),
+    icon: 'SquarePlay',
+    category: 'content',
+    schema: videoSchema,
+    defaults: () => ({ video: null, title: emptyText(), poster: null, caption: emptyText() }),
+    fields: [
+      { kind: 'video', key: 'video', label: L('Video link', 'رابط الفيديو') },
+      { kind: 'text', key: 'title', label: L('Video title', 'عنوان الفيديو'), max: 120 },
+      { kind: 'image', key: 'poster', label: L('Cover image', 'صورة الغلاف') },
+      { kind: 'text', key: 'caption', label: L('Caption', 'التعليق'), max: 200 },
     ],
   }),
   features: define({
@@ -565,6 +595,7 @@ const contentVariants = [
   variant('image', imageSchema),
   variant('imageText', imageTextSchema),
   variant('gallery', gallerySchema),
+  variant('video', videoSchema),
   variant('features', featuresSchema),
   variant('cards', cardsSchema),
   variant('cta', ctaSchema),

@@ -102,3 +102,66 @@ export function mediaIds(value: unknown, into: Set<string> = new Set()): Set<str
   }
   return into;
 }
+
+/**
+ * A video hosted on YouTube or Vimeo (D-046), stored as the service and the video's id only,
+ * never as a free address. Sites load the player only after a visitor presses play.
+ */
+export const videoRefSchema = z
+  .discriminatedUnion('provider', [
+    z.strictObject({ provider: z.literal('youtube'), id: z.string().regex(/^[A-Za-z0-9_-]{11}$/) }),
+    z.strictObject({ provider: z.literal('vimeo'), id: z.string().regex(/^[0-9]{6,12}$/) }),
+  ])
+  .nullable();
+export type VideoRef = z.infer<typeof videoRefSchema>;
+
+/** Reads a YouTube or Vimeo link as pasted from the browser or a share button. */
+export function parseVideoUrl(input: string): NonNullable<VideoRef> | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+  const host = url.hostname.replace(/^(www\.|m\.)/, '');
+  const parts = url.pathname.split('/').filter(Boolean);
+  let candidate: NonNullable<VideoRef> | null = null;
+  if (host === 'youtu.be') {
+    candidate = { provider: 'youtube', id: parts[0] ?? '' };
+  } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    const id =
+      parts[0] === 'watch'
+        ? url.searchParams.get('v')
+        : ['embed', 'shorts', 'live'].includes(parts[0] ?? '')
+          ? parts[1]
+          : null;
+    candidate = { provider: 'youtube', id: id ?? '' };
+  } else if (host === 'vimeo.com') {
+    candidate = { provider: 'vimeo', id: parts.find((p) => /^[0-9]+$/.test(p)) ?? '' };
+  } else if (host === 'player.vimeo.com' && parts[0] === 'video') {
+    candidate = { provider: 'vimeo', id: parts[1] ?? '' };
+  }
+  const parsed = videoRefSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Where the video plays: the provider's privacy-friendlier player, started at once. */
+export function videoEmbedUrl(video: NonNullable<VideoRef>): string {
+  return video.provider === 'youtube'
+    ? `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0`
+    : `https://player.vimeo.com/video/${video.id}?autoplay=1&dnt=1`;
+}
+
+/** The video's own page, for visitors without JavaScript. */
+export function videoPageUrl(video: NonNullable<VideoRef>): string {
+  return video.provider === 'youtube'
+    ? `https://www.youtube.com/watch?v=${video.id}`
+    : `https://vimeo.com/${video.id}`;
+}
+
+/** The players a site may frame (its Content-Security-Policy's frame-src). */
+export const VIDEO_FRAME_ORIGINS = [
+  'https://www.youtube-nocookie.com',
+  'https://player.vimeo.com',
+] as const;

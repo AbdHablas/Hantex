@@ -6,6 +6,8 @@ import {
   localizedPath,
   mediaIds,
   menusSchema,
+  parseVideoUrl,
+  videoEmbedUrl,
   newPage,
   newSection,
   pagePath,
@@ -294,5 +296,58 @@ describe('media library images', () => {
     const issues = checkSite({ ...site, media: new Set([A]) });
     expect(issues).toEqual([{ code: 'missing-image', target: 'page:home00', detail: B }]);
     expect(checkSite({ ...site, media: new Set([A, B]) })).toEqual([]);
+  });
+});
+
+describe('videos (D-046)', () => {
+  it('reads YouTube and Vimeo links as copied from the browser or a share button', () => {
+    const yt = { provider: 'youtube', id: 'dQw4w9WgXcQ' };
+    for (const link of [
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://youtube.com/watch?v=dQw4w9WgXcQ&t=42s',
+      'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://youtu.be/dQw4w9WgXcQ?si=abc',
+      'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+      '  https://www.youtube.com/embed/dQw4w9WgXcQ  ',
+    ]) {
+      expect(parseVideoUrl(link), link).toEqual(yt);
+    }
+    expect(parseVideoUrl('https://vimeo.com/76979871')).toEqual({
+      provider: 'vimeo',
+      id: '76979871',
+    });
+    expect(parseVideoUrl('https://player.vimeo.com/video/76979871?h=abc')).toEqual({
+      provider: 'vimeo',
+      id: '76979871',
+    });
+  });
+
+  it('refuses anything else', () => {
+    for (const link of [
+      '',
+      'not a link',
+      'javascript:alert(1)',
+      'https://example.com/watch?v=dQw4w9WgXcQ',
+      'https://youtube.com.example.com/watch?v=dQw4w9WgXcQ',
+      'https://www.youtube.com/watch?v=short',
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ"><script>',
+      'https://vimeo.com/channels/staffpicks',
+      'ftp://youtu.be/dQw4w9WgXcQ',
+    ]) {
+      expect(parseVideoUrl(link), link).toBeNull();
+    }
+    const bad = newSection('video') as { settings: { video: unknown } };
+    bad.settings.video = { provider: 'youtube', id: '../../evil' };
+    expect(sectionSchema.safeParse(bad).success).toBe(false);
+    bad.settings.video = { provider: 'other', id: 'dQw4w9WgXcQ' };
+    expect(sectionSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('plays from the providers’ privacy-friendlier players', () => {
+    expect(videoEmbedUrl({ provider: 'youtube', id: 'dQw4w9WgXcQ' })).toMatch(
+      /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?/,
+    );
+    expect(videoEmbedUrl({ provider: 'vimeo', id: '76979871' })).toContain('dnt=1');
   });
 });
