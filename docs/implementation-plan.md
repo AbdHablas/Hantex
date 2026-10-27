@@ -161,7 +161,7 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).
 - [ ] Image, gallery, video and image-and-text sections; sharing images per page
-      — *image, image-and-text and gallery done; video and sharing images to come*
+      — *image, image-and-text, gallery and sharing images done; video to come*
 
 ### 3c. Catalogue and studio
 

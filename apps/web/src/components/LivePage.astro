@@ -1,7 +1,7 @@
 ---
 import type { MenuItem } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
-import { hrefOf, pageHref, pick, resolveSections, type RenderContext } from '../builder';
+import { hrefOf, mediaSrc, pageHref, pick, resolveSections, type RenderContext } from '../builder';
 import { TEXT, dirOf } from '../i18n';
 import { SITE } from '../site-data';
 import Analytics from './Analytics.astro';
@@ -36,6 +36,21 @@ const pageTitle = pick(ctx, page.title);
 const title = pick(ctx, page.seo.title) || (isHome ? pick(ctx, settings.seo.title) || siteName : `${pageTitle} — ${siteName}`);
 const description = pick(ctx, page.seo.description) || (isHome ? pick(ctx, settings.seo.description) : '');
 const noindex = preview || page.seo.noindex;
+// The page's own sharing picture (D-044) when it has one: a published copy at least 1200 px wide
+// where stored, which is what link previews look for; otherwise the site's share card.
+const shareInfo = page.seo.image ? ctx.content.media?.[page.seo.image.mediaId] : undefined;
+const shareWidth = shareInfo
+  ? ([...shareInfo.widths].sort((a, b) => a - b).find((w) => w >= 1200) ?? Math.max(...shareInfo.widths))
+  : 0;
+const share =
+  origin && page.seo.image && shareInfo && !shareInfo.preview
+    ? {
+        url: `${origin}${mediaSrc(page.seo.image.mediaId, shareInfo, shareWidth)}`,
+        width: shareWidth,
+        height: Math.round((shareInfo.height * shareWidth) / shareInfo.width),
+        alt: pick(ctx, shareInfo.alt),
+      }
+    : null;
 const here = pageHref(ctx, pageId);
 
 /** Menu items with somewhere to go (or with children that do), in this language. */
@@ -88,8 +103,17 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
     {description && <meta property="og:description" content={description} />}
     <meta property="og:site_name" content={siteName} />
     {origin && <meta property="og:url" content={`${origin}${here}`} />}
-    {origin && SITE.logo && <meta property="og:image" content={`${origin}${SITE.logo.share}`} />}
-    <meta name="twitter:card" content={origin && SITE.logo ? 'summary_large_image' : 'summary'} />
+    {share ? (
+      <>
+        <meta property="og:image" content={share.url} />
+        <meta property="og:image:width" content={String(share.width)} />
+        <meta property="og:image:height" content={String(share.height)} />
+        {share.alt && <meta property="og:image:alt" content={share.alt} />}
+      </>
+    ) : (
+      origin && SITE.logo && <meta property="og:image" content={`${origin}${SITE.logo.share}`} />
+    )}
+    <meta name="twitter:card" content={share || (origin && SITE.logo) ? 'summary_large_image' : 'summary'} />
     {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
     {SITE.logo && <link rel="apple-touch-icon" href={SITE.logo.touchIcon} />}
     <link rel="stylesheet" href="/theme.css" />

@@ -312,7 +312,10 @@ The main data:
   - *(done)* images used by any page, draft or published, can't be deleted,
     and publishing refuses pages that use an image no longer in the library;
   - *(done)* choosing images in the section editor, from the website's own
-    library; the Media page says which pages use an image it won't delete.
+    library; the Media page says which pages use an image it won't delete;
+  - *(done)* a sharing picture per page (shown in link previews), falling back
+    to the website's own share card;
+  - *(next)* video sections.
 
 **Backups (D-010):** the database host's built-in restore, plus nightly
 encrypted exports to R2 (30 daily and 12 monthly copies). The workflow is

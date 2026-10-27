@@ -3,6 +3,7 @@ import {
   RESERVED_SLUGS,
   bilingual,
   emptyText,
+  imageRefSchema,
   itemId,
   linkSchema,
   mediaIds,
@@ -29,6 +30,8 @@ export const pageSchema = z.strictObject({
     description: bilingual(200),
     /** Ask search engines not to list the page. */
     noindex: z.boolean(),
+    /** Picture shown when a link to the page is shared; the site's own when left out. */
+    image: imageRefSchema.optional(),
   }),
   sections: z.array(sectionSchema).max(40),
 });

@@ -43,6 +43,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BilingualField } from '../components/document';
 import { DevicePreview } from '../components/builder/DevicePreview';
+import { ImageField } from '../components/builder/ImageField';
 import { PublishBar } from '../components/builder/PublishBar';
 import { SectionForm } from '../components/builder/SectionForm';
 import { SortableList, SortableRow } from '../components/builder/Sortable';
@@ -1019,6 +1020,15 @@ export function PageEditor() {
                   />
                   {b['noindex']}
                 </label>
+                <ImageField
+                  label={b['shareImage'] ?? ''}
+                  value={draft.seo.image ?? null}
+                  disabled={!editable}
+                  onChange={(image) =>
+                    update({ ...draft, seo: { ...draft.seo, image: image ?? undefined } })
+                  }
+                />
+                <p className="-mt-2 text-xs text-muted">{b['shareImageHelp']}</p>
               </fieldset>
             </div>
           </Card>

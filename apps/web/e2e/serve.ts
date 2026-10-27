@@ -12,6 +12,7 @@ import {
   createPoolDb,
   documentVersions,
   ensureSite,
+  mediaAssets,
   runMigrations,
   sites,
   syncStandardRoles,
@@ -21,7 +22,9 @@ import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { eq } from 'drizzle-orm';
 import { execFileSync, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { cp, rm } from 'node:fs/promises';
+import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import pg from 'pg';
 
 const env = process.env;
@@ -145,6 +148,26 @@ shared.settings.heading = { ar: 'قسم مشترك', en: 'Shared section' };
 const saved = { items: [{ id: 'shared01', name: { ar: 'مشترك', en: 'Shared' }, section: shared }] };
 home.sections.push(savedReference('shared01', 'ref00001'));
 about.sections.push(savedReference('shared01', 'ref00002'));
+// A published media library image (D-044) on the About page, also its sharing picture. The
+// stored file is a 1×1 WebP: the test checks it is served, not what it shows.
+const IMAGE_ID = '6f1d2c3b-4a5e-4f60-8a71-9b2c3d4e5f60';
+const IMAGE_WIDTHS = [480, 960, 1600];
+await db.insert(mediaAssets).values({
+  id: IMAGE_ID,
+  siteId: liveId,
+  name: 'test-picture.png',
+  alt: { ar: 'صورة تجريبية', en: 'A test picture' },
+  width: 1600,
+  height: 900,
+  variants: IMAGE_WIDTHS.map((w) => ({ width: w, height: Math.round((w * 9) / 16), bytes: 26 })),
+  bytes: 78,
+  publishedAt: new Date(),
+});
+const picture = newSection('image');
+picture.settings.image = { mediaId: IMAGE_ID };
+picture.settings.caption = { ar: 'تعليق الصورة', en: 'Picture caption' };
+about.sections.push(picture);
+about.seo.image = { mediaId: IMAGE_ID };
 // /about was this page's earlier address (Publish changes keeps it as a redirect).
 about.slug = 'who-we-are';
 content.index.redirects = [{ from: '/about', to: aboutId }];
@@ -189,6 +212,37 @@ async function build(site: string, out: string) {
   await cp('dist', out, { recursive: true });
 }
 await build('e2e-live', '.e2e/live');
+// The image's published copies, in the live site's local public bucket.
+const webp = join(await mkdtemp(join(tmpdir(), 'hantex-e2e-')), 'pixel.webp');
+await writeFile(
+  webp,
+  Uint8Array.from(atob('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='), (ch) =>
+    ch.charCodeAt(0),
+  ),
+);
+for (const width of IMAGE_WIDTHS) {
+  execFileSync(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'r2',
+      'object',
+      'put',
+      `hantex-media-public/sites/e2e-live/${IMAGE_ID}/${width}.webp`,
+      '--file',
+      webp,
+      '--content-type',
+      'image/webp',
+      '--local',
+      '--persist-to',
+      '.e2e/live/state',
+      '--config',
+      '.e2e/live/server/wrangler.json',
+    ],
+    { stdio: 'inherit', env: { ...env, WRANGLER_SEND_METRICS: 'false' } },
+  );
+}
 await build(FIRST_SITE.key, '.e2e/soon');
 
 function serve(dir: string, port: string, inspector: string) {

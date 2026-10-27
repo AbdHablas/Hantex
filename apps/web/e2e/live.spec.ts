@@ -205,3 +205,40 @@ test('a draft page preview renders, and only the dashboard may frame it', async 
     (await request.post(`${SOON}/preview`, { form: { payload, expires, signature } })).status(),
   ).toBe(403);
 });
+
+test('media library images are drawn from the site’s own /media/ address', async ({
+  page,
+  request,
+}) => {
+  await page.goto(`${LIVE}/en/who-we-are/`);
+  const figure = page.getByRole('figure').filter({ hasText: 'Picture caption' });
+  const img = figure.getByRole('img', { name: 'A test picture' });
+  await expect(img).toHaveAttribute('width', '1600');
+  await expect(img).toHaveAttribute('height', '900');
+  await expect(img).toHaveAttribute('srcset', /\/media\/[0-9a-f-]{36}\/480\.webp 480w/);
+  const src = (await img.getAttribute('src')) ?? '';
+  const response = await request.get(`${LIVE}${src}`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toBe('image/webp');
+  expect(response.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
+  // Another site's address, or an image that isn't published, is not found.
+  expect((await request.get(`${LIVE}${src.replace(/[0-9a-f]{4}\//, '0000/')}`)).status()).toBe(404);
+
+  // Loaded lazily: only once it's scrolled into view.
+  await img.scrollIntoViewIfNeeded();
+  // decode() fails for a broken image. (naturalWidth isn't used: with srcset it is scaled, and
+  // the test file is 1×1 pixel.)
+  expect(
+    await img.evaluate((el: HTMLImageElement) => el.decode().then(() => el.currentSrc)),
+  ).toMatch(/\/media\/[0-9a-f-]{36}\/\d+\.webp$/);
+
+  // Its sharing picture: the stored width closest above 1200 px, at the site's own domain.
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    /^https:\/\/live\.example\.test\/media\/[0-9a-f-]{36}\/1600\.webp$/,
+  );
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+    'content',
+    'A test picture',
+  );
+});

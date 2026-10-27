@@ -267,6 +267,11 @@ describe('media library images', () => {
 
   it('finds every image some content uses, and nothing else', () => {
     expect([...mediaIds(withImages())].sort()).toEqual([A, B]);
+    // A page's sharing picture counts too.
+    const shared = { ...newPage({ ar: 'ص', en: 'P' }, 'p') };
+    shared.seo = { ...shared.seo, image: { mediaId: A } };
+    expect(pageSchema.safeParse(shared).success).toBe(true);
+    expect([...mediaIds(shared)]).toEqual([A]);
     // Text that happens to look like an id is not an image.
     const text = newSection('richText');
     text.settings.title = { ar: A, en: A };

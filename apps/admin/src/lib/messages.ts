@@ -569,6 +569,9 @@ const en = {
     seo: 'Search engines and sharing',
     seoTitle: 'Title in search results',
     seoDescription: 'Description in search results',
+    shareImage: 'Picture when the page is shared',
+    shareImageHelp:
+      'Shown in link previews on WhatsApp, Facebook and others; best at least 1200 pixels wide. Without one, the website’s own share picture is used.',
     noindex: 'Ask search engines not to list this page',
     visible: 'Show this page on the website',
     sectionsTitle: 'Sections',
@@ -1415,6 +1418,9 @@ const ar: Messages = {
     seo: 'محركات البحث والمشاركة',
     seoTitle: 'العنوان في نتائج البحث',
     seoDescription: 'الوصف في نتائج البحث',
+    shareImage: 'الصورة عند مشاركة الصفحة',
+    shareImageHelp:
+      'تظهر في معاينات الروابط على واتساب وفيسبوك وغيرهما؛ والأفضل ألا يقل عرضها عن 1200 بكسل. إن لم تُختر صورة تُستخدم صورة المشاركة الخاصة بالموقع.',
     noindex: 'اطلب من محركات البحث عدم إدراج هذه الصفحة',
     visible: 'أظهر هذه الصفحة في الموقع',
     sectionsTitle: 'الأقسام',
