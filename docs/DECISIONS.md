@@ -626,6 +626,16 @@ then the general product catalogue (Phase 3c, D-045).
   - **Templates and components that use tokens only.**
 - **Boundary:** new templates and new content block types are development
   work. Everything else is done in the dashboard.
+- **Implementation note (logo uploads, 2026-10-27):** each site has a `logo`
+  document (draft, versions, rollback) holding a full logo and an optional
+  small mark. A file is accepted only if it is exactly what the SVG cleaner
+  writes, with every colour it draws listed and set to a logo token or
+  *fixed*. The build cleans it again and writes adaptive files to `/brand/`:
+  mapped colours follow the theme's logo colours through
+  `prefers-color-scheme` and accept `--hx-logo-*` when inline. Saving and
+  publishing need `appearance.editLogo` (Owner only by default). Uploaded
+  logos have no share picture or phone icon yet; those PNGs exist only for the
+  brand files.
 
 ## D-028 — Hosting of multiple websites
 

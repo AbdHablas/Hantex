@@ -33,7 +33,7 @@ const email = SITE.settings.contact.email;
         <span class="orb orb-a"></span>
       </div>
       <div class="maintenance-card rise">
-        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p class="footer-name">{siteName}</p>}
+        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width={Math.round(56 * SITE.logo.aspect)} height="56" /> : <p class="footer-name">{siteName}</p>}
         <div>
           <span class="maintenance-icon">
             <Icon name="accessory" />

@@ -160,7 +160,12 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] SVG cleaner (`@hantex/shared/svg`): strict parser, rebuilt from an allow-list, ready
         for logo uploads;
   - font uploads by the Owner (D-033);
-  - logo upload with colour mapping (D-027).
+  - [x] logo upload with colour mapping (D-027): a full logo and an optional small mark per
+        site, cleaned in the browser and checked again by the server and the build; each
+        colour follows a logo colour token or stays fixed; light and dark previews; draft,
+        publish and rollback; Owner only by default (`appearance.editLogo`). Still to come:
+        share pictures and phone icons made from uploaded logos (only the brand files have
+        them).
 - [x] Image, gallery, video and image-and-text sections; sharing images per page
       — *done; videos are YouTube or Vimeo links, click to play (D-046)*
 

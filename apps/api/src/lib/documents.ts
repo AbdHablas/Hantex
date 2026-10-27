@@ -23,6 +23,7 @@ import {
   pagesIndexSchema,
   savedSectionsSchema,
 } from '@hantex/sections';
+import { DEFAULT_LOGO, logoSchema } from '@hantex/shared/logo';
 import { brandTheme, themeSchema } from '@hantex/theme';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { ZodType } from 'zod';
@@ -31,6 +32,7 @@ export const KINDS = [
   'coming-soon',
   'site-settings',
   'theme',
+  'logo',
 ] as const satisfies readonly DocumentKind[];
 
 export const DOCUMENTS: Record<
@@ -63,6 +65,15 @@ export const DOCUMENTS: Record<
     view: ['appearance.edit'],
     edit: ['appearance.edit'],
     publish: ['appearance.publish'],
+  },
+  // Uploaded logos (D-027): replacing a site's logo is a brand decision, so it needs the logo
+  // permission (Owner only by default) as well as the appearance ones.
+  logo: {
+    schema: logoSchema,
+    defaults: DEFAULT_LOGO,
+    view: ['appearance.edit'],
+    edit: ['appearance.edit', 'appearance.editLogo'],
+    publish: ['appearance.publish', 'appearance.editLogo'],
   },
   // Website builder (D-035): one document per page, plus the page index, menus and layout. They
   // go live together through Publish changes (D-037).

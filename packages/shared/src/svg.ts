@@ -15,6 +15,17 @@ export interface SvgLimits {
 
 export const SVG_LIMITS: SvgLimits = { maxLength: 512 * 1024, maxElements: 5000, maxDepth: 32 };
 
+export interface SvgOptions {
+  /**
+   * A class to give each element drawn with a colour, so a style sheet can recolour it (adaptive
+   * logos, D-027). Returning null leaves the element as it is. Only names made of lowercase
+   * letters, digits and hyphens starting with `hx-` are written.
+   */
+  paint?: (property: PaintProperty, colour: string) => string | null;
+}
+
+export type PaintProperty = 'fill' | 'stroke' | 'stop-color';
+
 export type SvgResult =
   | {
       ok: true;
@@ -365,7 +376,13 @@ function parseViewBox(value: string | undefined): [number, number, number, numbe
   return w > 0 && h > 0 ? [x, y, w, h] : null;
 }
 
-export function sanitizeSvg(input: string, limits: SvgLimits = SVG_LIMITS): SvgResult {
+const CLASS_NAME = /^hx-[a-z0-9-]{1,40}$/;
+
+export function sanitizeSvg(
+  input: string,
+  limits: SvgLimits = SVG_LIMITS,
+  options: SvgOptions = {},
+): SvgResult {
   if (input.length > limits.maxLength) return { ok: false, reason: 'too-large' };
   let root: Element;
   try {
@@ -429,9 +446,13 @@ export function sanitizeSvg(input: string, limits: SvgLimits = SVG_LIMITS): SvgR
       props.delete('width');
       props.delete('height');
     }
-    for (const key of ['fill', 'stroke', 'stop-color']) {
+    const classes: string[] = [];
+    for (const key of ['fill', 'stroke', 'stop-color'] as const) {
       const hex = props.has(key) ? hexOf(props.get(key)!) : null;
-      if (hex) colours.add(hex);
+      if (!hex) continue;
+      colours.add(hex);
+      const cls = options.paint?.(key, hex);
+      if (cls && CLASS_NAME.test(cls) && !classes.includes(cls)) classes.push(cls);
     }
     if (
       element.name !== 'svg' &&
@@ -441,6 +462,7 @@ export function sanitizeSvg(input: string, limits: SvgLimits = SVG_LIMITS): SvgR
       drawn++;
     }
 
+    if (classes.length > 0) props.set('class', classes.join(' '));
     const attrs = [...props].map(([k, v]) => ` ${k}="${escapeAttr(v)}"`).join('');
     const inner = element.children
       .map((child) =>

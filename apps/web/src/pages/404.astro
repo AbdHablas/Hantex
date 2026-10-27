@@ -34,7 +34,7 @@ const siteName = SITE.site.name[locale] || SITE.site.name.ar || SITE.site.name.e
         <a href="/" aria-label={siteName}>
           {
             SITE.logo ? (
-              <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" />
+              <img src={SITE.logo.lockup} alt={siteName} width={Math.round(56 * SITE.logo.aspect)} height="56" />
             ) : (
               <span class="footer-name">{siteName}</span>
             )

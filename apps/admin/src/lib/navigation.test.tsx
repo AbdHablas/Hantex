@@ -48,6 +48,7 @@ describe('dashboard navigation', () => {
       'menus',
       'media',
       'appearance',
+      'logo',
       'subscribers',
       'general',
       'seo-contact',

@@ -52,7 +52,9 @@ export const previewRoutes = new Hono<AppEnv>().post(
     if (!primary) throw conflict('site-has-no-domain');
 
     const data: Record<string, unknown> = {};
-    for (const kind of KINDS) {
+    // The logo isn't part of a preview: the dashboard shows it, and the files would make the
+    // signed form far larger.
+    for (const kind of KINDS.filter((k) => k !== 'logo')) {
       if (drafts[kind]) {
         if (!DOCUMENTS[kind].view.every((p) => v.permissions.has(p))) {
           throw forbidden('missing-permission');

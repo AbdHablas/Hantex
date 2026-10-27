@@ -418,6 +418,29 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(details.getByText(/Used on: About us\./)).toBeVisible();
   await details.getByRole('button', { name: 'Cancel' }).click();
 
+  // An uploaded logo (D-027) is cleaned in the browser, its colours mapped, then published.
+  await page.goto('/s/second-site/logo');
+  await expect(
+    page.getByText('No logo uploaded. The website shows its name as text.'),
+  ).toBeVisible();
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({
+      name: 'logo.svg',
+      mimeType: 'image/svg+xml',
+      buffer: Buffer.from(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40"><script>alert(1)</script><rect width="40" height="40" fill="#1b1e24"/><circle cx="20" cy="20" r="6" fill="#ff6600"/></svg>',
+      ),
+    });
+  await expect(page.getByText('Left out while cleaning: script.')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Preview in dark mode' }).first()).toBeVisible();
+  await page.getByLabel('Colour #1b1e24').selectOption('neutral');
+  await expectAccessible(page, 'logo');
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await confirm(page);
+  await expect(page.getByText(/as version 1[.,]/)).toBeVisible();
+
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');
   await expect(page.getByText('No pages yet')).toBeVisible();

@@ -31,6 +31,9 @@ const MediaLibrary = lazy(() =>
 const MenusEditor = lazy(() =>
   import('./routes/menus').then((module) => ({ default: module.MenusEditor })),
 );
+const LogoEditor = lazy(() =>
+  import('./routes/logo').then((module) => ({ default: module.LogoEditor })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,6 +127,16 @@ const router = createBrowserRouter([
             element: (
               <SitePage>
                 <AppearanceEditor />
+              </SitePage>
+            ),
+          },
+          {
+            path: 'logo',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <LogoEditor />
+                </Suspense>
               </SitePage>
             ),
           },

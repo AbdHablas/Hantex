@@ -101,9 +101,10 @@ palettes are added without rebuilding the platform.
      indicator and so on) or keeps it fixed.
 
   The result is an adaptive logo that follows light/dark mode and the theme,
-  exactly like the Hantex Ultra files in `brand/logo/`. PNG versions for
-  emails and social images, and the favicon set, are generated from it at
-  build time.
+  exactly like the Hantex Ultra files in `brand/logo/`. *Built (2026-10-27):*
+  the dashboard's **Logo** page; without a small mark the full logo is the
+  browser-tab icon. *Not built yet:* PNG versions for emails and social
+  images, and the phone icon, from uploaded logos.
 - **Icons and illustrations** are drawn with `currentColor` and theme
   variables, so they follow each site's colours and mode. This covers
   interface icons (Lucide) and product-category icons. Uploaded icons are

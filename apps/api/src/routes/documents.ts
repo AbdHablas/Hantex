@@ -3,6 +3,7 @@ import { brandTheme, publishable, validateTheme, type Theme } from '@hantex/them
 import type { Permission } from '@hantex/shared';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
@@ -63,7 +64,10 @@ async function publish(
   };
 }
 
-/** One site's drafts, publishing, history and rollback: Coming Soon content, settings and theme. */
+/**
+ * One site's drafts, publishing, history and rollback: Coming Soon content, settings, theme and
+ * logo.
+ */
 export const documentRoutes = new Hono<AppEnv>()
   .get('/:kind', kindParam, async (c) => {
     const { kind } = c.req.valid('param');
@@ -80,35 +84,51 @@ export const documentRoutes = new Hono<AppEnv>()
     });
   })
 
-  .put('/:kind/draft', kindParam, async (c) => {
-    const { kind } = c.req.valid('param');
-    const v = c.var;
-    requireAll(v, DOCUMENTS[kind].edit);
-    const parsed = DOCUMENTS[kind].schema.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) {
-      throw badRequest('invalid-input', {
-        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
-      });
-    }
-    if (kind === 'theme') {
-      const next = parsed.data as Theme;
-      const previous = (await currentDraft(v.db, v.site.id, kind)).data as Theme;
-      if (logoOf(next) !== logoOf(previous) && !v.permissions.has('appearance.editLogo')) {
-        throw forbidden('logo-colours-locked');
+  // A logo draft holds two SVG files of up to 200,000 characters each; nothing else comes close.
+  .put(
+    '/:kind/draft',
+    kindParam,
+    bodyLimit({
+      maxSize: 1024 * 1024,
+      onError: () => {
+        throw badRequest('too-large');
+      },
+    }),
+    async (c) => {
+      const { kind } = c.req.valid('param');
+      const v = c.var;
+      requireAll(v, DOCUMENTS[kind].edit);
+      const parsed = DOCUMENTS[kind].schema.safeParse(await c.req.json().catch(() => null));
+      if (!parsed.success) {
+        throw badRequest('invalid-input', {
+          issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
+        });
       }
-    }
-    await saveDraft(v.db, v.site.id, kind, parsed.data, v.access.userId);
-    await writeAudit(
-      v.db,
-      auditActor(v),
-      { action: 'document.draft-saved', siteId: v.site.id, targetType: 'document', targetId: kind },
-      v.requestId,
-    );
-    return c.json({
-      ok: true,
-      ...(kind === 'theme' ? { checks: validateTheme(parsed.data as Theme) } : {}),
-    });
-  })
+      if (kind === 'theme') {
+        const next = parsed.data as Theme;
+        const previous = (await currentDraft(v.db, v.site.id, kind)).data as Theme;
+        if (logoOf(next) !== logoOf(previous) && !v.permissions.has('appearance.editLogo')) {
+          throw forbidden('logo-colours-locked');
+        }
+      }
+      await saveDraft(v.db, v.site.id, kind, parsed.data, v.access.userId);
+      await writeAudit(
+        v.db,
+        auditActor(v),
+        {
+          action: 'document.draft-saved',
+          siteId: v.site.id,
+          targetType: 'document',
+          targetId: kind,
+        },
+        v.requestId,
+      );
+      return c.json({
+        ok: true,
+        ...(kind === 'theme' ? { checks: validateTheme(parsed.data as Theme) } : {}),
+      });
+    },
+  )
 
   .post(
     '/:kind/publish',

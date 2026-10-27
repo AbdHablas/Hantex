@@ -65,7 +65,7 @@ const action = new URL(Astro.request.url);
   <body>
     <main class="maintenance">
       <div class="maintenance-card">
-        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <p class="footer-name">{siteName}</p>}
+        {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width={Math.round(56 * SITE.logo.aspect)} height="56" /> : <p class="footer-name">{siteName}</p>}
         {
           locales.map((l, i) => (
             <div class={i > 0 ? 'not-found-other' : undefined} lang={l} dir={dirOf(l)}>

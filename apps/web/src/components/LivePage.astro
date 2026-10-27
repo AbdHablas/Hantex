@@ -111,11 +111,11 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
         {share.alt && <meta property="og:image:alt" content={share.alt} />}
       </>
     ) : (
-      origin && SITE.logo && <meta property="og:image" content={`${origin}${SITE.logo.share}`} />
+      origin && SITE.logo?.share && <meta property="og:image" content={`${origin}${SITE.logo.share}`} />
     )}
-    <meta name="twitter:card" content={share || (origin && SITE.logo) ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:card" content={share || (origin && SITE.logo?.share) ? 'summary_large_image' : 'summary'} />
     {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
-    {SITE.logo && <link rel="apple-touch-icon" href={SITE.logo.touchIcon} />}
+    {SITE.logo?.touchIcon && <link rel="apple-touch-icon" href={SITE.logo.touchIcon} />}
     <link rel="stylesheet" href="/theme.css" />
     {themeCss && <style is:inline nonce={themeCss.nonce} set:html={themeCss.css} />}
     <script src="../scripts/theme.ts"></script>
@@ -126,7 +126,7 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
     <header class:list={['site-header', 'bx-header', { 'is-static': !layout.header.sticky }]} id="top">
       <div class="container header-inner">
         <a class="logo" href={pageHref(ctx, ctx.content.index.home ?? pageId)} aria-label={siteName}>
-          {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width="220" height="56" /> : <span>{siteName}</span>}
+          {SITE.logo ? <img src={SITE.logo.lockup} alt={siteName} width={Math.round(56 * SITE.logo.aspect)} height="56" /> : <span>{siteName}</span>}
         </a>
         {
           header.length > 0 && (
@@ -230,7 +230,7 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
     <footer class="site-footer">
       <div class="container footer-grid">
         <div class="footer-brand">
-          {SITE.logo ? <img src={SITE.logo.lockup} alt="" width="180" height="46" /> : <p class="footer-name">{siteName}</p>}
+          {SITE.logo ? <img src={SITE.logo.lockup} alt="" width={Math.round(46 * SITE.logo.aspect)} height="46" /> : <p class="footer-name">{siteName}</p>}
           {footerText && <p>{footerText}</p>}
         </div>
         {

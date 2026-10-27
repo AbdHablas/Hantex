@@ -71,6 +71,7 @@ const en = {
     menus: 'Menus, header & footer',
     media: 'Media',
     appearance: 'Appearance',
+    logo: 'Logo',
     subscribers: 'Sign-ups',
     general: 'General',
     seoContact: 'SEO & contact',
@@ -403,6 +404,42 @@ const en = {
     analyticsHelp:
       'Cloudflare Web Analytics: cookieless page views, with no consent banner needed. In Cloudflare, add this website under Web Analytics and paste the token from its snippet (32 letters and digits). Leave empty to collect nothing.',
     analyticsToken: 'Cloudflare Web Analytics token',
+  },
+
+  logo: {
+    title: 'Logo',
+    intro:
+      'Upload the website’s logo as an SVG file. It is cleaned before it is saved: only drawing is kept, never scripts, links or embedded files. Replacing the logo is a brand decision; only the Owner can do it.',
+    lockup: 'Full logo',
+    lockupHelp: 'Shown in the website’s header and footer.',
+    mark: 'Small mark (optional)',
+    markHelp: 'A square version for browser tabs. Without one, the full logo is used.',
+    upload: 'Upload SVG',
+    replace: 'Replace',
+    remove: 'Remove',
+    removeConfirm: 'Remove this logo from the draft?',
+    none: 'No logo uploaded. The website shows its name as text.',
+    noneMark: 'No small mark uploaded.',
+    removed: 'Left out while cleaning: {items}.',
+    colours: 'Colours',
+    coloursHelp:
+      'Choose which logo colour each colour follows. Logo colours change between light and dark mode (Appearance → Logo colours); fixed colours stay the same.',
+    colour: 'Colour {colour}',
+    fixed: 'Fixed (keep this colour)',
+    previewLight: 'Preview in light mode',
+    previewDark: 'Preview in dark mode',
+    previewNote: 'The previews use the logo colours of the Appearance draft.',
+    shareNote:
+      'Uploaded logos don’t yet make a picture for shared links or a phone home-screen icon; those are only made for the Hantex Ultra brand files.',
+    error: {
+      'too-large': 'The file is too large. Logos must be under 200 KB once cleaned.',
+      'too-complex': 'The drawing has too many parts or is nested too deeply.',
+      'not-svg': 'This is not an SVG file.',
+      malformed: 'The file could not be read as SVG. Export it again from your design tool.',
+      doctype: 'The file contains a document type declaration, which is not allowed.',
+      'no-size': 'The file has no size. Export it with a viewBox.',
+      empty: 'The file draws nothing.',
+    } as Record<string, string>,
   },
 
   appearance: {
@@ -935,6 +972,7 @@ const ar: Messages = {
     menus: 'القوائم والرأس والتذييل',
     media: 'الوسائط',
     appearance: 'المظهر',
+    logo: 'الشعار',
     subscribers: 'المشتركون',
     general: 'عام',
     seoContact: 'البحث والتواصل',
@@ -1259,6 +1297,42 @@ const ar: Messages = {
     analyticsHelp:
       'Cloudflare Web Analytics: عدد زيارات الصفحات دون ملفات تعريف الارتباط ودون الحاجة إلى نافذة موافقة. أضف هذا الموقع في Cloudflare ضمن Web Analytics والصق الرمز من الشيفرة (32 حرفًا ورقمًا). اتركه فارغًا لعدم جمع أي شيء.',
     analyticsToken: 'رمز Cloudflare Web Analytics',
+  },
+
+  logo: {
+    title: 'الشعار',
+    intro:
+      'ارفع شعار الموقع بصيغة SVG. يُنظَّف الملف قبل حفظه: يُحتفظ بالرسم فقط، دون نصوص برمجية أو روابط أو ملفات مضمّنة. استبدال الشعار قرار يخص العلامة التجارية، ولا يملكه إلا المالك.',
+    lockup: 'الشعار الكامل',
+    lockupHelp: 'يظهر في رأس الموقع وتذييله.',
+    mark: 'الرمز المصغّر (اختياري)',
+    markHelp: 'نسخة مربعة لعلامات تبويب المتصفح. إن لم توجد يُستخدم الشعار الكامل.',
+    upload: 'رفع ملف SVG',
+    replace: 'استبدال',
+    remove: 'إزالة',
+    removeConfirm: 'إزالة هذا الشعار من المسودة؟',
+    none: 'لم يُرفع شعار. يعرض الموقع اسمه نصًّا.',
+    noneMark: 'لم يُرفع رمز مصغّر.',
+    removed: 'حُذف أثناء التنظيف: {items}.',
+    colours: 'الألوان',
+    coloursHelp:
+      'اختر لون الشعار الذي يتبعه كل لون. تتغير ألوان الشعار بين الوضع الفاتح والداكن (المظهر ← ألوان الشعار)، وتبقى الألوان الثابتة كما هي.',
+    colour: 'اللون {colour}',
+    fixed: 'ثابت (يبقى هذا اللون)',
+    previewLight: 'معاينة في الوضع الفاتح',
+    previewDark: 'معاينة في الوضع الداكن',
+    previewNote: 'تستخدم المعاينات ألوان الشعار من مسودة المظهر.',
+    shareNote:
+      'لا تُنشئ الشعارات المرفوعة بعدُ صورة للروابط المشاركة أو أيقونة للشاشة الرئيسية في الهاتف؛ هذه تُنشأ لملفات علامة هانتكس ألترا فقط.',
+    error: {
+      'too-large': 'الملف كبير جدًا. يجب أن يكون الشعار أقل من 200 كيلوبايت بعد التنظيف.',
+      'too-complex': 'الرسم يحتوي على أجزاء كثيرة جدًا أو تداخل عميق جدًا.',
+      'not-svg': 'هذا ليس ملف SVG.',
+      malformed: 'تعذّرت قراءة الملف بصيغة SVG. صدّره مجددًا من برنامج التصميم.',
+      doctype: 'يحتوي الملف على تعريف نوع مستند، وهذا غير مسموح.',
+      'no-size': 'الملف بلا مقاس. صدّره مع viewBox.',
+      empty: 'الملف لا يرسم شيئًا.',
+    },
   },
 
   appearance: {

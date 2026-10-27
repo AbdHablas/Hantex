@@ -40,12 +40,15 @@ export interface SiteData {
   turnstileSiteKey: string;
   /** Adaptive logo files, or null to show the site's name as text. */
   logo: {
+    /** Square icon for browser tabs; the lockup when a site has no separate mark. */
     mark: string;
     lockup: string;
-    /** 1200×630 picture shown when a link to the site is shared (Open Graph). */
-    share: string;
-    /** 180×180 icon for phone home screens. */
-    touchIcon: string;
+    /** The lockup's width divided by its height, for its width and height attributes. */
+    aspect: number;
+    /** 1200×630 picture shown when a link to the site is shared (Open Graph), if there is one. */
+    share: string | null;
+    /** 180×180 icon for phone home screens, if there is one. */
+    touchIcon: string | null;
   } | null;
   versions: { comingSoon: number | null; settings: number | null; theme: number | null };
   /** The published pages; only for sites in live mode. */

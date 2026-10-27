@@ -25,6 +25,8 @@ import { randomBytes } from 'node:crypto';
 import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { newLogoFile } from '@hantex/shared/logo';
+import { sanitizeSvg } from '@hantex/shared/svg';
 import pg from 'pg';
 
 const env = process.env;
@@ -174,7 +176,18 @@ about.seo.image = { mediaId: IMAGE_ID };
 // /about was this page's earlier address (Publish changes keeps it as a redirect).
 about.slug = 'who-we-are';
 content.index.redirects = [{ from: '/about', to: aboutId }];
+// An uploaded logo (D-027): the dark square follows the theme's logo colours, the orange dot
+// stays fixed. No mark, so the lockup is also the browser-tab icon.
+const cleanedLogo = sanitizeSvg(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40"><title>Test website</title><rect width="40" height="40" rx="8" fill="#1b1e24"/><circle cx="20" cy="20" r="6" fill="#ff6600"/><script>alert(1)</script></svg>',
+);
+if (!cleanedLogo.ok) throw new Error('test logo refused');
+const lockup = newLogoFile(cleanedLogo.svg, cleanedLogo.colours);
+lockup.colours = lockup.colours.map((c) =>
+  c.colour === '#1b1e24' ? { ...c, use: 'neutral' as const } : c,
+);
 await db.insert(documentVersions).values([
+  { siteId: liveId, kind: 'logo', version: 1, data: { lockup, mark: null } },
   { siteId: liveId, kind: 'pages', version: 1, data: content.index },
   { siteId: liveId, kind: 'menus', version: 1, data: content.menus },
   { siteId: liveId, kind: 'layout', version: 1, data: content.layout },

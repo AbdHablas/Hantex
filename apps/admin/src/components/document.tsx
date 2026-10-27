@@ -20,11 +20,12 @@ import {
 } from './ui';
 
 /**
- * Shared editing for one site's versioned documents (Coming Soon content, site settings, theme):
+ * Shared editing for one site's versioned documents (Coming Soon content, site settings, theme,
+ * logo):
  * a draft that is saved, published (rebuilding the site) and rolled back (D-016, D-022).
  */
 
-export type DocumentKind = 'coming-soon' | 'site-settings' | 'theme';
+export type DocumentKind = 'coming-soon' | 'site-settings' | 'theme' | 'logo';
 
 export type Bi = { ar: string; en: string };
 
@@ -156,8 +157,11 @@ export type DocumentEditor<T> = ReturnType<typeof useDocumentEditor<T>>;
 export function DocumentActions<T>({
   editor,
   publishBody,
+  preview = true,
 }: {
   editor: DocumentEditor<T>;
+  /** Whether the draft can be previewed on the website (the logo is shown in the dashboard). */
+  preview?: boolean;
   /** Extra fields for publishing, e.g. a confirmed logo change. */
   publishBody?: () => Promise<Record<string, unknown> | null> | Record<string, unknown> | null;
 }) {
@@ -174,14 +178,16 @@ export function DocumentActions<T>({
           {m.comingSoon.saveDraft}
         </Button>
       )}
-      <PreviewButton
-        kind={editor.kind}
-        beforeOpen={
-          editor.dirty && editor.editable && editor.valid
-            ? () => editor.draft !== null && editor.save.mutateAsync(editor.draft)
-            : undefined
-        }
-      />
+      {preview && (
+        <PreviewButton
+          kind={editor.kind}
+          beforeOpen={
+            editor.dirty && editor.editable && editor.valid
+              ? () => editor.draft !== null && editor.save.mutateAsync(editor.draft)
+              : undefined
+          }
+        />
+      )}
       {editor.canPublish && (
         <Button
           busy={editor.publish.isPending}

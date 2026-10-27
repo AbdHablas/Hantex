@@ -36,6 +36,8 @@ import {
   siteKeySchema,
   siteSettingsSchema,
 } from '@hantex/shared';
+import { adaptiveLogo, logoSchema, type Logo } from '@hantex/shared/logo';
+import { sanitizeSvg } from '@hantex/shared/svg';
 import {
   FONT_LIBRARY,
   availableWeight,
@@ -103,6 +105,9 @@ async function fromDatabase(url: string): Promise<SiteData> {
     const comingSoon = await latest('coming-soon');
     const settings = await latest('site-settings');
     const theme = await latest('theme');
+    const logo = await latest('logo');
+    // An uploaded logo is re-validated like everything else: the schema cleans each file again.
+    uploadedLogo = logo ? logoSchema.parse(logo.data) : null;
     // The website builder's published documents (D-035): the latest version of each page, of
     // the page index, of the menus and of the header and footer.
     const builderRows = (
@@ -126,7 +131,7 @@ async function fromDatabase(url: string): Promise<SiteData> {
         primaryDomain: domains.find((d) => d.is_primary)?.hostname ?? null,
       },
       turnstileSiteKey: turnstileSiteKey(),
-      logo: brandLogo(site.key),
+      logo: siteLogo(site.key, uploadedLogo),
       versions: {
         comingSoon: comingSoon?.version ?? null,
         settings: settings?.version ?? null,
@@ -201,19 +206,39 @@ async function publishedMedia(
 /** Turnstile's public site key; Cloudflare's always-passing test key outside production. */
 const turnstileSiteKey = () => process.env['TURNSTILE_SITE_KEY'] ?? '1x00000000000000000000AA';
 
+/** The site's published uploaded logo (D-027), written to public/brand by this build. */
+let uploadedLogo: Logo | null = null;
+
+const BRAND_LOCKUP_ASPECT = 375.37 / 120;
+
 /**
- * Logo files: Hantex Ultra's adaptive SVGs from brand/logo. Other sites get uploaded, sanitised
- * logos in Phase 3 (D-027); until then their name is shown as text.
+ * Logo files. A published uploaded logo wins (D-027); otherwise Hantex Ultra uses its adaptive
+ * SVGs from brand/logo, and other sites show their name as text. Uploaded logos have no share
+ * picture or phone icon yet: those PNGs are only made for the brand files.
  */
-const brandLogo = (siteKey: string) =>
-  siteKey === FIRST_SITE.key
+function siteLogo(siteKey: string, uploaded: Logo | null): SiteData['logo'] {
+  if (uploaded?.lockup) {
+    const result = sanitizeSvg(uploaded.lockup.svg);
+    if (!result.ok) fail(`the published logo is not a valid SVG (${result.reason})`);
+    const [, , width, height] = result.viewBox;
+    return {
+      mark: uploaded.mark ? '/brand/mark.svg' : '/brand/lockup.svg',
+      lockup: '/brand/lockup.svg',
+      aspect: width / height,
+      share: null,
+      touchIcon: null,
+    };
+  }
+  return siteKey === FIRST_SITE.key
     ? {
         mark: '/brand/mark.svg',
         lockup: '/brand/lockup.svg',
+        aspect: BRAND_LOCKUP_ASPECT,
         share: '/brand/share-card.png',
         touchIcon: '/brand/touch-icon.png',
       }
     : null;
+}
 
 function defaults(): SiteData {
   const first = siteKey === FIRST_SITE.key;
@@ -230,7 +255,7 @@ function defaults(): SiteData {
       primaryDomain: first ? (FIRST_SITE.domains.find((d) => d.isPrimary)?.hostname ?? null) : null,
     },
     turnstileSiteKey: turnstileSiteKey(),
-    logo: brandLogo(siteKey),
+    logo: siteLogo(siteKey, null),
     versions: { comingSoon: null, settings: null, theme: null },
     comingSoon: DEFAULT_COMING_SOON,
     settings: DEFAULT_SITE_SETTINGS,
@@ -286,7 +311,18 @@ if (!publishable(themeCheck)) fail('the published theme fails the contrast or re
 
 const brandDir = join(root, 'public', 'brand');
 await rm(brandDir, { recursive: true, force: true });
-if (data.logo) {
+// Set while reading the database; TypeScript can't see assignments made inside a function.
+const uploaded = uploadedLogo as Logo | null;
+if (uploaded?.lockup) {
+  // Colours mapped to logo tokens follow the theme's logo colours in light and dark mode.
+  await mkdir(brandDir, { recursive: true });
+  for (const [name, file] of [
+    ['lockup.svg', uploaded.lockup],
+    ['mark.svg', uploaded.mark],
+  ] as const) {
+    if (file) await writeFile(join(brandDir, name), adaptiveLogo(file, data.theme.logo));
+  }
+} else if (data.logo) {
   await mkdir(brandDir, { recursive: true });
   for (const file of ['mark.svg', 'lockup.svg']) {
     await copyFile(join(root, '..', '..', 'brand', 'logo', file), join(brandDir, file));

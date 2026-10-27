@@ -243,6 +243,33 @@ test('media library images are drawn from the site’s own /media/ address', asy
   );
 });
 
+test('an uploaded logo is served cleaned and follows light and dark mode (D-027)', async ({
+  page,
+  request,
+}) => {
+  await page.goto(`${LIVE}/en/`);
+  const logo = page.locator('header .logo img');
+  await expect(logo).toHaveAttribute('src', '/brand/lockup.svg');
+  await expect(logo).toHaveAttribute('width', '224');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/brand/lockup.svg');
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(0);
+  expect(
+    await logo.evaluate((el: HTMLImageElement) => el.decode().then(() => el.naturalWidth)),
+  ).toBeGreaterThan(0);
+
+  const file = await request.get(`${LIVE}/brand/lockup.svg`);
+  expect(file.status()).toBe(200);
+  expect(file.headers()['content-type']).toContain('image/svg+xml');
+  const svg = await file.text();
+  expect(svg).not.toContain('<script');
+  expect(svg).toContain(`svg{--_hx-neutral:${brandTheme.logo.light.neutral}}`);
+  expect(svg).toContain(
+    `@media (prefers-color-scheme:dark){svg{--_hx-neutral:${brandTheme.logo.dark.neutral}}}`,
+  );
+  expect(svg).toMatch(/<rect[^>]* class="hx-f-neutral"/);
+  expect(svg).toMatch(/<circle[^>]*fill="#ff6600"/);
+});
+
 test('a video loads nothing from YouTube until the visitor presses play', async ({ page }) => {
   const youtube: string[] = [];
   const cspErrors: string[] = [];
