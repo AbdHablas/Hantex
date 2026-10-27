@@ -23,6 +23,7 @@ const EXPECTED: Record<string, string[]> = {
     'catalogue.edit',
     'catalogue.publish',
     'catalogue.delete',
+    'catalogue.verify',
     'site.publish',
     'settings.view',
     'settings.edit',

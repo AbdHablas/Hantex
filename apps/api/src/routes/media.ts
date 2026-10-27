@@ -1,5 +1,5 @@
 import { mediaAssets } from '@hantex/db/worker';
-import { and, desc, eq, ilike, lt, sum } from 'drizzle-orm';
+import { and, desc, eq, ilike, lt } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
@@ -10,6 +10,7 @@ import { usesOf, type Variant } from '../lib/media-library';
 import { previewKey, privateKey, publicKey } from '../lib/media-store';
 import { draftContent, publishedContent } from '../lib/site-content';
 import { validate } from '../lib/validate';
+import { storedBytes } from '../lib/site-files';
 import { readWebp } from '../lib/webp';
 import { requirePermission } from '../middleware/session';
 
@@ -36,7 +37,7 @@ const metaSchema = z.strictObject({
   alt: bilingual,
 });
 
-const quotaBytes = (env: AppEnv['Bindings']) => {
+export const quotaBytes = (env: AppEnv['Bindings']) => {
   const mb = Number(env.MEDIA_SITE_QUOTA_MB ?? 1024);
   return (Number.isFinite(mb) && mb > 0 ? mb : 1024) * 1024 * 1024;
 };
@@ -87,14 +88,11 @@ export const mediaRoutes = new Hono<AppEnv>()
         )
         .orderBy(desc(mediaAssets.createdAt))
         .limit(limit);
-      const [usage] = await v.db
-        .select({ bytes: sum(mediaAssets.bytes) })
-        .from(mediaAssets)
-        .where(eq(mediaAssets.siteId, v.site.id));
       return c.json({
         items: rows.map((row) => asItem(v.site.key, row)),
         next: rows.length === limit ? (rows.at(-1)?.createdAt ?? null) : null,
-        usedBytes: Number(usage?.bytes ?? 0),
+        // Images and files (lib/site-files.ts) share the quota.
+        usedBytes: await storedBytes(v.db, v.site.id),
         quotaBytes: quotaBytes(c.env),
       });
     },
@@ -138,11 +136,9 @@ export const mediaRoutes = new Hono<AppEnv>()
     }
 
     const bytes = files.reduce((total, f) => total + f.data.byteLength, 0);
-    const [usage] = await v.db
-      .select({ bytes: sum(mediaAssets.bytes) })
-      .from(mediaAssets)
-      .where(eq(mediaAssets.siteId, v.site.id));
-    if (Number(usage?.bytes ?? 0) + bytes > quotaBytes(c.env)) throw conflict('media-quota');
+    if ((await storedBytes(v.db, v.site.id)) + bytes > quotaBytes(c.env)) {
+      throw conflict('media-quota');
+    }
 
     const id = crypto.randomUUID();
     const store = v.deps.media(c.env);

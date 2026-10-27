@@ -28,6 +28,7 @@ export const RESERVED_SLUGS = [
   'brand',
   'fonts',
   'media',
+  'files',
   'robots.txt',
   'sitemap.xml',
   '404',

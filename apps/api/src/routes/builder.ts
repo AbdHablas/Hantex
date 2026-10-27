@@ -1,6 +1,7 @@
 import { documentDrafts, documentVersions, users, type DocumentKind } from '@hantex/db/worker';
 import {
   checkCatalogue,
+  fileIds,
   checkSite,
   itemId,
   layoutSchema,
@@ -16,12 +17,17 @@ import {
 } from '@hantex/sections';
 import type { Permission } from '@hantex/shared';
 import { brandTheme, publishable, validateTheme, type Theme } from '@hantex/theme';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
-import { draftCatalogue, publishedCatalogue } from '../lib/catalogue-content';
+import {
+  draftCatalogue,
+  lockCatalogue,
+  publishedCatalogue,
+  type Reader,
+} from '../lib/catalogue-content';
 import {
   DOCUMENTS,
   currentDraft,
@@ -31,6 +37,7 @@ import {
 } from '../lib/documents';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { libraryIds, publishMedia } from '../lib/media-library';
+import { fileLibraryIds, publishFiles } from '../lib/site-files';
 import { startRebuild } from '../lib/rebuild';
 import { draftContent, newRedirects, publishedContent, sameData } from '../lib/site-content';
 import { requireThemeFonts } from '../lib/fonts';
@@ -76,11 +83,12 @@ async function freeSlug(v: AppEnv['Variables'], base: string, parentId: string |
 const isCatalogue = (kind: DocumentKind) => kind === 'catalogue' || kind === 'product';
 
 /** What would stop the draft catalogue going live. */
-async function catalogueIssues(v: AppEnv['Variables']) {
+async function catalogueIssues(v: AppEnv['Variables'], db: Reader = v.db) {
   return checkCatalogue({
-    ...(await draftCatalogue(v.db, v.site.id)),
+    ...(await draftCatalogue(db, v.site.id)),
     locales: v.site.locales,
     media: await libraryIds(v.db, v.site.id),
+    files: await fileLibraryIds(db, v.site.id),
   });
 }
 
@@ -459,15 +467,39 @@ export const builderRoutes = new Hono<AppEnv>()
         if (issues.length > 0) throw conflict('site-issues', { issues });
         redirects = newRedirects(await publishedContent(v.db, v.site.id), next);
       }
-      // The catalogue goes live as a whole, so it is checked as a whole (D-045).
       const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
-      if (touchesCatalogue) {
-        const issues = await catalogueIssues(v);
-        if (issues.length > 0) throw conflict('catalogue-issues', { issues });
-      }
 
       const published: { kind: string; key: string; version: number }[] = [];
       await v.db.transaction(async (tx) => {
+        if (touchesCatalogue) {
+          // The catalogue goes live as a whole, so it is checked as a whole (D-045), under its
+          // lock: what is checked is exactly what is published, even if someone is saving.
+          await lockCatalogue(tx, v.site.id);
+          const now = await tx
+            .select({
+              kind: documentDrafts.kind,
+              key: documentDrafts.key,
+              data: documentDrafts.data,
+            })
+            .from(documentDrafts)
+            .where(
+              and(
+                eq(documentDrafts.siteId, v.site.id),
+                inArray(documentDrafts.kind, ['catalogue', 'product']),
+              ),
+            );
+          const current = new Map(now.map((r) => [`${r.kind}:${r.key}`, r.data]));
+          for (const item of items.filter((i) => isCatalogue(i.kind))) {
+            const draft = DOCUMENTS[item.kind].schema.safeParse(
+              current.get(`${item.kind}:${item.key}`),
+            );
+            if (!draft.success || !sameData(draft.data, item.data)) {
+              throw conflict('changed-while-publishing');
+            }
+          }
+          const issues = await catalogueIssues(v, tx);
+          if (issues.length > 0) throw conflict('catalogue-issues', { issues });
+        }
         for (const item of items) {
           let data = item.data;
           // Redirects for changed addresses are recorded on the page index.
@@ -509,13 +541,12 @@ export const builderRoutes = new Hono<AppEnv>()
         );
       }
       if (touchesCatalogue) {
+        // Images and files of the live catalogue: its structure, series and visible products.
         const live = await publishedCatalogue(v.db, v.site.id);
-        await publishMedia(
-          v.db,
-          { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
-          v.site,
-          mediaIds([live.catalogue, [...live.products.values()].filter((p) => p.visible)]),
-        );
+        const visible = [live.catalogue, [...live.products.values()].filter((p) => p.visible)];
+        const stores = { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) };
+        await publishMedia(v.db, stores, v.site, mediaIds(visible));
+        await publishFiles(v.db, stores, v.site, fileIds(visible));
       }
       const { job, result } = await startRebuild(c);
       await writeAudit(

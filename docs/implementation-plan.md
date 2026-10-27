@@ -178,8 +178,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] categories (main first, three levels), attributes with groups and starter sets,
         finishes, products and variants; drafts, versions, restore, Publish changes with
         checks — *stage 1, done*
-  - [ ] series
-  - [ ] documents (PDF datasheets, guides, certificates)
+  - [x] series, and documents (PDF datasheets, guides, certificates) with
+        certificate verification by Owner or Administrator — *stage 2, done*
   - [ ] CSV/Excel import and export
 - [ ] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products

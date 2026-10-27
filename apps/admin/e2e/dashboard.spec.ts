@@ -471,7 +471,7 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(
     page.getByText('Products belong to categories, so add categories first.'),
   ).toBeVisible();
-  await page.getByRole('link', { name: 'Go to categories & attributes' }).click();
+  await page.getByRole('link', { name: 'Go to catalogue setup' }).click();
   await page.getByRole('tab', { name: 'Attributes' }).click();
   await page.getByLabel('Starter set').selectOption({ label: 'Switches and sockets' });
   await page.getByRole('button', { name: 'Add starter attributes' }).click();
@@ -492,9 +492,37 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await finishDialog.getByRole('group', { name: 'Name' }).getByLabel('English').fill('White');
   await finishDialog.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('أبيض');
   await finishDialog.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('tab', { name: 'Series' }).click();
+  await page.getByRole('button', { name: 'Add series' }).click();
+  const seriesDialog = page.getByRole('dialog', { name: 'Series' });
+  await seriesDialog.getByRole('group', { name: 'Name' }).getByLabel('English').fill('Classic');
+  await seriesDialog.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('كلاسيك');
+  await expect(seriesDialog.getByLabel('Address')).toHaveValue('classic');
+  await seriesDialog.getByLabel('White').check();
+  await expectAccessible(page, 'series dialog');
+  await seriesDialog.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByText('Draft saved. It goes live with Publish changes.')).toBeVisible();
   await expectAccessible(page, 'catalogue structure');
+
+  // Files (PDF) are saved as soon as they are uploaded; anything else is refused.
+  await page.getByRole('tab', { name: 'Files' }).click();
+  const pdf = (body: string) =>
+    Buffer.from(`%PDF-1.7\n${body}\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n`, 'latin1');
+  await page.getByLabel('Upload PDF').setInputFiles({
+    name: 'script.pdf',
+    mimeType: 'application/pdf',
+    buffer: pdf('1 0 obj\n<< /S /JavaScript /JS (x) >>\nendobj'),
+  });
+  await expect(page.getByText(/This file can’t be used/)).toBeVisible();
+  await page.getByLabel('Upload PDF').setInputFiles({
+    name: 'Example certificate.pdf',
+    mimeType: 'application/pdf',
+    buffer: pdf('1 0 obj\n<< /Type /Catalog >>\nendobj'),
+  });
+  await expect(page.getByText('Example certificate.pdf uploaded.')).toBeVisible();
+  await expect(page.getByText('Not attached')).toBeVisible();
+  await expectAccessible(page, 'catalogue files');
 
   await page.getByRole('link', { name: 'Products', exact: true }).click();
   await page.getByRole('button', { name: 'New product' }).click();
@@ -511,17 +539,36 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Add variant' }).click();
   await page.getByLabel('Product code').fill('HX-1001');
   await page.getByLabel('Finish', { exact: true }).selectOption({ label: 'White' });
+  await page.getByLabel('Series', { exact: true }).selectOption({ label: 'Classic' });
+  await page.getByRole('button', { name: 'Attach document' }).click();
+  const documentDialog = page.getByRole('dialog', { name: 'Document' });
+  await documentDialog.getByLabel('File', { exact: true }).selectOption({
+    label: 'Example certificate.pdf',
+  });
+  await documentDialog.getByLabel('Kind of document').selectOption({ label: 'Certificate' });
+  await documentDialog.getByRole('group', { name: 'Title' }).getByLabel('English').fill('Test');
+  await documentDialog.getByRole('group', { name: 'Title' }).getByLabel('Arabic').fill('اختبار');
+  await documentDialog.getByLabel('Mark or standard').fill('Example mark');
+  await expectAccessible(page, 'document dialog');
+  await documentDialog.getByRole('button', { name: 'Done' }).click();
+  // Verification waits for the save, and needs a confirmation.
+  await expect(page.getByRole('button', { name: 'Mark verified' })).toBeDisabled();
   await expectAccessible(page, 'product editor');
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByText('Draft saved. It goes live with Publish changes.')).toBeVisible();
+  await expect(page.getByText('Not verified: not shown as a certification')).toBeVisible();
+  await page.getByRole('button', { name: 'Mark verified' }).click();
+  await confirm(page);
+  await expect(page.getByText(/^Verified on /)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove verification' })).toBeVisible();
 
-  // A finish a product uses can't be removed from the structure.
+  // A finish a series or product uses can't be removed from the structure.
   await page.goto('/s/second-site/catalogue');
   await page.getByRole('tab', { name: 'Finishes' }).click();
   await page.getByRole('button', { name: 'Delete White' }).click();
   await confirm(page);
   await page.getByRole('button', { name: 'Save draft' }).click();
-  await expect(page.getByText(/A product variant still uses a finish you removed/)).toBeVisible();
+  await expect(page.getByText(/A series still uses a finish you removed/)).toBeVisible();
   await page.getByRole('button', { name: 'Discard changes' }).click();
 
   await page.goto('/s/second-site/products');

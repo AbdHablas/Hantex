@@ -4,7 +4,9 @@
  * `private/<siteId>/<assetId>/<width>.webp`; the public one, which the site Workers read, holds
  * copies of published images under `sites/<siteKey>/…` and short-lived preview copies under
  * `preview/<siteKey>/…` (removed by the bucket's lifecycle rule, docs/deployment.md), and the
- * uploaded fonts every website may use under `fonts/<fontId>/…`.
+ * uploaded fonts every website may use under `fonts/<fontId>/…`. Website files (PDF, D-045) sit
+ * beside the images: `private/<siteId>/files/<fileId>.pdf`, published as
+ * `sites/<siteKey>/files/<fileId>.pdf`.
  */
 export interface StoredFile {
   body: ReadableStream | ArrayBuffer;
@@ -25,6 +27,11 @@ export const publicKey = (siteKey: string, assetId: string, width: number) =>
   `sites/${siteKey}/${assetId}/${width}.webp`;
 export const previewKey = (siteKey: string, assetId: string, width: number) =>
   `preview/${siteKey}/${assetId}/${width}.webp`;
+
+export const privateFileKey = (siteId: string, fileId: string) =>
+  `private/${siteId}/files/${fileId}.pdf`;
+export const publicFileKey = (siteKey: string, fileId: string) =>
+  `sites/${siteKey}/files/${fileId}.pdf`;
 
 /** An uploaded font's file in the public bucket (D-033), shared by every website. */
 export const fontKey = (fontId: string, weight: number) => `fonts/${fontId}/${weight}.woff2`;

@@ -8,50 +8,74 @@ import {
   checkCatalogue,
   finishSchema,
   itemId,
+  keepVerification,
   newProduct,
   productSchema,
+  seriesSchema,
   slugSchema,
   type Catalogue,
+  type DocumentRef,
   type Product,
 } from '@hantex/sections';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
 import {
   draftCatalogue,
   publishedCatalogueVersions,
+  withCatalogueLock,
   type CatalogueContent,
+  type Reader,
 } from '../lib/catalogue-content';
 import { currentDraft, latestPublished, saveDraft } from '../lib/documents';
 import { badRequest, conflict, notFound } from '../lib/errors';
 import { libraryIds } from '../lib/media-library';
+import { fileLibraryIds } from '../lib/site-files';
 import { sameData } from '../lib/site-content';
 import { validate } from '../lib/validate';
 import { requirePermission } from '../middleware/session';
 
 /**
  * A website's product catalogue (D-026, D-045): categories, attribute groups and attributes,
- * finishes, and products with their variants, all saved as drafts. They go live with the rest
- * of the site through *Publish changes*, which runs `checkCatalogue` first.
+ * finishes, series, and products with their variants and documents, all saved as drafts. They go
+ * live with the rest of the site through *Publish changes*, which runs `checkCatalogue` first.
+ *
+ * Every change that reads the catalogue and writes it back holds the site's catalogue lock, so
+ * two people saving at once never lose each other's products. A certificate's verification is
+ * kept by the API: saves carry it over only while the file and details stay the same, and only
+ * someone with `catalogue.verify` can set it.
  */
 
 const auditActor = (v: AppEnv['Variables']) => ({ userId: v.access.userId, label: v.access.email });
 const idParam = validate('param', z.object({ id: itemId }));
 const newId = () => crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+/** Request size caps: a product, or the whole structure, well above what the limits allow. */
+const sizeLimit = (maxSize: number) =>
+  bodyLimit({
+    maxSize,
+    onError: () => {
+      throw badRequest('too-large');
+    },
+  });
 
 const structureSchema = z.strictObject({
   categories: z.array(categorySchema).max(300),
   groups: z.array(attributeGroupSchema).max(30),
   attributes: z.array(attributeSchema).max(300),
   finishes: z.array(finishSchema).max(300),
+  series: z.array(seriesSchema).max(200),
 });
 type Structure = z.infer<typeof structureSchema>;
 
-async function catalogueDraft(v: AppEnv['Variables']) {
-  return (await currentDraft(v.db, v.site.id, 'catalogue')).data as Catalogue;
+async function catalogueDraft(db: Reader, siteId: string) {
+  return (await currentDraft(db, siteId, 'catalogue')).data as Catalogue;
 }
+
+/** Unverified copies: a verification belongs to the document it was made on. */
+const unverified = (documents: DocumentRef[]) => documents.map((d) => ({ ...d, verified: null }));
 
 /**
  * Changes to the structure that would leave the draft catalogue broken are refused while editing:
@@ -65,6 +89,7 @@ function structureProblem(next: Structure, content: CatalogueContent) {
     ...next.groups.map((g) => g.id),
     ...next.attributes.map((a) => a.id),
     ...next.finishes.map((f) => f.id),
+    ...next.series.map((x) => x.id),
   ];
   if (new Set(ids).size !== ids.length) return badRequest('duplicate-id');
 
@@ -88,6 +113,10 @@ function structureProblem(next: Structure, content: CatalogueContent) {
     return badRequest('missing-attribute');
   }
   const finishes = new Set(next.finishes.map((f) => f.id));
+  if (next.series.some((x) => x.finishIds.some((id) => !finishes.has(id)))) {
+    return badRequest('missing-finish');
+  }
+  const series = new Set(next.series.map((x) => x.id));
   const before = new Map(content.catalogue.attributes.map((a) => [a.id, a]));
 
   for (const [productId, product] of content.products) {
@@ -109,6 +138,9 @@ function structureProblem(next: Structure, content: CatalogueContent) {
         return conflict('finish-in-use', { productId });
       }
     }
+    if (product.seriesId !== null && !series.has(product.seriesId)) {
+      return conflict('series-in-use', { productId });
+    }
   }
   return null;
 }
@@ -127,15 +159,17 @@ export const catalogueRoutes = new Hono<AppEnv>()
   /** The structure, every product in order with its state, and what would stop publishing. */
   .get('/', requirePermission('catalogue.view'), async (c) => {
     const v = c.var;
-    const [content, published, media] = await Promise.all([
+    const [content, published, media, files] = await Promise.all([
       draftCatalogue(v.db, v.site.id),
       publishedCatalogueVersions(v.db, v.site.id),
       libraryIds(v.db, v.site.id),
+      fileLibraryIds(v.db, v.site.id),
     ]);
-    const { categories, groups, attributes, finishes, products: order } = content.catalogue;
+    const { categories, groups, attributes, finishes, series, products: order } = content.catalogue;
     const live = published.get('catalogue:');
+    const liveProducts = new Set((live?.data as Catalogue | undefined)?.products ?? []);
     return c.json({
-      structure: { categories, groups, attributes, finishes },
+      structure: { categories, groups, attributes, finishes, series },
       structureChanged: !live || !sameData(live.data, content.catalogue),
       products: order
         .filter((id) => content.products.has(id))
@@ -147,32 +181,45 @@ export const catalogueRoutes = new Hono<AppEnv>()
             name: product.name,
             slug: product.slug,
             categoryId: product.categoryId,
+            seriesId: product.seriesId,
             visible: product.visible,
             variants: product.variants.length,
             image:
               product.images[0] ?? product.variants.find((x) => x.images[0])?.images[0] ?? null,
-            published:
-              version !== undefined &&
-              (live?.data as Catalogue | undefined)?.products.includes(id) === true,
+            published: version !== undefined && liveProducts.has(id),
             changed: !version || !sameData(version.data, product),
           };
         }),
-      issues: checkCatalogue({ ...content, locales: v.site.locales, media }),
+      issues: checkCatalogue({ ...content, locales: v.site.locales, media, files }),
     });
   })
 
   .put(
     '/structure',
     requirePermission('catalogue.edit'),
+    sizeLimit(4 * 1024 * 1024),
     validate('json', structureSchema),
     async (c) => {
       const v = c.var;
       const body = c.req.valid('json');
-      const content = await draftCatalogue(v.db, v.site.id);
-      const problem = structureProblem(body, content);
-      if (problem) throw problem;
-      const catalogue = await catalogueDraft(v);
-      await saveDraft(v.db, v.site.id, 'catalogue', { ...catalogue, ...body }, v.access.userId);
+      await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const content = await draftCatalogue(tx, v.site.id);
+        const problem = structureProblem(body, content);
+        if (problem) throw problem;
+        const before = new Map(content.catalogue.series.map((x) => [x.id, x.documents]));
+        const series = body.series.map((x) => ({
+          ...x,
+          documents: keepVerification(before.get(x.id) ?? [], x.documents),
+        }));
+        const catalogue = await catalogueDraft(tx, v.site.id);
+        await saveDraft(
+          tx,
+          v.site.id,
+          'catalogue',
+          { ...catalogue, ...body, series },
+          v.access.userId,
+        );
+      });
       await writeAudit(
         v.db,
         auditActor(v),
@@ -195,14 +242,17 @@ export const catalogueRoutes = new Hono<AppEnv>()
     async (c) => {
       const v = c.var;
       const { products } = c.req.valid('json');
-      const catalogue = await catalogueDraft(v);
-      // Reordering never adds or removes products.
-      const same =
-        products.length === catalogue.products.length &&
-        new Set(products).size === products.length &&
-        products.every((id) => catalogue.products.includes(id));
-      if (!same) throw badRequest('invalid-order');
-      await saveDraft(v.db, v.site.id, 'catalogue', { ...catalogue, products }, v.access.userId);
+      await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const catalogue = await catalogueDraft(tx, v.site.id);
+        // Reordering never adds or removes products.
+        const current = new Set(catalogue.products);
+        const same =
+          products.length === catalogue.products.length &&
+          new Set(products).size === products.length &&
+          products.every((id) => current.has(id));
+        if (!same) throw badRequest('invalid-order');
+        await saveDraft(tx, v.site.id, 'catalogue', { ...catalogue, products }, v.access.userId);
+      });
       return c.json({ ok: true });
     },
   )
@@ -219,22 +269,25 @@ export const catalogueRoutes = new Hono<AppEnv>()
     async (c) => {
       const v = c.var;
       const body = c.req.valid('json');
-      const content = await draftCatalogue(v.db, v.site.id);
-      const catalogue = content.catalogue;
-      if (!catalogue.categories.some((x) => x.id === body.categoryId)) {
-        throw badRequest('unknown-category');
-      }
-      if (catalogue.products.length >= MAX_PRODUCTS) throw conflict('too-many-products');
       const id = newId();
-      const product = newProduct(body.name, freeSlug(content, body.slug), body.categoryId);
-      await saveDraft(v.db, v.site.id, 'product', product, v.access.userId, id);
-      await saveDraft(
-        v.db,
-        v.site.id,
-        'catalogue',
-        { ...catalogue, products: [...catalogue.products, id] },
-        v.access.userId,
-      );
+      const product = await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const content = await draftCatalogue(tx, v.site.id);
+        const catalogue = content.catalogue;
+        if (!catalogue.categories.some((x) => x.id === body.categoryId)) {
+          throw badRequest('unknown-category');
+        }
+        if (catalogue.products.length >= MAX_PRODUCTS) throw conflict('too-many-products');
+        const created = newProduct(body.name, freeSlug(content, body.slug), body.categoryId);
+        await saveDraft(tx, v.site.id, 'product', created, v.access.userId, id);
+        await saveDraft(
+          tx,
+          v.site.id,
+          'catalogue',
+          { ...catalogue, products: [...catalogue.products, id] },
+          v.access.userId,
+        );
+        return created;
+      });
       await writeAudit(
         v.db,
         auditActor(v),
@@ -248,7 +301,7 @@ export const catalogueRoutes = new Hono<AppEnv>()
   .get('/products/:id', requirePermission('catalogue.view'), idParam, async (c) => {
     const v = c.var;
     const { id } = c.req.valid('param');
-    if (!(await catalogueDraft(v)).products.includes(id)) throw notFound();
+    if (!(await catalogueDraft(v.db, v.site.id)).products.includes(id)) throw notFound();
     const draft = await currentDraft(v.db, v.site.id, 'product', id);
     const published = await latestPublished(v.db, v.site.id, 'product', id);
     return c.json({
@@ -261,47 +314,65 @@ export const catalogueRoutes = new Hono<AppEnv>()
     });
   })
 
-  .put('/products/:id', requirePermission('catalogue.edit'), idParam, async (c) => {
-    const v = c.var;
-    const { id } = c.req.valid('param');
-    const catalogue = await catalogueDraft(v);
-    if (!catalogue.products.includes(id)) throw notFound();
-    const parsed = productSchema.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) {
-      throw badRequest('invalid-input', {
-        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
+  .put(
+    '/products/:id',
+    requirePermission('catalogue.edit'),
+    sizeLimit(1024 * 1024),
+    idParam,
+    async (c) => {
+      const v = c.var;
+      const { id } = c.req.valid('param');
+      const parsed = productSchema.safeParse(await c.req.json().catch(() => null));
+      if (!parsed.success) {
+        throw badRequest('invalid-input', {
+          issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), code: i.code })),
+        });
+      }
+      await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const content = await draftCatalogue(tx, v.site.id);
+        const catalogue = content.catalogue;
+        if (!catalogue.products.includes(id)) throw notFound();
+        const product = parsed.data;
+        const categories = new Set(catalogue.categories.map((x) => x.id));
+        if (![product.categoryId, ...product.extraCategoryIds].every((x) => categories.has(x))) {
+          throw badRequest('unknown-category');
+        }
+        if (product.seriesId !== null && !catalogue.series.some((x) => x.id === product.seriesId)) {
+          throw badRequest('unknown-series');
+        }
+        const before = content.products.get(id)?.documents ?? [];
+        const documents = keepVerification(before, product.documents);
+        await saveDraft(tx, v.site.id, 'product', { ...product, documents }, v.access.userId, id);
       });
-    }
-    const product = parsed.data;
-    const categories = new Set(catalogue.categories.map((x) => x.id));
-    if (![product.categoryId, ...product.extraCategoryIds].every((x) => categories.has(x))) {
-      throw badRequest('unknown-category');
-    }
-    await saveDraft(v.db, v.site.id, 'product', product, v.access.userId, id);
-    return c.json({ ok: true });
-  })
+      return c.json({ ok: true });
+    },
+  )
 
   .post('/products/:id/duplicate', requirePermission('catalogue.edit'), idParam, async (c) => {
     const v = c.var;
     const { id } = c.req.valid('param');
-    const content = await draftCatalogue(v.db, v.site.id);
-    const catalogue = content.catalogue;
-    const source = content.products.get(id);
-    if (!catalogue.products.includes(id) || !source) throw notFound();
-    if (catalogue.products.length >= MAX_PRODUCTS) throw conflict('too-many-products');
     const copyId = newId();
-    const copy: Product = {
-      ...structuredClone(source),
-      slug: freeSlug(content, `${source.slug.slice(0, 50)}-copy`),
-      // Product codes belong to one product; the copy starts hidden with new variant ids and
-      // empty codes, so nothing goes public twice by accident.
-      variants: source.variants.map((x) => ({ ...structuredClone(x), id: newId(), sku: '' })),
-      visible: false,
-    };
-    await saveDraft(v.db, v.site.id, 'product', copy, v.access.userId, copyId);
-    const products = [...catalogue.products];
-    products.splice(products.indexOf(id) + 1, 0, copyId);
-    await saveDraft(v.db, v.site.id, 'catalogue', { ...catalogue, products }, v.access.userId);
+    await withCatalogueLock(v.db, v.site.id, async (tx) => {
+      const content = await draftCatalogue(tx, v.site.id);
+      const catalogue = content.catalogue;
+      const source = content.products.get(id);
+      if (!catalogue.products.includes(id) || !source) throw notFound();
+      if (catalogue.products.length >= MAX_PRODUCTS) throw conflict('too-many-products');
+      const copy: Product = {
+        ...structuredClone(source),
+        slug: freeSlug(content, `${source.slug.slice(0, 50)}-copy`),
+        // Product codes belong to one product; the copy starts hidden with new variant ids and
+        // empty codes, so nothing goes public twice by accident. Certificates attached to the
+        // copy need verifying for it afresh.
+        variants: source.variants.map((x) => ({ ...structuredClone(x), id: newId(), sku: '' })),
+        documents: unverified(source.documents),
+        visible: false,
+      };
+      await saveDraft(tx, v.site.id, 'product', copy, v.access.userId, copyId);
+      const products = [...catalogue.products];
+      products.splice(products.indexOf(id) + 1, 0, copyId);
+      await saveDraft(tx, v.site.id, 'catalogue', { ...catalogue, products }, v.access.userId);
+    });
     await writeAudit(
       v.db,
       auditActor(v),
@@ -320,26 +391,28 @@ export const catalogueRoutes = new Hono<AppEnv>()
   .delete('/products/:id', requirePermission('catalogue.delete'), idParam, async (c) => {
     const v = c.var;
     const { id } = c.req.valid('param');
-    const catalogue = await catalogueDraft(v);
-    if (!catalogue.products.includes(id)) throw notFound();
-    // The product leaves the draft catalogue; its published versions stay for history until the
-    // next Publish changes removes it from the website.
-    await saveDraft(
-      v.db,
-      v.site.id,
-      'catalogue',
-      { ...catalogue, products: catalogue.products.filter((p) => p !== id) },
-      v.access.userId,
-    );
-    await v.db
-      .delete(documentDrafts)
-      .where(
-        and(
-          eq(documentDrafts.siteId, v.site.id),
-          eq(documentDrafts.kind, 'product'),
-          eq(documentDrafts.key, id),
-        ),
+    await withCatalogueLock(v.db, v.site.id, async (tx) => {
+      const catalogue = await catalogueDraft(tx, v.site.id);
+      if (!catalogue.products.includes(id)) throw notFound();
+      // The product leaves the draft catalogue; its published versions stay for history until
+      // the next Publish changes removes it from the website.
+      await saveDraft(
+        tx,
+        v.site.id,
+        'catalogue',
+        { ...catalogue, products: catalogue.products.filter((p) => p !== id) },
+        v.access.userId,
       );
+      await tx
+        .delete(documentDrafts)
+        .where(
+          and(
+            eq(documentDrafts.siteId, v.site.id),
+            eq(documentDrafts.kind, 'product'),
+            eq(documentDrafts.key, id),
+          ),
+        );
+    });
     await writeAudit(
       v.db,
       auditActor(v),
@@ -394,27 +467,97 @@ export const catalogueRoutes = new Hono<AppEnv>()
       if (!row) throw notFound();
       const parsed = productSchema.safeParse(row.data);
       if (!parsed.success) throw conflict('version-incompatible');
-      const catalogue = await catalogueDraft(v);
-      const categories = new Set(catalogue.categories.map((x) => x.id));
-      if (
-        ![parsed.data.categoryId, ...parsed.data.extraCategoryIds].every((x) => categories.has(x))
-      ) {
-        throw conflict('version-incompatible');
-      }
-      const listed = catalogue.products.includes(id);
-      if (!listed && catalogue.products.length >= MAX_PRODUCTS) {
-        throw conflict('too-many-products');
-      }
-      await saveDraft(v.db, v.site.id, 'product', parsed.data, v.access.userId, id);
-      if (!listed) {
-        await saveDraft(
-          v.db,
-          v.site.id,
-          'catalogue',
-          { ...catalogue, products: [...catalogue.products, id] },
-          v.access.userId,
-        );
-      }
+      const restored = parsed.data;
+      await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const catalogue = await catalogueDraft(tx, v.site.id);
+        const categories = new Set(catalogue.categories.map((x) => x.id));
+        if (
+          ![restored.categoryId, ...restored.extraCategoryIds].every((x) => categories.has(x)) ||
+          (restored.seriesId !== null && !catalogue.series.some((x) => x.id === restored.seriesId))
+        ) {
+          throw conflict('version-incompatible');
+        }
+        const listed = catalogue.products.includes(id);
+        if (!listed && catalogue.products.length >= MAX_PRODUCTS) {
+          throw conflict('too-many-products');
+        }
+        // A published version's verifications were made on exactly its documents, so they stay.
+        await saveDraft(tx, v.site.id, 'product', restored, v.access.userId, id);
+        if (!listed) {
+          await saveDraft(
+            tx,
+            v.site.id,
+            'catalogue',
+            { ...catalogue, products: [...catalogue.products, id] },
+            v.access.userId,
+          );
+        }
+      });
       return c.json({ ok: true });
+    },
+  )
+
+  /* ------------------------------------------ Certificates ------------------------------------------ */
+
+  /**
+   * Marks a certificate verified (or not) after someone with `catalogue.verify` has checked its
+   * details against the attached file. Only then can the website show it as a certification.
+   */
+  .post(
+    '/verify',
+    requirePermission('catalogue.verify'),
+    validate(
+      'json',
+      z.strictObject({
+        target: z.strictObject({ type: z.enum(['product', 'series']), id: itemId }),
+        documentId: itemId,
+        verified: z.boolean(),
+      }),
+    ),
+    async (c) => {
+      const v = c.var;
+      const { target, documentId, verified } = c.req.valid('json');
+      const files = await fileLibraryIds(v.db, v.site.id);
+      const verification = verified ? { by: v.access.userId, at: new Date().toISOString() } : null;
+      const mark = (documents: DocumentRef[]) => {
+        const doc = documents.find((d) => d.id === documentId);
+        if (!doc) throw notFound();
+        if (verified) {
+          if (doc.type !== 'certificate' || !doc.certificate || doc.certificate.name === '') {
+            throw badRequest('not-a-certificate');
+          }
+          if (!files.has(doc.fileId)) throw conflict('file-missing');
+        }
+        return documents.map((d) => (d.id === documentId ? { ...d, verified: verification } : d));
+      };
+      await withCatalogueLock(v.db, v.site.id, async (tx) => {
+        const content = await draftCatalogue(tx, v.site.id);
+        if (target.type === 'product') {
+          const product = content.products.get(target.id);
+          if (!product) throw notFound();
+          const next = { ...product, documents: mark(product.documents) };
+          await saveDraft(tx, v.site.id, 'product', next, v.access.userId, target.id);
+        } else {
+          const catalogue = await catalogueDraft(tx, v.site.id);
+          if (!catalogue.series.some((x) => x.id === target.id)) throw notFound();
+          const series = catalogue.series.map((x) =>
+            x.id === target.id ? { ...x, documents: mark(x.documents) } : x,
+          );
+          await saveDraft(tx, v.site.id, 'catalogue', { ...catalogue, series }, v.access.userId);
+        }
+      });
+      await writeAudit(
+        v.db,
+        auditActor(v),
+        {
+          action: verified ? 'catalogue.certificate-verified' : 'catalogue.certificate-unverified',
+          siteId: v.site.id,
+          targetType: target.type,
+          targetId: target.id,
+          details: { documentId },
+        },
+        v.requestId,
+      );
+      return c.json({ ok: true, verified: verification });
     },
   );

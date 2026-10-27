@@ -19,3 +19,12 @@ export function fakeWebp(width: number, height: number, padding = 16): ArrayBuff
   view.setUint32(21, ((width - 1) & 0x3fff) | (((height - 1) & 0x3fff) << 14), true);
   return b.buffer;
 }
+
+/** A small PDF made of the given object text (enough for the PDF check, not a real document). */
+export function fakePdf(
+  body = '1 0 obj\n<< /Type /Catalog >>\nendobj',
+  version = '1.7',
+): ArrayBuffer {
+  const text = `%PDF-${version}\n%âãÏÓ\n${body}\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n`;
+  return Uint8Array.from(text, (ch) => ch.charCodeAt(0)).buffer;
+}

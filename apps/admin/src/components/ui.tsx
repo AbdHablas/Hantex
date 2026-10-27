@@ -742,13 +742,13 @@ export function Tabs({
     >
       <TabsPrimitive.List
         aria-label={label}
-        className="mb-4 inline-flex rounded-xl border border-border bg-surface-2 p-1"
+        className="mb-4 inline-flex max-w-full overflow-x-auto rounded-xl border border-border bg-surface-2 p-1"
       >
         {tabs.map((tab) => (
           <TabsPrimitive.Trigger
             key={tab.value}
             value={tab.value}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:shadow-sm"
+            className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:shadow-sm"
           >
             {tab.label}
           </TabsPrimitive.Trigger>

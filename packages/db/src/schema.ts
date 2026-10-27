@@ -525,6 +525,31 @@ export const mediaAssets = pgTable(
 );
 
 /**
+ * A website's files (D-045): PDF datasheets, installation guides and certificates that catalogue
+ * products and series attach. Each is kept in the private R2 bucket at
+ * `private/<siteId>/files/<id>.pdf` and copied to the public one when published content attaches
+ * it. Their bytes count towards the site's media quota.
+ */
+export const siteFiles = pgTable(
+  'site_files',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    kind: text('kind').notNull().default('pdf'),
+    /** The uploaded file's name, for finding it again in the dashboard. */
+    name: text('name').notNull(),
+    bytes: integer('bytes').notNull(),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('site_files_site_idx').on(t.siteId, t.createdAt),
+    check('site_files_kind_check', sql`${t.kind} in ('pdf')`),
+  ],
+);
+
+/**
  * Fonts uploaded by the Owner (D-033), shared by every website. Each row is one family; its
  * files (one per weight, upright only) are in the public R2 bucket at
  * `fonts/<id>/<weight>.woff2`. Name, weights and scripts are read from the files themselves.

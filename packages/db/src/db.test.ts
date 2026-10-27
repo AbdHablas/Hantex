@@ -91,6 +91,7 @@ describe('migrations', () => {
       'roles',
       'sessions',
       'site_domains',
+      'site_files',
       'sites',
       'subscribers',
       'theme_presets',
@@ -511,6 +512,11 @@ describe('least-privilege database users', () => {
       permissionDenied,
     );
     await expect(asRole('hantex_build', 'select created_by from media_assets')).rejects.toThrow(
+      permissionDenied,
+    );
+    // Published files: their sizes, not their uploaded names or uploaders.
+    await asRole('hantex_build', 'select id, site_id, bytes, published_at from site_files');
+    await expect(asRole('hantex_build', 'select name from site_files')).rejects.toThrow(
       permissionDenied,
     );
     // Uploaded fonts: their files and scripts, not who confirmed the licence.

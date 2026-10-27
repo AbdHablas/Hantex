@@ -8,6 +8,7 @@ import { auditRoutes, siteAuditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
 import { builderRoutes } from './routes/builder';
 import { catalogueRoutes } from './routes/catalogue';
+import { catalogueFileRoutes } from './routes/catalogue-files';
 import { documentRoutes } from './routes/documents';
 import { enrolmentRoutes } from './routes/enrolment';
 import { meRoutes } from './routes/me';
@@ -34,6 +35,7 @@ function siteApi() {
     .route('/overview', overviewRoutes)
     .route('/documents', documentRoutes)
     .route('/', builderRoutes)
+    .route('/catalogue/files', catalogueFileRoutes)
     .route('/catalogue', catalogueRoutes)
     .route('/preview', previewRoutes)
     .route('/subscribers', subscriberRoutes)

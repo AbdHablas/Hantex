@@ -144,7 +144,12 @@ const versionsOf = (siteId: string, kind: DocumentKind, key = '') =>
     eq(documentVersions.key, key),
   );
 
-export async function latestPublished(db: Database, siteId: string, kind: DocumentKind, key = '') {
+export async function latestPublished(
+  db: Pick<Database, 'select'>,
+  siteId: string,
+  kind: DocumentKind,
+  key = '',
+) {
   const [row] = await db
     .select()
     .from(documentVersions)
@@ -155,7 +160,12 @@ export async function latestPublished(db: Database, siteId: string, kind: Docume
 }
 
 /** The working draft, or the published version, or the defaults (nothing factual pre-filled). */
-export async function currentDraft(db: Database, siteId: string, kind: DocumentKind, key = '') {
+export async function currentDraft(
+  db: Pick<Database, 'select'>,
+  siteId: string,
+  kind: DocumentKind,
+  key = '',
+) {
   const [draft] = await db
     .select()
     .from(documentDrafts)

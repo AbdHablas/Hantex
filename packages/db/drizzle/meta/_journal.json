@@ -78,6 +78,13 @@
       "when": 1793129470135,
       "tag": "0010_catalogue_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793133024240,
+      "tag": "0011_site_files",
+      "breakpoints": true
     }
   ]
 }

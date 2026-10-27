@@ -90,7 +90,17 @@ export const PERMISSIONS = {
     scope: 'site',
     group: 'content',
     sensitive: 'destructive',
-    label: { en: 'Delete products', ar: 'حذف المنتجات' },
+    label: { en: 'Delete products and files', ar: 'حذف المنتجات والملفات' },
+  },
+  'catalogue.verify': {
+    scope: 'site',
+    group: 'content',
+    // A verified certificate is shown on the website as a certification claim (D-045).
+    sensitive: 'brand',
+    label: {
+      en: 'Verify certificates against their documents',
+      ar: 'توثيق الشهادات بمطابقتها مع مستنداتها',
+    },
   },
   'settings.view': {
     scope: 'site',
@@ -270,6 +280,7 @@ export const STANDARD_ROLES: readonly StandardRole[] = [
       'catalogue.edit',
       'catalogue.publish',
       'catalogue.delete',
+      'catalogue.verify',
       'comingSoon.view',
       'comingSoon.edit',
       'site.publish',

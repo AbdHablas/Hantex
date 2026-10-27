@@ -78,6 +78,7 @@ const STRUCTURE: Structure = {
   finishes: [
     { id: 'white00001', name: both('White'), swatch: '#ffffff', material: 'plastic', image: null },
   ],
+  series: [],
 };
 
 const listing = async (cookie = owner) => json<Listing>(await h.request('GET', base, { cookie }));
@@ -138,7 +139,13 @@ afterAll(() => h.close());
 describe('catalogue structure', () => {
   it('starts empty: no categories, attributes, finishes or products are invented', async () => {
     const list = await listing();
-    expect(list.structure).toEqual({ categories: [], groups: [], attributes: [], finishes: [] });
+    expect(list.structure).toEqual({
+      categories: [],
+      groups: [],
+      attributes: [],
+      finishes: [],
+      series: [],
+    });
     expect(list.products).toEqual([]);
   });
 

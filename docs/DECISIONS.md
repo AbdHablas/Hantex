@@ -1018,8 +1018,27 @@ then the general product catalogue (Phase 3c, D-045).
   pre-filled. Starter attribute sets (switches and sockets, lighting and
   lamps, general product) add field definitions only. New permissions
   `catalogue.view`, `.edit`, `.publish` and `.delete` follow the roles matrix.
-  Still to come: series, documents (PDF), CSV/Excel import and export, and
-  the public product pages (Phase 4).
+- **Implementation note (catalogue stage 2, 2026-10-27):** *series* are part
+  of the `catalogue` document (name, address, description, image, finishes in
+  order, documents); a product may belong to one. *Files* are a website's
+  PDFs (`site_files`), kept in the private bucket and copied to the public one
+  when published content attaches them; each site serves them only as
+  downloads at `/files/<id>.pdf`. Uploads must be real PDFs of at most 10 MB,
+  not password-protected, and without plainly visible scripts, launch actions,
+  embedded files or media. That check reads the file's uncompressed parts
+  only, so it is a safeguard rather than a guarantee, which is why files are
+  never shown inside the dashboard or a site. Images and files share the
+  site's storage quota. Products and series attach *documents* (file, kind,
+  title). Certificates also carry their mark, number, issuer and end date as
+  typed in, and are shown as a certification only when verified and still
+  valid (`isCertified`). Only the new `catalogue.verify` permission (Owner
+  and Administrator) can verify, through its own action. Saves carry a
+  verification over only while the file and details are unchanged. Copies of
+  a product start unverified. Every catalogue change that reads and writes
+  back the catalogue, and *Publish changes* itself, holds a per-site lock (a
+  Postgres advisory lock), so simultaneous saves can't lose products and what
+  is checked is exactly what is published. Still to come: CSV/Excel import
+  and export, and the public product pages (Phase 4).
 
 ## D-046 — Videos
 

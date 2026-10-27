@@ -131,7 +131,9 @@ function CatalogueIssueLine({
           ? structure?.attributes.find((a) => a.id === id)?.name
           : scope === 'finish'
             ? structure?.finishes.find((f) => f.id === id)?.name
-            : structure?.groups.find((g) => g.id === id)?.name;
+            : scope === 'series'
+              ? structure?.series.find((x) => x.id === id)?.name
+              : structure?.groups.find((g) => g.id === id)?.name;
   const kind = t.issueKind[scope ?? ''] ?? '';
   const where = `${kind}${name ? ` “${bi(name)}”` : ''}`;
   return (

@@ -6,20 +6,27 @@ import {
   attributeSchema,
   catalogueSchema,
   checkCatalogue,
+  documentRefSchema,
+  fileIds,
+  isCertified,
+  keepVerification,
   newProduct,
   productAttributes,
   productSchema,
   skuSchema,
   type Catalogue,
+  type DocumentRef,
   type Product,
 } from './index';
 
 const both = (en: string, ar = `ع ${en}`) => ({ ar, en });
 const MEDIA = '0b8a6c1e-2f3d-4a5b-8c7d-9e0f1a2b3c4d';
+const FILE = '2c9b7d2f-3a4e-4b6c-9d8e-0f1a2b3c4d5e';
 
 function sample(): { catalogue: Catalogue; products: Map<string, Product> } {
   const catalogue: Catalogue = {
     ...DEFAULT_CATALOGUE,
+    series: [],
     categories: [
       {
         id: 'switches01',
@@ -89,7 +96,18 @@ function sample(): { catalogue: Catalogue; products: Map<string, Product> } {
 const check = (
   { catalogue, products }: ReturnType<typeof sample>,
   media: ReadonlySet<string> = new Set([MEDIA]),
-) => checkCatalogue({ catalogue, products, locales: ['ar', 'en'], media });
+  files: ReadonlySet<string> = new Set([FILE]),
+) => checkCatalogue({ catalogue, products, locales: ['ar', 'en'], media, files });
+
+const certificate = (over: Partial<DocumentRef> = {}): DocumentRef => ({
+  id: 'doc0000001',
+  fileId: FILE,
+  type: 'certificate',
+  title: both('Certificate'),
+  certificate: { name: 'Mark', number: 'N-1', issuer: 'Body', validUntil: '2027-01-31' },
+  verified: null,
+  ...over,
+});
 
 describe('catalogue', () => {
   it('accepts an empty catalogue and a complete sample', () => {
@@ -194,6 +212,100 @@ describe('catalogue', () => {
     expect(check(s)).toEqual([]);
     p.categoryId = 'nothere01';
     expect(check(s).map((i) => i.code)).toEqual(['missing-category']);
+  });
+});
+
+describe('series and documents', () => {
+  it('reads catalogues and products saved before series and documents existed', () => {
+    const { series: _series, ...old } = DEFAULT_CATALOGUE;
+    expect(catalogueSchema.parse(old).series).toEqual([]);
+    const { seriesId: _s, documents: _d, ...oldProduct } = newProduct(both('X'), 'x', 'aaaaaa');
+    const product = productSchema.parse(oldProduct);
+    expect(product.seriesId).toBeNull();
+    expect(product.documents).toEqual([]);
+  });
+
+  it('keeps certificate details on certificates only', () => {
+    expect(documentRefSchema.safeParse(certificate()).success).toBe(true);
+    expect(documentRefSchema.safeParse({ ...certificate(), type: 'datasheet' }).success).toBe(
+      false,
+    );
+    expect(
+      documentRefSchema.safeParse({
+        ...certificate(),
+        type: 'datasheet',
+        certificate: null,
+        verified: { by: 'user', at: '2026-10-27T10:00:00Z' },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('checks series, their finishes and the series products belong to', () => {
+    const s = sample();
+    s.catalogue.series.push(
+      {
+        id: 'series0001',
+        name: both('Line'),
+        slug: 'line',
+        description: both(''),
+        image: null,
+        finishIds: ['white00001', 'gone000001'],
+        documents: [],
+      },
+      {
+        id: 'series0002',
+        name: both('Line', ''),
+        slug: 'line',
+        description: both(''),
+        image: null,
+        finishIds: [],
+        documents: [],
+      },
+    );
+    s.products.get('product001')!.seriesId = 'nothere01';
+    const codes = check(s).map((i) => `${i.code}:${i.target}`);
+    expect(codes).toContain('missing-finish:series:series0001');
+    expect(codes).toContain('missing-name:series:series0002');
+    expect(codes).toContain('duplicate-address:series:series0002');
+    expect(codes).toContain('missing-series:product:product001');
+  });
+
+  it('checks documents: titles, certificate names and files that exist', () => {
+    const s = sample();
+    const p = s.products.get('product001')!;
+    p.documents = [
+      certificate({
+        title: both('Cert', ''),
+        certificate: { name: '', number: '', issuer: '', validUntil: null },
+      }),
+    ];
+    const codes = check(s, undefined, new Set()).map((i) => `${i.code}:${i.detail}`);
+    expect(codes).toContain('missing-name:doc0000001');
+    expect(codes).toContain('missing-name:doc0000001:certificate');
+    expect(codes).toContain(`missing-file:${FILE}`);
+    p.documents = [certificate()];
+    expect(check(s)).toEqual([]);
+    expect(fileIds([s.catalogue, p])).toEqual(new Set([FILE]));
+  });
+
+  it('keeps verification only while the file and certificate details are unchanged', () => {
+    const verified = { by: 'user-1', at: '2026-10-27T10:00:00.000Z' };
+    const before = [certificate({ verified })];
+    expect(keepVerification(before, [certificate()])[0]!.verified).toEqual(verified);
+    // An editor can't mark a certificate verified by saving it so.
+    expect(keepVerification([], [certificate({ verified })])[0]!.verified).toBeNull();
+    const other = '3d0c8e3a-4b5f-4c7d-8e9f-1a2b3c4d5e6f';
+    expect(keepVerification(before, [certificate({ fileId: other })])[0]!.verified).toBeNull();
+    const changed = certificate();
+    changed.certificate = { ...changed.certificate!, validUntil: '2030-01-01' };
+    expect(keepVerification(before, [changed])[0]!.verified).toBeNull();
+  });
+
+  it('shows a certification only when verified and still valid', () => {
+    const verified = { by: 'user-1', at: '2026-10-27T10:00:00.000Z' };
+    expect(isCertified(certificate(), '2026-10-27')).toBe(false);
+    expect(isCertified(certificate({ verified }), '2026-10-27')).toBe(true);
+    expect(isCertified(certificate({ verified }), '2027-02-01')).toBe(false);
   });
 });
 

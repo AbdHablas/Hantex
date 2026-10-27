@@ -10,19 +10,8 @@ import {
   type Category,
   type Finish,
 } from '@hantex/sections';
-import {
-  ArrowDown,
-  ArrowUp,
-  FolderTree,
-  ListChecks,
-  Palette,
-  Pencil,
-  Plus,
-  Star,
-  Trash2,
-  Wand2,
-} from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { FolderTree, ListChecks, Palette, Plus, Star, Trash2, Wand2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { BilingualField } from '../components/document';
 import { ImageField } from '../components/builder/ImageField';
 import {
@@ -30,7 +19,6 @@ import {
   Badge,
   Button,
   Card,
-  Dialog,
   EmptyState,
   ErrorText,
   Field,
@@ -52,11 +40,13 @@ import { useCurrentSite } from '../lib/session';
 
 /**
  * The catalogue's structure (D-026, D-045): categories (a tree up to three levels), attribute
- * groups and attributes, and finishes. Everything is the website's own data; changes are kept
+ * groups and attributes, finishes and series, plus the website's PDF files. Everything is the website's own data; changes are kept
  * here until saved as a draft, and go live with Publish changes.
  */
 
-const empty = () => ({ ar: '', en: '' });
+import { FilesCard } from '../components/catalogue/FilesCard';
+import { Checkbox, ItemDialog, RowActions, empty, move } from '../components/catalogue/parts';
+import { SeriesCard } from '../components/catalogue/SeriesCard';
 
 /** Categories in tree order: each followed by its sub-categories, with their depth. */
 export function categoryTree(categories: Category[]) {
@@ -70,166 +60,6 @@ export function categoryTree(categories: Category[]) {
   };
   walk(null, 1);
   return out;
-}
-
-/** Moves an item among the items that share its parent (or among all, without parents). */
-function move<T extends { id: string }>(
-  items: T[],
-  id: string,
-  step: -1 | 1,
-  sibling: (a: T, b: T) => boolean = () => true,
-) {
-  const index = items.findIndex((i) => i.id === id);
-  const item = items[index];
-  if (!item) return items;
-  const siblings = items
-    .map((other, i) => ({ other, i }))
-    .filter(({ other }) => sibling(item, other));
-  const at = siblings.findIndex(({ i }) => i === index);
-  const target = siblings[at + step];
-  if (!target) return items;
-  const next = [...items];
-  next[index] = target.other;
-  next[target.i] = item;
-  return next;
-}
-
-function RowActions({
-  label,
-  editable,
-  onUp,
-  onDown,
-  onEdit,
-  onDelete,
-}: {
-  label: string;
-  editable: boolean;
-  onUp?: (() => void) | null;
-  onDown?: (() => void) | null;
-  onEdit: () => void;
-  /** Null when the item can't be deleted yet (a category with sub-categories). */
-  onDelete: (() => void) | null;
-}) {
-  const { m, format } = useI18n();
-  const t = m.catalogue;
-  return (
-    <div className="flex shrink-0 items-center gap-0.5">
-      {editable && (
-        <>
-          <IconButton
-            label={format(t.moveUp, { name: label })}
-            disabled={!onUp}
-            onClick={onUp ?? undefined}
-          >
-            <ArrowUp className="size-4" aria-hidden />
-          </IconButton>
-          <IconButton
-            label={format(t.moveDown, { name: label })}
-            disabled={!onDown}
-            onClick={onDown ?? undefined}
-          >
-            <ArrowDown className="size-4" aria-hidden />
-          </IconButton>
-        </>
-      )}
-      <IconButton
-        label={format(editable ? t.editItem : t.viewItem, { name: label })}
-        onClick={onEdit}
-      >
-        <Pencil className="size-4" aria-hidden />
-      </IconButton>
-      {editable && (
-        <IconButton
-          label={format(t.deleteItem, { name: label })}
-          disabled={!onDelete}
-          onClick={onDelete ?? undefined}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </IconButton>
-      )}
-    </div>
-  );
-}
-
-function Checkbox({
-  label,
-  help,
-  checked,
-  disabled,
-  onChange,
-}: {
-  label: ReactNode;
-  help?: ReactNode;
-  checked: boolean;
-  disabled: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex items-start gap-2 text-sm">
-      <input
-        type="checkbox"
-        className="mt-0.5 size-4 accent-accent"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span>
-        {label}
-        {help && <span className="block text-xs text-muted">{help}</span>}
-      </span>
-    </label>
-  );
-}
-
-/** A dialog editing a copy of one item; Done puts it back into the unsaved structure. */
-function ItemDialog<T>({
-  title,
-  item,
-  editable,
-  valid,
-  onClose,
-  onDone,
-  children,
-}: {
-  title: string;
-  item: T | null;
-  editable: boolean;
-  valid: boolean;
-  onClose: () => void;
-  onDone: () => void;
-  children: ReactNode;
-}) {
-  const { m } = useI18n();
-  return (
-    <Dialog
-      open={item !== null}
-      onClose={onClose}
-      title={title}
-      className="w-[min(44rem,calc(100vw-2rem))]"
-    >
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (editable && valid) onDone();
-        }}
-      >
-        <fieldset disabled={!editable} className="contents">
-          {children}
-        </fieldset>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            {editable ? m.cancel : m.close}
-          </Button>
-          {editable && (
-            <Button type="submit" disabled={!valid}>
-              {m.catalogue.done}
-            </Button>
-          )}
-        </div>
-      </form>
-    </Dialog>
-  );
 }
 
 /* ------------------------------------------- Categories ------------------------------------------- */
@@ -1224,6 +1054,20 @@ export function CatalogueStructureEditor() {
                   <FinishesCard structure={structure} editable={editable} onChange={change} />
                 ),
               },
+              {
+                value: 'series',
+                label: t.series,
+                content: (
+                  <SeriesCard
+                    structure={structure}
+                    editable={editable}
+                    dirty={dirty}
+                    onChange={change}
+                  />
+                ),
+              },
+              // Files are saved as soon as they are uploaded, not with the structure's draft.
+              { value: 'files', label: t.files, content: <FilesCard /> },
             ]}
           />
         </div>

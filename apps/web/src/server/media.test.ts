@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hmacHex } from './crypto';
-import { serveFont, serveMedia, type MediaBucket } from './media';
+import { serveFile, serveFont, serveMedia, type MediaBucket } from './media';
 
 const SECRET = 'test-preview-secret-0123456789abcdef';
 const ID = '0b6f5d0e-3c1a-4c2e-9a51-2f4d8e7b6a10';
@@ -109,5 +109,36 @@ describe('uploaded fonts', () => {
       expect(response.status, path).toBe(404);
     }
     expect(store.asked).toEqual([`fonts/${ID}/400.woff2`]);
+  });
+});
+
+describe('published files', () => {
+  const file = (path: string, store: MediaBucket, method = 'GET') =>
+    serveFile(new Request(`https://example.test${path}`, { method }), {
+      bucket: store,
+      siteKey: 'hantex-ultra',
+    });
+
+  it('serves this site’s published PDFs as downloads', async () => {
+    const store = bucket([`sites/hantex-ultra/files/${ID}.pdf`]);
+    const response = await file(`/files/${ID}.pdf`, store);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/pdf');
+    expect(response.headers.get('Content-Disposition')).toBe(`attachment; filename="${ID}.pdf"`);
+    expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('reaches nothing outside this site’s published files', async () => {
+    const store = bucket([`private/x/files/${ID}.pdf`, `sites/other/files/${ID}.pdf`]);
+    for (const path of [
+      `/files/${ID}.pdf`,
+      `/files/../private/x/files/${ID}.pdf`,
+      `/files/${ID}.PDF`,
+      '/files/not-an-id.pdf',
+    ]) {
+      expect((await file(path, store)).status, path).toBe(404);
+    }
+    expect(store.asked).toEqual([`sites/hantex-ultra/files/${ID}.pdf`]);
+    expect((await file(`/files/${ID}.pdf`, store, 'POST')).status).toBe(405);
   });
 });

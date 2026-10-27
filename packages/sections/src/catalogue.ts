@@ -4,8 +4,9 @@ import type { Bilingual } from './primitives';
 
 /**
  * A website's product catalogue (D-026, D-045). Nothing here is specific to one kind of product:
- * categories, attribute definitions and finishes are each website's own data. The structure
- * (categories, attribute groups, attributes, finishes and the product order) is one site document,
+ * categories, attribute definitions, finishes and series are each website's own data. The
+ * structure (categories, attribute groups, attributes, finishes, series and the product order) is
+ * one site document,
  * `catalogue`; each product is a `product` document keyed by its id. Both have drafts and
  * numbered versions and go live through *Publish changes*, checked by `checkCatalogue`.
  *
@@ -83,6 +84,131 @@ export const finishSchema = z.strictObject({
 });
 export type Finish = z.infer<typeof finishSchema>;
 
+/* ---------------------------------------- Documents ---------------------------------------- */
+
+/** What a PDF attached to a product or series is. */
+export const DOCUMENT_TYPES = [
+  'datasheet',
+  'installation',
+  'manual',
+  'certificate',
+  'declaration',
+  'other',
+] as const;
+export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+/**
+ * What a certificate says, typed in from the document itself. It is shown on the website only
+ * once an Owner or Administrator has checked it against the attached file (D-045).
+ */
+export const certificateSchema = z.strictObject({
+  /** The mark, scheme or standard, as written on the certificate. */
+  name: z.string().trim().max(60),
+  number: z.string().trim().max(80),
+  issuer: z.string().trim().max(120),
+  validUntil: z.iso.date().nullable(),
+});
+export type Certificate = z.infer<typeof certificateSchema>;
+
+/** Who checked a certificate and when. Set by the API only, never taken from an editor's save. */
+export const verificationSchema = z.strictObject({
+  by: z.string().min(1).max(64),
+  at: z.iso.datetime(),
+});
+export type Verification = z.infer<typeof verificationSchema>;
+
+export const documentRefSchema = z
+  .strictObject({
+    id: itemId,
+    /** A PDF in the website's files (`site_files`). */
+    fileId: z.uuid(),
+    type: z.enum(DOCUMENT_TYPES),
+    title: bilingual(120),
+    /** Certificates only. */
+    certificate: certificateSchema.nullable(),
+    verified: verificationSchema.nullable(),
+  })
+  .refine((d) => (d.type === 'certificate') === (d.certificate !== null), {
+    message: 'Only certificates have certificate details',
+    path: ['certificate'],
+  })
+  .refine((d) => d.verified === null || d.certificate !== null, {
+    message: 'Only certificates are verified',
+    path: ['verified'],
+  });
+export type DocumentRef = z.infer<typeof documentRefSchema>;
+
+const documentList = z.array(documentRefSchema).max(20).default([]);
+
+const sameCertificate = (a: Certificate | null, b: Certificate | null) =>
+  a !== null &&
+  b !== null &&
+  a.name === b.name &&
+  a.number === b.number &&
+  a.issuer === b.issuer &&
+  a.validUntil === b.validUntil;
+
+/**
+ * Carries each document's verification over from the stored version, and only while the
+ * document still has the same file and the same certificate details. Whatever an editor's save
+ * says about verification is ignored, so only the verify action can mark a certificate verified.
+ */
+export function keepVerification(previous: DocumentRef[], next: DocumentRef[]): DocumentRef[] {
+  return next.map((doc) => {
+    const before = previous.find((p) => p.id === doc.id);
+    const kept =
+      before?.verified &&
+      before.fileId === doc.fileId &&
+      doc.type === 'certificate' &&
+      sameCertificate(before.certificate, doc.certificate)
+        ? before.verified
+        : null;
+    return { ...doc, verified: kept };
+  });
+}
+
+/** Whether a certificate may be shown as a certification mark on a given day (YYYY-MM-DD). */
+export function isCertified(doc: DocumentRef, today: string): boolean {
+  return (
+    doc.type === 'certificate' &&
+    doc.certificate !== null &&
+    doc.certificate.name !== '' &&
+    doc.verified !== null &&
+    (doc.certificate.validUntil === null || doc.certificate.validUntil >= today)
+  );
+}
+
+/** Every file that some content attaches (any `{ fileId }` inside it). */
+export function fileIds(value: unknown, into: Set<string> = new Set()): Set<string> {
+  if (Array.isArray(value)) {
+    for (const item of value) fileIds(item, into);
+  } else if (value && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      if (key === 'fileId' && typeof item === 'string' && z.uuid().safeParse(item).success) {
+        into.add(item.toLowerCase());
+      } else {
+        fileIds(item, into);
+      }
+    }
+  }
+  return into;
+}
+
+/* ------------------------------------------ Series ------------------------------------------ */
+
+/** A design line: products that share one design and one set of finishes. */
+export const seriesSchema = z.strictObject({
+  id: itemId,
+  name: bilingual(80),
+  slug: slugSchema,
+  description: bilingual(1000),
+  image: image.nullable(),
+  /** The finishes the series comes in, in display order. */
+  finishIds: z.array(itemId).max(60),
+  documents: documentList,
+});
+export type Series = z.infer<typeof seriesSchema>;
+
 export const MAX_PRODUCTS = 5000;
 
 export const catalogueSchema = z.strictObject({
@@ -92,6 +218,7 @@ export const catalogueSchema = z.strictObject({
   groups: z.array(attributeGroupSchema).max(30),
   attributes: z.array(attributeSchema).max(300),
   finishes: z.array(finishSchema).max(300),
+  series: z.array(seriesSchema).max(200).default([]),
   /** Every product of the site, in display order. */
   products: z.array(itemId).max(MAX_PRODUCTS),
 });
@@ -103,6 +230,7 @@ export const DEFAULT_CATALOGUE: Catalogue = {
   groups: [],
   attributes: [],
   finishes: [],
+  series: [],
   products: [],
 };
 
@@ -138,13 +266,18 @@ export const productSchema = z.strictObject({
   categoryId: itemId,
   /** Also listed in these categories. */
   extraCategoryIds: z.array(itemId).max(5),
+  seriesId: itemId.nullable().default(null),
   summary: bilingual(300),
   /** Plain paragraphs separated by blank lines. */
   description: bilingual(5000),
   images: z.array(image).max(20),
   /** Values by attribute id; attributes left out show nothing. */
-  values: z.record(itemId, attributeValueSchema),
+  values: z
+    .record(itemId, attributeValueSchema)
+    .refine((values) => Object.keys(values).length <= 300, 'Too many values'),
   variants: z.array(variantSchema).max(60),
+  /** Datasheets, guides and certificates (PDF). */
+  documents: documentList,
   /** Hidden products keep their content but are not built or listed. */
   visible: z.boolean(),
 });
@@ -156,11 +289,13 @@ export function newProduct(name: Bilingual, slug: string, categoryId: string): P
     slug,
     categoryId,
     extraCategoryIds: [],
+    seriesId: null,
     summary: emptyText(),
     description: emptyText(),
     images: [],
     values: {},
     variants: [],
+    documents: [],
     // New products start hidden, so nothing half-entered goes public.
     visible: false,
   };
@@ -220,8 +355,13 @@ export interface CatalogueIssue {
     | 'wrong-value'
     | 'missing-finish'
     | 'duplicate-sku'
-    | 'missing-image';
-  /** What is concerned: `category:<id>`, `attribute:<id>`, `finish:<id>` or `product:<id>`. */
+    | 'missing-image'
+    | 'missing-series'
+    | 'missing-file';
+  /**
+   * What is concerned: `category:<id>`, `group:<id>`, `attribute:<id>`, `finish:<id>`,
+   * `series:<id>` or `product:<id>`.
+   */
   target: string;
   detail?: string;
 }
@@ -232,6 +372,8 @@ export interface CatalogueDraft {
   locales: readonly string[];
   /** The website's media library images; when given, images that no longer exist are reported. */
   media?: ReadonlySet<string>;
+  /** The website's files (PDF); when given, attached files that no longer exist are reported. */
+  files?: ReadonlySet<string>;
 }
 
 const filled = (text: Bilingual, locales: readonly string[]) =>
@@ -240,7 +382,7 @@ const filled = (text: Bilingual, locales: readonly string[]) =>
 /**
  * Cross-checks run before publishing: names in every language the site uses, unique ids,
  * addresses and codes, a category tree at most three levels deep, and references (categories,
- * attribute groups, attributes, choices, finishes, images) that exist. Hidden products are
+ * attribute groups, attributes, choices, finishes, series, images, files) that exist. Hidden products are
  * checked only for what would break the catalogue, not for missing translations.
  */
 export function checkCatalogue(draft: CatalogueDraft): CatalogueIssue[] {
@@ -322,6 +464,40 @@ export function checkCatalogue(draft: CatalogueDraft): CatalogueIssue[] {
     named(finish.name, target);
   }
 
+  /** Titles in every language and certificate names, on whatever goes public. */
+  const documents = (list: DocumentRef[], target: string, live: boolean) => {
+    const seen = new Set<string>();
+    for (const doc of list) {
+      if (seen.has(doc.id)) issues.push({ code: 'duplicate-id', target, detail: doc.id });
+      seen.add(doc.id);
+      if (!live) continue;
+      named(doc.title, target, doc.id);
+      if (doc.certificate && doc.certificate.name === '') {
+        issues.push({ code: 'missing-name', target, detail: `${doc.id}:certificate` });
+      }
+    }
+  };
+
+  const seriesSlugs = new Set<string>();
+  for (const series of catalogue.series) {
+    const target = `series:${series.id}`;
+    unique(series.id, target);
+    named(series.name, target);
+    if ((RESERVED_SLUGS as readonly string[]).includes(series.slug)) {
+      issues.push({ code: 'reserved-address', target, detail: series.slug });
+    }
+    if (seriesSlugs.has(series.slug)) {
+      issues.push({ code: 'duplicate-address', target, detail: series.slug });
+    }
+    seriesSlugs.add(series.slug);
+    for (const finishId of series.finishIds) {
+      if (!finishes.has(finishId))
+        issues.push({ code: 'missing-finish', target, detail: finishId });
+    }
+    documents(series.documents, target, true);
+  }
+  const seriesIds = new Set(catalogue.series.map((x) => x.id));
+
   const productSlugs = new Map<string, string>();
   const skus = new Map<string, string>();
   const listed = new Set<string>();
@@ -372,6 +548,10 @@ export function checkCatalogue(draft: CatalogueDraft): CatalogueIssue[] {
         skus.set(variant.sku.toLowerCase(), `${productId}:${variant.id}`);
       }
     }
+    if (product.seriesId !== null && !seriesIds.has(product.seriesId)) {
+      issues.push({ code: 'missing-series', target, detail: product.seriesId });
+    }
+    documents(product.documents, target, product.visible);
     if (!product.visible) continue;
     named(product.name, target);
     const other = productSlugs.get(product.slug);
@@ -391,6 +571,20 @@ export function checkCatalogue(draft: CatalogueDraft): CatalogueIssue[] {
     };
     for (const category of catalogue.categories) check(category, `category:${category.id}`);
     for (const finish of catalogue.finishes) check(finish, `finish:${finish.id}`);
+    for (const series of catalogue.series) check(series, `series:${series.id}`);
+    for (const productId of catalogue.products) {
+      const product = products.get(productId);
+      if (product?.visible) check(product, `product:${productId}`);
+    }
+  }
+  if (draft.files) {
+    const check = (value: unknown, target: string) => {
+      for (const fileId of fileIds(value)) {
+        if (!draft.files?.has(fileId))
+          issues.push({ code: 'missing-file', target, detail: fileId });
+      }
+    };
+    for (const series of catalogue.series) check(series, `series:${series.id}`);
     for (const productId of catalogue.products) {
       const product = products.get(productId);
       if (product?.visible) check(product, `product:${productId}`);

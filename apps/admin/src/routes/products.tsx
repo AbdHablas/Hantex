@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Copy,
   EyeOff,
+  FileText,
   FolderTree,
   History,
   MoreHorizontal,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { DocumentsField } from '../components/catalogue/DocumentsField';
 import { BilingualField } from '../components/document';
 import { ImageField } from '../components/builder/ImageField';
 import { PublishBar } from '../components/builder/PublishBar';
@@ -695,10 +697,10 @@ function ProductForm({ productId }: { productId: string }) {
   useEffect(() => {
     if (!loaded.data) return;
     const next = loaded.data.product;
-    setProduct((current) =>
-      current === null || sameData(current, previous.current) ? next : current,
-    );
+    // Read before replacing: the updater below runs later, during the next render.
+    const before = previous.current;
     previous.current = next;
+    setProduct((current) => (current === null || sameData(current, before) ? next : current));
   }, [loaded.data]);
   const save = useBuilderMutation((next: Product) =>
     api(sitePath(siteKey, `/catalogue/products/${productId}`), { method: 'PUT', body: next }),
@@ -822,6 +824,25 @@ function ProductForm({ productId }: { productId: string }) {
                 </Select>
               )}
             </Field>
+            {structure.series.length > 0 && (
+              <Field label={t.productSeries} help={t.productSeriesHelp}>
+                {(props) => (
+                  <Select
+                    {...props}
+                    disabled={!editable}
+                    value={product.seriesId ?? ''}
+                    onChange={(e) => update({ ...product, seriesId: e.target.value || null })}
+                  >
+                    <option value="">{t.noSeriesChoice}</option>
+                    {structure.series.map((series) => (
+                      <option key={series.id} value={series.id}>
+                        {bi(series.name) || series.slug}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            )}
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-medium">{t.extraCategories}</legend>
               <p className="text-xs text-muted">{t.extraCategoriesHelp}</p>
@@ -972,6 +993,18 @@ function ProductForm({ productId }: { productId: string }) {
                 />
               ))
             )}
+          </div>
+        </Card>
+
+        <Card title={t.documents} icon={<FileText />} description={t.documentsHelp}>
+          <div className="px-5 pb-5">
+            <DocumentsField
+              documents={product.documents}
+              target={{ type: 'product', id: productId }}
+              editable={editable}
+              dirty={dirty}
+              onChange={(documents) => update({ ...product, documents })}
+            />
           </div>
         </Card>
 

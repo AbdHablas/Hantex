@@ -80,3 +80,33 @@ export async function serveFont(request: Request, bucket: MediaBucket): Promise<
     },
   });
 }
+
+const FILE_PATH = /^\/files\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.pdf$/;
+
+/**
+ * Serves this site's published files (D-045), PDFs that products and series attach, at
+ * /files/<id>.pdf. They are offered as downloads with their type fixed, never drawn as a page.
+ */
+export async function serveFile(
+  request: Request,
+  options: { bucket: MediaBucket; siteKey: string },
+): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
+  }
+  const match = FILE_PATH.exec(new URL(request.url).pathname);
+  if (!match) return notFound();
+  const file = await options.bucket.get(`sites/${options.siteKey}/files/${match[1]}.pdf`);
+  if (!file) return notFound();
+  return new Response(request.method === 'HEAD' ? null : file.body, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Length': String(file.size),
+      'Content-Disposition': `attachment; filename="${match[1]}.pdf"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; sandbox",
+      // A file's id never changes content, but it may be removed, so it is cached for a day.
+      'Cache-Control': 'public, max-age=86400',
+    },
+  });
+}
