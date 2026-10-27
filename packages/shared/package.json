@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./contact": "./src/contact.ts"
+    "./contact": "./src/contact.ts",
+    "./svg": "./src/svg.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

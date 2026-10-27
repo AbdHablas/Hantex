@@ -157,7 +157,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] public copies on publish, served from each site's `/media/`; signed links in previews;
         images in use can't be deleted;
   - [x] choosing images in the section editor (step 3);
-  - SVG sanitiser;
+  - [x] SVG cleaner (`@hantex/shared/svg`): strict parser, rebuilt from an allow-list, ready
+        for logo uploads;
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).
 - [x] Image, gallery, video and image-and-text sections; sharing images per page

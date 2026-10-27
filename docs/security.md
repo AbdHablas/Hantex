@@ -150,8 +150,14 @@ end.
   which expire with the preview. Site Workers can read the public bucket only.
 - **Photos:** location and other metadata (EXIF/GPS) are removed. Image
   dimensions are limited, to protect against decompression bombs.
-- **SVG:** parsed and rebuilt from an allow-list. Scripts, event handlers,
-  links, `foreignObject`, external references and CSS `url()` are removed.
+- **SVG:** parsed and rebuilt from an allow-list (`packages/shared/src/svg.ts`).
+  Scripts, event handlers, links, `foreignObject`, `use`, images, animation,
+  style sheets, external references and CSS `url()` are removed; document
+  types, entities and CDATA are refused outright. Only plain `.class` colour
+  rules and `style` declarations are carried over, as checked attributes.
+  Every attribute value is checked, size, element count and nesting depth
+  are limited, and the pattern checks are tested against inputs crafted to
+  make them slow.
   The original is kept privately and never served
   ([`theming.md`](theming.md)).
 - **Fonts:** parsed before acceptance, size-limited, licence recorded.

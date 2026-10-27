@@ -316,6 +316,7 @@ The main data:
   - *(done)* a sharing picture per page (shown in link previews), falling back
     to the website's own share card;
   - *(done)* video sections: YouTube or Vimeo links, click to play (D-046).
+  - *(done)* the SVG cleaner for uploaded logos (strict parser, allow-list rebuild).
 
 **Backups (D-010):** the database host's built-in restore, plus nightly
 encrypted exports to R2 (30 daily and 12 monthly copies). The workflow is
