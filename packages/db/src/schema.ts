@@ -383,10 +383,12 @@ export const DOCUMENT_KINDS = [
   'layout',
   'saved-sections',
   'logo',
+  'catalogue',
+  'product',
 ] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 const kindCheck = (column: unknown) =>
-  sql`${column} in ('coming-soon', 'site-settings', 'theme', 'page', 'pages', 'menus', 'layout', 'saved-sections', 'logo')`;
+  sql`${column} in ('coming-soon', 'site-settings', 'theme', 'page', 'pages', 'menus', 'layout', 'saved-sections', 'logo', 'catalogue', 'product')`;
 const keyColumn = () => text('key').notNull().default('');
 
 const siteRef = () =>

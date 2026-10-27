@@ -466,6 +466,72 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
       .filter({ has: page.getByRole('option', { name: 'Cairo · uploaded' }) }),
   ).toHaveCount(2);
 
+  // The product catalogue (D-026, D-045): structure first, then a product, published together.
+  await page.goto('/s/second-site/products');
+  await expect(
+    page.getByText('Products belong to categories, so add categories first.'),
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Go to categories & attributes' }).click();
+  await page.getByRole('tab', { name: 'Attributes' }).click();
+  await page.getByLabel('Starter set').selectOption({ label: 'Switches and sockets' });
+  await page.getByRole('button', { name: 'Add starter attributes' }).click();
+  await expect(page.getByText(/attributes added\. Save the draft/)).toBeVisible();
+  await page.getByRole('tab', { name: 'Categories' }).click();
+  await page.getByRole('button', { name: 'Add category' }).click();
+  const categoryDialog = page.getByRole('dialog', { name: 'Category' });
+  await categoryDialog.getByRole('group', { name: 'Name' }).getByLabel('English').fill('Switches');
+  await categoryDialog.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('مفاتيح');
+  await expect(categoryDialog.getByLabel('Address')).toHaveValue('switches');
+  await categoryDialog.getByLabel('Main category').check();
+  await categoryDialog.getByLabel('Rated current').check();
+  await expectAccessible(page, 'category dialog');
+  await categoryDialog.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('tab', { name: 'Finishes' }).click();
+  await page.getByRole('button', { name: 'Add finish' }).click();
+  const finishDialog = page.getByRole('dialog', { name: 'Finish' });
+  await finishDialog.getByRole('group', { name: 'Name' }).getByLabel('English').fill('White');
+  await finishDialog.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('أبيض');
+  await finishDialog.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText('Draft saved. It goes live with Publish changes.')).toBeVisible();
+  await expectAccessible(page, 'catalogue structure');
+
+  await page.getByRole('link', { name: 'Products', exact: true }).click();
+  await page.getByRole('button', { name: 'New product' }).click();
+  const newProduct = page.getByRole('dialog', { name: 'New product' });
+  await newProduct
+    .getByRole('group', { name: 'Name' })
+    .getByLabel('English')
+    .fill('One-gang switch');
+  await newProduct.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('مفتاح خط واحد');
+  await newProduct.getByRole('button', { name: 'Create' }).click();
+  await expect(page.getByRole('heading', { name: 'One-gang switch' })).toBeVisible();
+  await page.getByLabel('Show on the website').check();
+  await page.getByLabel('Rated current (A)').fill('16');
+  await page.getByRole('button', { name: 'Add variant' }).click();
+  await page.getByLabel('Product code').fill('HX-1001');
+  await page.getByLabel('Finish', { exact: true }).selectOption({ label: 'White' });
+  await expectAccessible(page, 'product editor');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText('Draft saved. It goes live with Publish changes.')).toBeVisible();
+
+  // A finish a product uses can't be removed from the structure.
+  await page.goto('/s/second-site/catalogue');
+  await page.getByRole('tab', { name: 'Finishes' }).click();
+  await page.getByRole('button', { name: 'Delete White' }).click();
+  await confirm(page);
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText(/A product variant still uses a finish you removed/)).toBeVisible();
+  await page.getByRole('button', { name: 'Discard changes' }).click();
+
+  await page.goto('/s/second-site/products');
+  await expect(page.getByText('Not published')).toBeVisible();
+  await page.getByRole('button', { name: 'Publish changes' }).click();
+  await confirm(page);
+  await expect(page.getByText('Changes published.')).toBeVisible();
+  await expect(page.getByText('Not published')).toBeHidden();
+  await expectAccessible(page, 'products');
+
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');
   await expect(page.getByText('No pages yet')).toBeVisible();

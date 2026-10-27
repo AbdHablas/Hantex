@@ -46,6 +46,8 @@ describe('dashboard navigation', () => {
       'coming-soon',
       'pages',
       'menus',
+      'products',
+      'catalogue',
       'media',
       'appearance',
       'logo',

@@ -71,6 +71,13 @@
       "when": 1793126203136,
       "tag": "0009_fonts",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793129470135,
+      "tag": "0010_catalogue_documents",
+      "breakpoints": true
     }
   ]
 }

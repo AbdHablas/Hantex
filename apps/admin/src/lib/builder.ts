@@ -1,4 +1,11 @@
-import type { Layout, Menus, Page, SavedSections, SiteIssue } from '@hantex/sections';
+import type {
+  CatalogueIssue,
+  Layout,
+  Menus,
+  Page,
+  SavedSections,
+  SiteIssue,
+} from '@hantex/sections';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, sitePath } from './api';
 import { useCurrentSite } from './session';
@@ -36,6 +43,8 @@ export interface PageResponse {
 export interface Changes {
   items: { kind: string; key: string; allowed: boolean }[];
   issues: SiteIssue[];
+  /** What would stop the catalogue going live, when it has changes (D-045). */
+  catalogueIssues: CatalogueIssue[];
 }
 
 export function useBuilderKeys() {

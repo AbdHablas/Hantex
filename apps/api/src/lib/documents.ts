@@ -15,11 +15,15 @@ import {
   DEFAULT_LAYOUT,
   DEFAULT_MENUS,
   DEFAULT_PAGES_INDEX,
+  DEFAULT_CATALOGUE,
   DEFAULT_SAVED_SECTIONS,
+  catalogueSchema,
   layoutSchema,
   menusSchema,
   newPage,
+  newProduct,
   pageSchema,
+  productSchema,
   pagesIndexSchema,
   savedSectionsSchema,
 } from '@hantex/sections';
@@ -111,6 +115,22 @@ export const DOCUMENTS: Record<
     view: ['pages.view'],
     edit: ['pages.edit'],
     publish: ['pages.edit', 'site.publish'],
+  },
+  // Product catalogue (D-026, D-045): the structure, and one document per product. They go live
+  // through Publish changes too.
+  catalogue: {
+    schema: catalogueSchema,
+    defaults: DEFAULT_CATALOGUE,
+    view: ['catalogue.view'],
+    edit: ['catalogue.edit'],
+    publish: ['catalogue.publish', 'site.publish'],
+  },
+  product: {
+    schema: productSchema,
+    defaults: newProduct({ ar: '', en: '' }, 'product', ''),
+    view: ['catalogue.view'],
+    edit: ['catalogue.edit'],
+    publish: ['catalogue.publish', 'site.publish'],
   },
 };
 

@@ -31,6 +31,15 @@ const MediaLibrary = lazy(() =>
 const MenusEditor = lazy(() =>
   import('./routes/menus').then((module) => ({ default: module.MenusEditor })),
 );
+const ProductsList = lazy(() =>
+  import('./routes/products').then((module) => ({ default: module.ProductsList })),
+);
+const ProductEditor = lazy(() =>
+  import('./routes/products').then((module) => ({ default: module.ProductEditor })),
+);
+const CatalogueStructureEditor = lazy(() =>
+  import('./routes/catalogue').then((module) => ({ default: module.CatalogueStructureEditor })),
+);
 const FontLibrary = lazy(() =>
   import('./routes/fonts').then((module) => ({ default: module.FontLibrary })),
 );
@@ -93,6 +102,36 @@ const router = createBrowserRouter([
               <SitePage>
                 <Suspense fallback={<Loading />}>
                   <PageEditor />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'products',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <ProductsList />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'products/:productId',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <ProductEditor />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'catalogue',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <CatalogueStructureEditor />
                 </Suspense>
               </SitePage>
             ),

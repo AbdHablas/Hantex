@@ -1005,6 +1005,21 @@ then the general product catalogue (Phase 3c, D-045).
   to general ones (e.g. lighting, generic product). Hantex Ultra keeps
   Switches and Sockets as its first, *main* categories as the owner named
   them; another website can lead with entirely different products.
+- **Implementation note (catalogue stage 1, 2026-10-27):** each website has a
+  `catalogue` document (categories up to three levels, attribute groups,
+  typed attributes, finishes and the product order) and one `product`
+  document per product (names, summary, description, photos, attribute
+  values, variants with codes, finishes and photos). Both have drafts and
+  numbered versions and go live through *Publish changes*, which refuses a
+  catalogue with problems (`checkCatalogue`: missing translations, repeated
+  addresses or product codes, references to removed categories, attributes,
+  choices, finishes or images). Structure edits that would strand a product
+  are refused while editing. New products start hidden and empty; nothing is
+  pre-filled. Starter attribute sets (switches and sockets, lighting and
+  lamps, general product) add field definitions only. New permissions
+  `catalogue.view`, `.edit`, `.publish` and `.delete` follow the roles matrix.
+  Still to come: series, documents (PDF), CSV/Excel import and export, and
+  the public product pages (Phase 4).
 
 ## D-046 — Videos
 

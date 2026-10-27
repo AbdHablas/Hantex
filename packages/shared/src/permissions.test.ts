@@ -7,7 +7,7 @@ import {
   permissionsOf,
 } from './permissions';
 
-// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035, D-040).
+// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035, D-040, D-045).
 const EXPECTED: Record<string, string[]> = {
   owner: Object.keys(PERMISSIONS),
   administrator: [
@@ -19,6 +19,10 @@ const EXPECTED: Record<string, string[]> = {
     'media.view',
     'media.edit',
     'media.delete',
+    'catalogue.view',
+    'catalogue.edit',
+    'catalogue.publish',
+    'catalogue.delete',
     'site.publish',
     'settings.view',
     'settings.edit',
@@ -40,6 +44,9 @@ const EXPECTED: Record<string, string[]> = {
     'pages.edit',
     'media.view',
     'media.edit',
+    'catalogue.view',
+    'catalogue.edit',
+    'catalogue.publish',
     'site.publish',
     'settings.view',
   ],
@@ -48,6 +55,7 @@ const EXPECTED: Record<string, string[]> = {
     'comingSoon.view',
     'pages.view',
     'media.view',
+    'catalogue.view',
     'settings.view',
     'subscribers.view',
     'subscribers.export',
@@ -60,8 +68,17 @@ const EXPECTED: Record<string, string[]> = {
     'pages.edit',
     'media.view',
     'media.edit',
+    'catalogue.view',
+    'catalogue.edit',
   ],
-  viewer: ['dashboard.view', 'comingSoon.view', 'pages.view', 'media.view', 'settings.view'],
+  viewer: [
+    'dashboard.view',
+    'comingSoon.view',
+    'pages.view',
+    'media.view',
+    'catalogue.view',
+    'settings.view',
+  ],
 };
 
 describe('standard roles', () => {

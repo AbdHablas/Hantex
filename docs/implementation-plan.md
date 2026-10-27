@@ -174,11 +174,13 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 
 ### 3c. Catalogue and studio
 
-- [ ] Product catalogue (D-026):
-  - categories, with switches and sockets first;
-  - series, products, variants and finishes;
-  - attributes and documents;
-  - CSV/Excel import and export.
+- [ ] Product catalogue (D-026, D-045):
+  - [x] categories (main first, three levels), attributes with groups and starter sets,
+        finishes, products and variants; drafts, versions, restore, Publish changes with
+        checks — *stage 1, done*
+  - [ ] series
+  - [ ] documents (PDF datasheets, guides, certificates)
+  - [ ] CSV/Excel import and export
 - [ ] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
 - [ ] Enquiries and quotation requests per site

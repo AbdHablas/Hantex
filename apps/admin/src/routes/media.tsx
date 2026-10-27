@@ -73,18 +73,20 @@ function DetailsDialog({ item, onClose }: { item: MediaItem | null; onClose: () 
     resetRemove();
   }, [item, resetSave, resetRemove]);
   const editable = can('media.edit') && site?.archived !== true;
-  // Deleting is refused while pages use the image; say which ones.
+  // Deleting is refused while pages or the catalogue use the image; say which ones.
   const inUseError =
     remove.error instanceof ApiError && remove.error.code === 'media-in-use'
       ? (remove.error.details as {
           pages?: { title: { ar: string; en: string } }[];
           saved?: { name: { ar: string; en: string } }[];
+          catalogue?: { name: { ar: string; en: string } }[];
         })
       : null;
   const inUse = inUseError
     ? [
         ...(inUseError.pages ?? []).map((p) => p.title[locale] || p.title.ar || p.title.en),
         ...(inUseError.saved ?? []).map((s) => s.name[locale] || s.name.ar || s.name.en),
+        ...(inUseError.catalogue ?? []).map((x) => x.name[locale] || x.name.ar || x.name.en),
       ].join(locale === 'ar' ? '، ' : ', ')
     : null;
   return (

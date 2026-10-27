@@ -1,8 +1,9 @@
-import type { SiteIssue } from '@hantex/sections';
+import type { CatalogueIssue, SiteIssue } from '@hantex/sections';
 import { Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { api, sitePath } from '../../lib/api';
 import { useBuilderMutation, useChanges, usePages, type PageSummary } from '../../lib/builder';
+import { useCatalogue, type CatalogueListing } from '../../lib/catalogue';
 import { useBilingual, useI18n } from '../../lib/i18n';
 import { useCurrentSite } from '../../lib/session';
 import { Alert, Button, Card, ErrorText, confirmAction, later } from '../ui';
@@ -17,6 +18,7 @@ export function PublishBar() {
   const { site, siteKey, can } = useCurrentSite();
   const changes = useChanges();
   const pages = usePages();
+  const catalogue = useCatalogue();
   const [notice, setNotice] = useState<string | null>(null);
   const publish = useBuilderMutation(() =>
     api(sitePath(siteKey, '/changes/publish'), { method: 'POST', body: {} }),
@@ -24,6 +26,7 @@ export function PublishBar() {
   if (!site || !changes.data) return null;
   const count = changes.data.items.filter((i) => i.allowed).length;
   const issues = changes.data.issues;
+  const catalogueIssues = changes.data.catalogueIssues ?? [];
   const canPublish = can('site.publish') && !site.archived;
   return (
     <Card
@@ -33,7 +36,7 @@ export function PublishBar() {
       actions={
         canPublish && (
           <Button
-            disabled={count === 0 || issues.length > 0}
+            disabled={count === 0 || issues.length > 0 || catalogueIssues.length > 0}
             busy={publish.isPending}
             onClick={later(async () => {
               if (!(await confirmAction(b['publishConfirm'] ?? ''))) return;
@@ -46,7 +49,7 @@ export function PublishBar() {
         )
       }
     >
-      {(issues.length > 0 || notice || publish.error) && (
+      {(issues.length > 0 || catalogueIssues.length > 0 || notice || publish.error) && (
         <div className="grid gap-3">
           {notice && <Alert tone="success">{notice}</Alert>}
           <ErrorText error={publish.error} />
@@ -56,6 +59,16 @@ export function PublishBar() {
               <ul className="mt-1 list-disc ps-5">
                 {issues.map((issue, i) => (
                   <IssueLine key={i} issue={issue} pages={pages.data?.pages ?? []} />
+                ))}
+              </ul>
+            </Alert>
+          )}
+          {catalogueIssues.length > 0 && (
+            <Alert tone="warning">
+              <p className="font-medium">{m.catalogue.issuesTitle}</p>
+              <ul className="mt-1 list-disc ps-5">
+                {catalogueIssues.map((issue, i) => (
+                  <CatalogueIssueLine key={i} issue={issue} listing={catalogue.data} />
                 ))}
               </ul>
             </Alert>
@@ -93,6 +106,43 @@ function IssueLine({ issue, pages }: { issue: SiteIssue; pages: PageSummary[] })
     <li>
       {format(b[`issue.${issue.code}`] ?? issue.code, { detail })}
       {where && <span className="text-muted"> — {format(b['issueWhere'] ?? '', { where })}</span>}
+    </li>
+  );
+}
+
+function CatalogueIssueLine({
+  issue,
+  listing,
+}: {
+  issue: CatalogueIssue;
+  listing: CatalogueListing | undefined;
+}) {
+  const { m, format } = useI18n();
+  const bi = useBilingual();
+  const t = m.catalogue;
+  const [scope, id] = issue.target.split(':');
+  const structure = listing?.structure;
+  const name =
+    scope === 'product'
+      ? listing?.products.find((p) => p.id === id)?.name
+      : scope === 'category'
+        ? structure?.categories.find((c) => c.id === id)?.name
+        : scope === 'attribute'
+          ? structure?.attributes.find((a) => a.id === id)?.name
+          : scope === 'finish'
+            ? structure?.finishes.find((f) => f.id === id)?.name
+            : structure?.groups.find((g) => g.id === id)?.name;
+  const kind = t.issueKind[scope ?? ''] ?? '';
+  const where = `${kind}${name ? ` “${bi(name)}”` : ''}`;
+  return (
+    <li>
+      {t.issue[issue.code] ?? issue.code}
+      {issue.code === 'duplicate-sku' || issue.code === 'duplicate-address' ? (
+        <span dir="ltr"> ({issue.detail})</span>
+      ) : null}
+      {where && (
+        <span className="text-muted"> — {format(m.builder['issueWhere'] ?? '', { where })}</span>
+      )}
     </li>
   );
 }

@@ -29,7 +29,8 @@ or extended later without rebuilding anything.
 | Coming Soon content (launch date, texts, milestones…) | ✓ | ✓ | ✓ | View | Draft | View |
 | Publish changes (rebuilds the public page) | ✓ | ✓ | ✓ | — | — | — |
 | Pages, news, FAQs *(Phase 3+)* | ✓ | ✓ | ✓ | View | Draft | View |
-| Products and catalogue *(Phase 3)* | ✓ | ✓ | ✓ | View | Draft | View |
+| Products and catalogue: view, edit drafts, publish *(D-045; `catalogue.view`, `.edit`, `.publish`)* | ✓ | ✓ | ✓ | View | Draft | View |
+| Products: delete *(`catalogue.delete`)* | ✓ | ✓ | — | — | — | — |
 | 3D Studio: create and review models *(Phase 3, D-029)* | ✓ | ✓ | ✓ | — | Create only | View |
 | 3D Studio: approve models for publishing *(owner's requirement)* | ✓ | — | — | — | — | — |
 | Media library: view and upload | ✓ | ✓ | ✓ | View | ✓ | View |
@@ -143,8 +144,6 @@ These are added to the matrix as each feature is built. Each one is proposed
 with its standard-role defaults before it is used:
 
 - Font library: add and remove fonts.
-- Catalogue: view, edit drafts, publish, delete
-  ([`product-catalogue.md`](product-catalogue.md)).
 - Media: view and upload, delete.
 - 3D Studio:
   - create captures and start processing;

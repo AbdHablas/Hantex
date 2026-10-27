@@ -7,6 +7,7 @@ import { requireSession, withDb, withSite } from './middleware/session';
 import { auditRoutes, siteAuditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
 import { builderRoutes } from './routes/builder';
+import { catalogueRoutes } from './routes/catalogue';
 import { documentRoutes } from './routes/documents';
 import { enrolmentRoutes } from './routes/enrolment';
 import { meRoutes } from './routes/me';
@@ -33,6 +34,7 @@ function siteApi() {
     .route('/overview', overviewRoutes)
     .route('/documents', documentRoutes)
     .route('/', builderRoutes)
+    .route('/catalogue', catalogueRoutes)
     .route('/preview', previewRoutes)
     .route('/subscribers', subscriberRoutes)
     .route('/announcements', announcementRoutes)

@@ -1,5 +1,6 @@
 import { documentDrafts, documentVersions, users, type DocumentKind } from '@hantex/db/worker';
 import {
+  checkCatalogue,
   checkSite,
   itemId,
   layoutSchema,
@@ -20,6 +21,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
+import { draftCatalogue, publishedCatalogue } from '../lib/catalogue-content';
 import {
   DOCUMENTS,
   currentDraft,
@@ -69,6 +71,17 @@ async function freeSlug(v: AppEnv['Variables'], base: string, parentId: string |
     if (!taken.has(candidate)) return candidate;
   }
   throw conflict('slug-taken');
+}
+
+const isCatalogue = (kind: DocumentKind) => kind === 'catalogue' || kind === 'product';
+
+/** What would stop the draft catalogue going live. */
+async function catalogueIssues(v: AppEnv['Variables']) {
+  return checkCatalogue({
+    ...(await draftCatalogue(v.db, v.site.id)),
+    locales: v.site.locales,
+    media: await libraryIds(v.db, v.site.id),
+  });
 }
 
 /** Every changed item of the site: drafts that differ from their latest published version. */
@@ -400,6 +413,7 @@ export const builderRoutes = new Hono<AppEnv>()
         locales: v.site.locales,
         media: await libraryIds(v.db, v.site.id),
       }),
+      catalogueIssues: items.some((i) => isCatalogue(i.kind)) ? await catalogueIssues(v) : [],
     });
   })
 
@@ -445,6 +459,12 @@ export const builderRoutes = new Hono<AppEnv>()
         if (issues.length > 0) throw conflict('site-issues', { issues });
         redirects = newRedirects(await publishedContent(v.db, v.site.id), next);
       }
+      // The catalogue goes live as a whole, so it is checked as a whole (D-045).
+      const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
+      if (touchesCatalogue) {
+        const issues = await catalogueIssues(v);
+        if (issues.length > 0) throw conflict('catalogue-issues', { issues });
+      }
 
       const published: { kind: string; key: string; version: number }[] = [];
       await v.db.transaction(async (tx) => {
@@ -486,6 +506,15 @@ export const builderRoutes = new Hono<AppEnv>()
           { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
           v.site,
           mediaIds([...live.pages.values(), live.saved]),
+        );
+      }
+      if (touchesCatalogue) {
+        const live = await publishedCatalogue(v.db, v.site.id);
+        await publishMedia(
+          v.db,
+          { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
+          v.site,
+          mediaIds([live.catalogue, [...live.products.values()].filter((p) => p.visible)]),
         );
       }
       const { job, result } = await startRebuild(c);

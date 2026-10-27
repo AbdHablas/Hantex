@@ -4,7 +4,10 @@
 structure below (D-026). **Made general on 2026-10-22 (D-045):** the same catalogue serves
 any kind of product on any website; everything specific to switches and sockets below
 is a *template* or Hantex Ultra's own data, never built into the code. No prices or online ordering. The dashboard side is built in Phase 3
-and the public pages in Phase 4. Nothing is built yet.
+and the public pages in Phase 4. **Built so far (stage 1):** categories, attribute groups and
+attributes with starter sets, finishes, products and variants in the dashboard, with drafts,
+versions and checks before publishing. Series, documents, import/export and the public pages
+are still to come.
 
 ## Business context
 

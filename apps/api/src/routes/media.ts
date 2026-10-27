@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
 import { badRequest, conflict, notFound } from '../lib/errors';
+import { catalogueUsesOf, draftCatalogue, publishedCatalogue } from '../lib/catalogue-content';
 import { usesOf, type Variant } from '../lib/media-library';
 import { previewKey, privateKey, publicKey } from '../lib/media-store';
 import { draftContent, publishedContent } from '../lib/site-content';
@@ -237,7 +238,18 @@ export const mediaRoutes = new Hono<AppEnv>()
     const live = usesOf(await publishedContent(v.db, v.site.id), id);
     const pages = [...new Map([...draft.pages, ...live.pages].map((p) => [p.id, p])).values()];
     const saved = [...new Map([...draft.saved, ...live.saved].map((s) => [s.id, s])).values()];
-    if (pages.length > 0 || saved.length > 0) throw conflict('media-in-use', { pages, saved });
+    // The same goes for the catalogue's categories, finishes and products.
+    const catalogue = [
+      ...new Map(
+        [
+          ...catalogueUsesOf(await draftCatalogue(v.db, v.site.id), id),
+          ...catalogueUsesOf(await publishedCatalogue(v.db, v.site.id), id),
+        ].map((x) => [`${x.type}:${x.id}`, x]),
+      ).values(),
+    ];
+    if (pages.length > 0 || saved.length > 0 || catalogue.length > 0) {
+      throw conflict('media-in-use', { pages, saved, catalogue });
+    }
     const [row] = await v.db
       .delete(mediaAssets)
       .where(and(eq(mediaAssets.id, id), eq(mediaAssets.siteId, v.site.id)))
