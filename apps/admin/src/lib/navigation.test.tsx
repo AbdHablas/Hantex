@@ -55,6 +55,7 @@ describe('dashboard navigation', () => {
       'team',
       'activity',
       'sites',
+      'fonts',
       'people',
       'roles',
       'audit',

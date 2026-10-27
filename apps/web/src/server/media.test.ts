@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hmacHex } from './crypto';
-import { serveMedia, type MediaBucket } from './media';
+import { serveFont, serveMedia, type MediaBucket } from './media';
 
 const SECRET = 'test-preview-secret-0123456789abcdef';
 const ID = '0b6f5d0e-3c1a-4c2e-9a51-2f4d8e7b6a10';
@@ -82,5 +82,32 @@ describe('site media', () => {
     expect((await serve(`${path}?${otherKey}`, store)).status).toBe(404);
     const otherImage = await signed('hantex-ultra', ID.replace('0b6f', '1b6f'), later());
     expect((await serve(`${path}?${otherImage}`, store)).status).toBe(404);
+  });
+});
+
+describe('uploaded fonts', () => {
+  const FONT = `/fonts/library/${ID}/700.woff2`;
+
+  it('serves a font file from the shared fonts folder, cached for a year', async () => {
+    const store = bucket([`fonts/${ID}/700.woff2`]);
+    const response = await serveFont(new Request(`https://example.test${FONT}`), store);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('font/woff2');
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
+    expect(store.asked).toEqual([`fonts/${ID}/700.woff2`]);
+  });
+
+  it('reaches nothing else in the bucket', async () => {
+    const store = bucket([`sites/hantex-ultra/${ID}/960.webp`]);
+    for (const path of [
+      `/fonts/library/${ID}/750.woff2`,
+      `/fonts/library/${ID}/../../sites/hantex-ultra/${ID}/960.webp`,
+      `/fonts/library/not-an-id/400.woff2`,
+      `/fonts/library/${ID}/400.woff2`,
+    ]) {
+      const response = await serveFont(new Request(`https://example.test${path}`), store);
+      expect(response.status, path).toBe(404);
+    }
+    expect(store.asked).toEqual([`fonts/${ID}/400.woff2`]);
   });
 });

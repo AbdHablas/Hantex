@@ -131,7 +131,7 @@ site.
 
 **Built (2026-10-21):** each permission in code is marked *site* or
 *platform*. Platform permissions (managing Owners and Administrators, roles,
-security settings, sites) count only from an all-sites assignment, so a
+security settings, sites, uploaded fonts) count only from an all-sites assignment, so a
 per-site role can never act on the whole platform, even if a custom role
 lists them. `@hantex/shared` works out a person's permissions on each site,
 and the database rejects per-site Owners and mixed all-sites and per-site

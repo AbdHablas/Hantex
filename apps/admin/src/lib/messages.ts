@@ -79,6 +79,7 @@ const en = {
     activity: 'Activity log',
     // Administration (all websites)
     sites: 'Websites',
+    fonts: 'Fonts',
     people: 'People',
     roles: 'Roles & permissions',
     auditLog: 'Audit log',
@@ -404,6 +405,35 @@ const en = {
     analyticsHelp:
       'Cloudflare Web Analytics: cookieless page views, with no consent banner needed. In Cloudflare, add this website under Web Analytics and paste the token from its snippet (32 letters and digits). Leave empty to collect nothing.',
     analyticsToken: 'Cloudflare Web Analytics token',
+  },
+
+  fonts: {
+    title: 'Fonts',
+    intro:
+      'Fonts uploaded here can be chosen in every website’s Appearance, next to the built-in fonts. Upload a family’s WOFF2 web-font files, one per weight. Each file is checked before it is stored; its name, weight and the scripts it writes are read from the file.',
+    upload: 'Upload a font family',
+    files: 'WOFF2 files',
+    filesHelp: 'One file per weight (for example Regular 400 and Bold 700), upright styles only.',
+    licenceName: 'Licence',
+    licenceNameHelp:
+      'For example “SIL Open Font License 1.1”, or the name of your purchased licence.',
+    licenceUrl: 'Licence link (optional)',
+    confirm:
+      'I confirm this font’s licence allows using it on our websites, self-hosted. My confirmation is recorded.',
+    submit: 'Check and upload',
+    uploaded: '{name} was added to the font library.',
+    none: 'No fonts uploaded yet. The built-in fonts are always available.',
+    weights: 'Weights',
+    scripts: 'Writes',
+    script: { latin: 'Latin', arabic: 'Arabic' } as Record<string, string>,
+    licence: 'Licence',
+    confirmedBy: 'Confirmed by {who} on {date}',
+    delete: 'Delete font',
+    deleteConfirm: 'Delete {name} from the font library? Its files are removed.',
+    deleted: 'Font deleted.',
+    broken: '{name} can’t be read as a font.',
+    uploadedTag: 'uploaded',
+    missing: 'A font no longer in the library',
   },
 
   logo: {
@@ -896,6 +926,18 @@ const en = {
     'media-too-large': 'That image is too large.',
     'media-quota': 'This website’s media storage is full. Delete unused images first.',
     'media-in-use': 'Pages use this image, so it can’t be deleted.',
+    'invalid-font':
+      'That file isn’t a usable WOFF2 font. Use the WOFF2 web-font files from the font’s supplier.',
+    'font-too-large': 'A font file is too large (2 MB at most each, nine files at most).',
+    'font-too-many-files': 'Upload at most nine files at a time: one per weight.',
+    'font-mixed-families': 'All the files must belong to the same font family.',
+    'font-italic': 'Only upright (non-italic) styles can be uploaded.',
+    'font-duplicate-weight': 'Two files have the same weight. Upload one file per weight.',
+    'font-scripts-differ':
+      'The files don’t share a script: every weight must write Latin, Arabic or both.',
+    'font-in-use': 'A website’s theme uses this font. Choose another font there first.',
+    'theme-fonts':
+      'A chosen font is no longer in the library or can’t write that script. Choose another font.',
     'announcement-in-progress': 'Finish or cancel the current announcement first.',
     'announcement-finished': 'This announcement is already finished or cancelled.',
   } as Record<string, string>,
@@ -979,6 +1021,7 @@ const ar: Messages = {
     team: 'الفريق',
     activity: 'سجل النشاط',
     sites: 'المواقع',
+    fonts: 'الخطوط',
     people: 'الأشخاص',
     roles: 'الأدوار والصلاحيات',
     auditLog: 'سجل التدقيق',
@@ -1297,6 +1340,33 @@ const ar: Messages = {
     analyticsHelp:
       'Cloudflare Web Analytics: عدد زيارات الصفحات دون ملفات تعريف الارتباط ودون الحاجة إلى نافذة موافقة. أضف هذا الموقع في Cloudflare ضمن Web Analytics والصق الرمز من الشيفرة (32 حرفًا ورقمًا). اتركه فارغًا لعدم جمع أي شيء.',
     analyticsToken: 'رمز Cloudflare Web Analytics',
+  },
+
+  fonts: {
+    title: 'الخطوط',
+    intro:
+      'الخطوط المرفوعة هنا يمكن اختيارها في مظهر كل موقع، إلى جانب الخطوط المدمجة. ارفع ملفات WOFF2 لعائلة الخط، ملفًا لكل وزن. يُفحص كل ملف قبل حفظه، ويُقرأ اسمه ووزنه وأنظمة الكتابة التي يدعمها من الملف نفسه.',
+    upload: 'رفع عائلة خط',
+    files: 'ملفات WOFF2',
+    filesHelp: 'ملف لكل وزن (مثل العادي 400 والعريض 700)، الأنماط المستقيمة فقط.',
+    licenceName: 'الترخيص',
+    licenceNameHelp: 'مثل «SIL Open Font License 1.1»، أو اسم الترخيص الذي اشتريته.',
+    licenceUrl: 'رابط الترخيص (اختياري)',
+    confirm: 'أؤكد أن ترخيص هذا الخط يسمح باستخدامه على مواقعنا مستضافًا لدينا. يُسجَّل تأكيدي.',
+    submit: 'فحص ورفع',
+    uploaded: 'أُضيف {name} إلى مكتبة الخطوط.',
+    none: 'لم تُرفع خطوط بعد. الخطوط المدمجة متاحة دائمًا.',
+    weights: 'الأوزان',
+    scripts: 'يكتب',
+    script: { latin: 'اللاتينية', arabic: 'العربية' },
+    licence: 'الترخيص',
+    confirmedBy: 'أكّده {who} في {date}',
+    delete: 'حذف الخط',
+    deleteConfirm: 'حذف {name} من مكتبة الخطوط؟ ستُزال ملفاته.',
+    deleted: 'حُذف الخط.',
+    broken: 'تعذّرت قراءة {name} كخط.',
+    uploadedTag: 'مرفوع',
+    missing: 'خط لم يعد في المكتبة',
   },
 
   logo: {
@@ -1777,6 +1847,17 @@ const ar: Messages = {
     'media-too-large': 'هذه الصورة كبيرة جدًا.',
     'media-quota': 'امتلأت مساحة وسائط هذا الموقع. احذف الصور غير المستخدمة أولًا.',
     'media-in-use': 'تستخدم صفحات هذه الصورة، لذا لا يمكن حذفها.',
+    'invalid-font': 'هذا الملف ليس خط WOFF2 صالحًا. استخدم ملفات خطوط الويب WOFF2 من مورّد الخط.',
+    'font-too-large':
+      'أحد ملفات الخط كبير جدًا (2 ميغابايت كحد أقصى لكل ملف، وتسعة ملفات كحد أقصى).',
+    'font-too-many-files': 'ارفع تسعة ملفات على الأكثر في المرة الواحدة: ملف لكل وزن.',
+    'font-mixed-families': 'يجب أن تنتمي كل الملفات إلى عائلة الخط نفسها.',
+    'font-italic': 'يمكن رفع الأنماط المستقيمة (غير المائلة) فقط.',
+    'font-duplicate-weight': 'لملفين الوزن نفسه. ارفع ملفًا واحدًا لكل وزن.',
+    'font-scripts-differ':
+      'الملفات لا تشترك في نظام كتابة: يجب أن يكتب كل وزن اللاتينية أو العربية أو كليهما.',
+    'font-in-use': 'يستخدم مظهر أحد المواقع هذا الخط. اختر خطًا آخر هناك أولًا.',
+    'theme-fonts': 'أحد الخطوط المختارة لم يعد في المكتبة أو لا يكتب هذا النظام. اختر خطًا آخر.',
     'announcement-in-progress': 'أكمل الإعلان الحالي أو ألغه أولًا.',
     'announcement-finished': 'هذا الإعلان اكتمل أو أُلغي بالفعل.',
   },

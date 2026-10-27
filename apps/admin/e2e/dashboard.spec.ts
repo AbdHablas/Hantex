@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
@@ -440,6 +441,30 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await confirm(page);
   await expect(page.getByText(/as version 1[.,]/)).toBeVisible();
+
+  // An uploaded font (D-033): checked, stored with its licence, then offered in Appearance.
+  await page.goto('/fonts');
+  await expect(page.getByText('No fonts uploaded yet.', { exact: false })).toBeVisible();
+  const cairo = join(
+    dirname(createRequire(import.meta.url).resolve('@fontsource/cairo/package.json')),
+    'files',
+  );
+  await page
+    .getByLabel('WOFF2 files')
+    .setInputFiles([400, 700].map((w) => join(cairo, `cairo-latin-${w}-normal.woff2`)));
+  await page.getByLabel('Licence', { exact: true }).fill('SIL Open Font License 1.1');
+  await page.getByLabel(/I confirm this font’s licence/).check();
+  await page.getByRole('button', { name: 'Check and upload' }).click();
+  await expect(page.getByText(/was added to the font library/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cairo' })).toBeVisible();
+  await expect(page.getByText('400 · 700')).toBeVisible();
+  await expectAccessible(page, 'fonts');
+  await page.goto('/s/second-site/appearance');
+  await expect(
+    page
+      .getByRole('combobox')
+      .filter({ has: page.getByRole('option', { name: 'Cairo · uploaded' }) }),
+  ).toHaveCount(2);
 
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');

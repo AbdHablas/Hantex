@@ -31,6 +31,7 @@ import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { libraryIds, publishMedia } from '../lib/media-library';
 import { startRebuild } from '../lib/rebuild';
 import { draftContent, newRedirects, publishedContent, sameData } from '../lib/site-content';
+import { requireThemeFonts } from '../lib/fonts';
 import { validate } from '../lib/validate';
 import { requirePermission } from '../middleware/session';
 
@@ -427,6 +428,7 @@ export const builderRoutes = new Hono<AppEnv>()
         if (offBrand && c.req.valid('json').confirmLogoChange !== true) {
           throw conflict('confirm-logo-change');
         }
+        await requireThemeFonts(v.db, theme);
       }
 
       const touchesBuilder = items.some((i) =>

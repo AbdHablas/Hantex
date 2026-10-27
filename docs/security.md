@@ -134,7 +134,7 @@ end.
 - Theme tokens validated on the server (format and range); text contrast
   checked against WCAG AA in light and dark mode before publishing.
 - No free-form CSS or script fields; fonts only from the curated,
-  self-hosted library.
+  self-hosted library, which the Owner can extend with checked uploads.
 - Publishing and rollback are permission-checked and audited; the dashboard
   keeps its own fixed theme so a broken public theme cannot lock staff out.
 
@@ -148,6 +148,15 @@ end.
   copied to the public bucket only when published pages use it; previews of unpublished
   images use separate copies served only through links signed for that site and image,
   which expire with the preview. Site Workers can read the public bucket only.
+- **Fonts (D-033):** WOFF2 only, at most 2 MB a file and nine files at a
+  time; Owner only (`fonts.manage`). The server reads every file before storing
+  it. The header and table directory must describe exactly that file, the
+  compressed data must unpack to exactly the listed tables (capped at 20 MB
+  against decompression bombs), and the tables a font needs must be present.
+  Name, weight and scripts are read from the font, never taken from the form;
+  CSS refers to uploaded fonts by their id, so a font's name never reaches a
+  style sheet. Files are served as `font/woff2` with `nosniff`. The dashboard
+  also loads each file as a font before sending it.
 - **Photos:** location and other metadata (EXIF/GPS) are removed. Image
   dimensions are limited, to protect against decompression bombs.
 - **SVG:** parsed and rebuilt from an allow-list (`packages/shared/src/svg.ts`).

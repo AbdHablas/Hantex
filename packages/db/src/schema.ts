@@ -523,6 +523,33 @@ export const mediaAssets = pgTable(
 );
 
 /**
+ * Fonts uploaded by the Owner (D-033), shared by every website. Each row is one family; its
+ * files (one per weight, upright only) are in the public R2 bucket at
+ * `fonts/<id>/<weight>.woff2`. Name, weights and scripts are read from the files themselves.
+ * The licence the Owner confirmed is kept with who confirmed it and when.
+ */
+export const fonts = pgTable(
+  'fonts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** The family name the files give themselves; shown in the dashboard only. */
+    family: text('family').notNull(),
+    /** Scripts every file draws: 'latin', 'arabic'. */
+    scripts: text('scripts').array().notNull(),
+    /** The stored files: [{ weight, bytes }], lightest first. */
+    files: jsonb('files').notNull(),
+    /** { name, url }: the licence the Owner confirmed allows use on websites. */
+    licence: jsonb('licence').notNull(),
+    licenceConfirmedBy: text('licence_confirmed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    licenceConfirmedAt: timestamp('licence_confirmed_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('fonts_created_idx').on(t.createdAt)],
+);
+
+/**
  * Announcements to a site's email sign-ups (D-040): written in the dashboard, sent in small
  * chunks within the daily sending limit, so a large list is spread over days. Each delivery is
  * recorded once per subscriber, which lets sending stop and resume without sending twice.

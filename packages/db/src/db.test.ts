@@ -79,6 +79,7 @@ describe('migrations', () => {
       'document_versions',
       'email_challenges',
       'enrolment_tickets',
+      'fonts',
       'form_rate_limits',
       'invitations',
       'media_assets',
@@ -512,6 +513,12 @@ describe('least-privilege database users', () => {
     await expect(asRole('hantex_build', 'select created_by from media_assets')).rejects.toThrow(
       permissionDenied,
     );
+    // Uploaded fonts: their files and scripts, not who confirmed the licence.
+    await asRole('hantex_build', 'select id, family, scripts, files from fonts');
+    await expect(asRole('hantex_build', 'select licence_confirmed_by from fonts')).rejects.toThrow(
+      permissionDenied,
+    );
+    await expect(asRole('hantex_build', 'delete from fonts')).rejects.toThrow(permissionDenied);
   });
 
   it('gives the backup user read access to everything and nothing else', async () => {

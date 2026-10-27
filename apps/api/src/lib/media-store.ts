@@ -3,7 +3,8 @@
  * Two buckets: the private one, which only this API can read, holds every upload under
  * `private/<siteId>/<assetId>/<width>.webp`; the public one, which the site Workers read, holds
  * copies of published images under `sites/<siteKey>/…` and short-lived preview copies under
- * `preview/<siteKey>/…` (removed by the bucket's lifecycle rule, docs/deployment.md).
+ * `preview/<siteKey>/…` (removed by the bucket's lifecycle rule, docs/deployment.md), and the
+ * uploaded fonts every website may use under `fonts/<fontId>/…`.
  */
 export interface StoredFile {
   body: ReadableStream | ArrayBuffer;
@@ -24,6 +25,9 @@ export const publicKey = (siteKey: string, assetId: string, width: number) =>
   `sites/${siteKey}/${assetId}/${width}.webp`;
 export const previewKey = (siteKey: string, assetId: string, width: number) =>
   `preview/${siteKey}/${assetId}/${width}.webp`;
+
+/** An uploaded font's file in the public bucket (D-033), shared by every website. */
+export const fontKey = (fontId: string, weight: number) => `fonts/${fontId}/${weight}.woff2`;
 
 /** Copies one file between buckets (R2 bindings have no server-side copy). */
 export async function copyFile(from: MediaStore, fromKey: string, to: MediaStore, toKey: string) {

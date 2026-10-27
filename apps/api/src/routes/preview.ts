@@ -1,5 +1,6 @@
 import { siteDomains } from '@hantex/db/worker';
 import { and, eq, ne } from 'drizzle-orm';
+import { fontsInUse, type Theme } from '@hantex/theme';
 import { Hono } from 'hono';
 import { itemId, mediaIds } from '@hantex/sections';
 import { z } from 'zod';
@@ -9,6 +10,7 @@ import { conflict, forbidden, notFound } from '../lib/errors';
 import { draftContent, publishedContent } from '../lib/site-content';
 import { previewMedia } from '../lib/media-library';
 import { PREVIEW_TTL_SECONDS, signPreview } from '../lib/preview';
+import { uploadedFonts } from '../lib/fonts';
 import { validate } from '../lib/validate';
 import { requirePermission } from '../middleware/session';
 
@@ -65,6 +67,10 @@ export const previewRoutes = new Hono<AppEnv>().post(
           (await latestPublished(v.db, v.site.id, kind))?.data ?? DOCUMENTS[kind].defaults;
       }
     }
+    // The uploaded fonts the previewed theme uses (D-033), so the page can load them.
+    const theme = DOCUMENTS.theme.schema.parse(data['theme']) as Theme;
+    const used = new Set(fontsInUse(theme.typography).keys());
+    data['fonts'] = (await uploadedFonts(v.db)).filter((font) => used.has(font.id));
     if (drafts.builder || page) {
       if (drafts.builder && !v.permissions.has('pages.view')) throw forbidden('missing-permission');
       const content = drafts.builder

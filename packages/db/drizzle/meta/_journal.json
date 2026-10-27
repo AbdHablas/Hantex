@@ -64,6 +64,13 @@
       "when": 1793120625211,
       "tag": "0008_logo_document",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793126203136,
+      "tag": "0009_fonts",
+      "breakpoints": true
     }
   ]
 }

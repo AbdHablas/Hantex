@@ -1,6 +1,7 @@
 import type { Permission } from '@hantex/shared';
 import {
   Building2,
+  CaseSensitive,
   FileStack,
   FileText,
   Images,
@@ -202,6 +203,14 @@ export function buildNavigation(m: Messages, me: Me, site: MySite | undefined): 
     section: { id: 'admin', label: n.sectionAdmin, hint: n.sectionAdminHelp, scope: 'platform' },
     entries: [
       { id: 'sites', label: n.sites, to: '/sites', icon: <Building2 />, keywords: ['new website'] },
+      {
+        id: 'fonts',
+        label: n.fonts,
+        to: '/fonts',
+        icon: <CaseSensitive />,
+        keywords: ['fonts', 'typeface', 'woff2', 'licence', 'خطوط'],
+        rule: { platform: 'fonts.manage' },
+      },
       {
         id: 'people',
         label: n.people,

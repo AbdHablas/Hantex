@@ -1,13 +1,24 @@
 export { contrastRatio, parseHex, relativeLuminance } from './color';
-export { themeToCss } from './css';
+export { themeToCss, uploadedFontFaces } from './css';
 export { BRAND, BUILT_IN_PRESETS, brandTheme, neutralTheme } from './defaults';
 export {
+  BUILT_IN_FONTS,
   FONT_LIBRARY,
+  UPLOADED_FONT_ID,
+  fontCatalogue,
   fontIds,
   fontsForScript,
+  isUploadedFont,
+  uploadedFontId,
+  uploadedFontSchema,
+  type CatalogueEntry,
+  type FontCatalogue,
   type FontDefinition,
   type FontId,
+  type FontRef,
   type Script,
+  type UploadedFont,
+  type UploadedFontId,
 } from './fonts';
 export {
   COLOR_TOKENS,
@@ -35,10 +46,12 @@ export {
   TYPOGRAPHY_PRESETS,
   WEIGHTS,
   availableWeight,
+  checkThemeFonts,
   checkTypography,
   fontsInUse,
   textStylesFrom,
   typographySchema,
+  type FontIssue,
   type FontRole,
   type TextStyle,
   type TextStyleId,

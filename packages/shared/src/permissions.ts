@@ -118,6 +118,15 @@ export const PERMISSIONS = {
     group: 'appearance',
     label: { en: 'Publish or roll back the theme', ar: 'نشر المظهر أو استرجاع نسخة سابقة' },
   },
+  'fonts.manage': {
+    scope: 'platform',
+    group: 'appearance',
+    reserved: true,
+    label: {
+      en: 'Add and remove uploaded fonts (all websites)',
+      ar: 'إضافة الخطوط المرفوعة وحذفها (كل المواقع)',
+    },
+  },
   'appearance.editLogo': {
     scope: 'site',
     group: 'appearance',

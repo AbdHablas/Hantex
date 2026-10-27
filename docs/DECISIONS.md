@@ -826,6 +826,20 @@ then the general product catalogue (Phase 3c, D-045).
   addresses to Google and loosens the security policy.
 - **Depends on:** the R2 media storage arriving with the media library
   (Phase 3). Until then, option (a) applies.
+- **Implementation note (2026-10-27):** built as recommended. The new
+  permission is `fonts.manage` (platform-wide, Owner only). The Owner uploads a
+  family's WOFF2 files, one per weight, upright only, at most 2 MB each, and
+  confirms the licence; who confirmed it and when is recorded. Each file is
+  decompressed and read on the server before anything is stored. Its
+  directory must match the file exactly, the tables a web font needs must be
+  present, and the unpacked size must match the directory, with a 20 MB cap.
+  The family name, weight and scripts come from the file: a script counts only
+  if every weight draws all its basic letters. Fonts are shared by every
+  website, stored in the public bucket under `fonts/<id>/`, and served by
+  each site Worker at `/fonts/library/<id>/<weight>.woff2`. Themes refer to
+  them as `upload-<id>`. Saving, publishing and the site build refuse a theme
+  whose uploaded font is missing or can't write its script. A font a theme
+  uses can't be deleted.
 
 ## D-034 — Component system across dashboard and public sites
 

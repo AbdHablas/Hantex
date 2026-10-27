@@ -12,6 +12,7 @@ import {
   createPoolDb,
   documentVersions,
   ensureSite,
+  fonts,
   mediaAssets,
   runMigrations,
   sites,
@@ -24,9 +25,11 @@ import { execFileSync, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { newLogoFile } from '@hantex/shared/logo';
 import { sanitizeSvg } from '@hantex/shared/svg';
+import { brandTheme, uploadedFontId } from '@hantex/theme';
 import pg from 'pg';
 
 const env = process.env;
@@ -186,8 +189,23 @@ const lockup = newLogoFile(cleanedLogo.svg, cleanedLogo.colours);
 lockup.colours = lockup.colours.map((c) =>
   c.colour === '#1b1e24' ? { ...c, use: 'neutral' as const } : c,
 );
+// An uploaded font (D-033) for the headings' Latin text: Cairo's Latin files from the built-in
+// library, stored as the dashboard would store them.
+const FONT_ID = '3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a';
+const FONT_WEIGHTS = [400, 700];
+await db.insert(fonts).values({
+  id: FONT_ID,
+  family: 'Cairo',
+  scripts: ['latin'],
+  files: FONT_WEIGHTS.map((weight) => ({ weight, bytes: 1 })),
+  licence: { name: 'SIL Open Font License 1.1', url: null },
+  licenceConfirmedAt: new Date(),
+});
+const liveTheme = structuredClone(brandTheme);
+liveTheme.typography.fonts.heading.latin = uploadedFontId(FONT_ID);
 await db.insert(documentVersions).values([
   { siteId: liveId, kind: 'logo', version: 1, data: { lockup, mark: null } },
+  { siteId: liveId, kind: 'theme', version: 1, data: liveTheme },
   { siteId: liveId, kind: 'pages', version: 1, data: content.index },
   { siteId: liveId, kind: 'menus', version: 1, data: content.menus },
   { siteId: liveId, kind: 'layout', version: 1, data: content.layout },
@@ -250,6 +268,33 @@ for (const width of IMAGE_WIDTHS) {
       webp,
       '--content-type',
       'image/webp',
+      '--local',
+      '--persist-to',
+      '.e2e/live/state',
+      '--config',
+      '.e2e/live/server/wrangler.json',
+    ],
+    { stdio: 'inherit', env: { ...env, WRANGLER_SEND_METRICS: 'false' } },
+  );
+}
+const cairo = join(
+  dirname(createRequire(import.meta.url).resolve('@fontsource/cairo/package.json')),
+  'files',
+);
+for (const weight of FONT_WEIGHTS) {
+  execFileSync(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'r2',
+      'object',
+      'put',
+      `hantex-media-public/fonts/${FONT_ID}/${weight}.woff2`,
+      '--file',
+      join(cairo, `cairo-latin-${weight}-normal.woff2`),
+      '--content-type',
+      'font/woff2',
       '--local',
       '--persist-to',
       '.e2e/live/state',

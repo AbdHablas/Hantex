@@ -8,7 +8,7 @@ import {
   savedSectionsSchema,
 } from '@hantex/sections';
 import { LOCALES, comingSoonSchema, siteSettingsSchema } from '@hantex/shared';
-import { themeSchema } from '@hantex/theme';
+import { themeSchema, uploadedFontSchema } from '@hantex/theme';
 import { z } from 'zod';
 import { hmacHex, timingSafeEqual } from './crypto';
 
@@ -36,6 +36,8 @@ const payloadSchema = z.object({
     page: z.object({ id: itemId, locale: z.enum(LOCALES) }).optional(),
     /** The images the previewed page uses (D-044). */
     media: mediaMapSchema.optional(),
+    /** The uploaded fonts the previewed theme uses (D-033). */
+    fonts: z.array(uploadedFontSchema).max(4).optional(),
   }),
 });
 

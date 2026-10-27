@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { FONT_LIBRARY, fontsForScript, type FontId } from './fonts';
+import {
+  BUILT_IN_FONTS,
+  UPLOADED_FONT_ID,
+  fontsForScript,
+  type FontCatalogue,
+  type FontId,
+  type FontRef,
+  type UploadedFontId,
+} from './fonts';
 
 /**
  * The typography system (D-032): named text styles that every component uses, two font roles
@@ -47,8 +55,16 @@ export const STYLE_LIMITS: Record<TextStyleId, { minSize: number; minLineHeight:
   spec: { minSize: 13, minLineHeight: 1.3 },
 };
 
+/**
+ * A built-in font that writes the script, or an uploaded font. Whether an uploaded font exists
+ * and writes the script is checked against the font library when saving and publishing
+ * (checkThemeFonts), since the schema can't know which fonts have been uploaded.
+ */
 const fontFor = (script: 'latin' | 'arabic') =>
-  z.enum(fontsForScript(script) as [FontId, ...FontId[]]);
+  z.union([
+    z.enum(fontsForScript(script) as [FontId, ...FontId[]]),
+    z.string().regex(UPLOADED_FONT_ID) as unknown as z.ZodType<UploadedFontId>,
+  ]);
 
 const pairSchema = z.strictObject({ latin: fontFor('latin'), arabic: fontFor('arabic') });
 
@@ -261,8 +277,8 @@ export function checkTypography(typography: Typography): TypographyIssue[] {
 /** The weights each font must ship for each script, from the styles that use it. */
 export function fontsInUse(
   typography: Typography,
-): Map<FontId, Map<'latin' | 'arabic', Set<Weight>>> {
-  const used = new Map<FontId, Map<'latin' | 'arabic', Set<Weight>>>();
+): Map<FontRef, Map<'latin' | 'arabic', Set<Weight>>> {
+  const used = new Map<FontRef, Map<'latin' | 'arabic', Set<Weight>>>();
   for (const id of TEXT_STYLES) {
     const style = typography.styles[id];
     const pair = typography.fonts[style.font];
@@ -278,7 +294,37 @@ export function fontsInUse(
 }
 
 /** The closest weight a font actually ships (e.g. Tajawal has no 600). */
-export function availableWeight(font: FontId, weight: number): number {
-  const available = FONT_LIBRARY[font].weights as readonly number[];
-  return available.reduce((best, w) => (Math.abs(w - weight) < Math.abs(best - weight) ? w : best));
+export function availableWeight(
+  font: FontRef,
+  weight: number,
+  catalogue: FontCatalogue = BUILT_IN_FONTS,
+): number {
+  const available = catalogue.get(font)?.weights ?? [];
+  return available.reduce(
+    (best, w) => (Math.abs(w - weight) < Math.abs(best - weight) ? w : best),
+    available[0] ?? weight,
+  );
+}
+
+export interface FontIssue {
+  role: FontRole;
+  script: 'latin' | 'arabic';
+  font: FontRef;
+  /** missing: not in the font library (deleted?); script: doesn't write that script. */
+  problem: 'missing' | 'script';
+}
+
+/** Fonts the theme uses that the library doesn't have, or that can't write their script. */
+export function checkThemeFonts(typography: Typography, catalogue: FontCatalogue): FontIssue[] {
+  const issues: FontIssue[] = [];
+  for (const role of FONT_ROLES) {
+    for (const script of ['latin', 'arabic'] as const) {
+      const font = typography.fonts[role][script];
+      const entry = catalogue.get(font);
+      if (!entry) issues.push({ role, script, font, problem: 'missing' });
+      else if (!entry.scripts.includes(script))
+        issues.push({ role, script, font, problem: 'script' });
+    }
+  }
+  return issues;
 }

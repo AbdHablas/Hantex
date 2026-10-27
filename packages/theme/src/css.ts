@@ -1,5 +1,11 @@
-import { FONT_LIBRARY } from './fonts';
-import { TEXT_STYLES, type TextStyle, type Typography } from './typography';
+import { BUILT_IN_FONTS, isUploadedFont, type FontCatalogue } from './fonts';
+import {
+  TEXT_STYLES,
+  availableWeight,
+  fontsInUse,
+  type TextStyle,
+  type Typography,
+} from './typography';
 import { COLOR_TOKENS, type Mode, type Theme } from './schema';
 
 const kebab = (s: string) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
@@ -42,9 +48,14 @@ function modeDeclarations(theme: Theme, mode: Mode): string[] {
   ];
 }
 
-const family = (pair: Typography['fonts']['body']) =>
+const family = (pair: Typography['fonts']['body'], catalogue: FontCatalogue) =>
   // Latin first: Latin text uses the Latin font, Arabic characters fall back to the Arabic font.
-  `"${FONT_LIBRARY[pair.latin].family}", "${FONT_LIBRARY[pair.arabic].family}", system-ui, sans-serif`;
+  // A font missing from the catalogue (an uploaded font since deleted) is left out.
+  [pair.latin, pair.arabic]
+    .map((ref) => catalogue.get(ref)?.family)
+    .filter((name) => name !== undefined)
+    .map((name) => `"${name}", `)
+    .join('') + 'system-ui, sans-serif';
 
 /** Sizes above 24px shrink smoothly between a 1440px and a 360px wide screen. */
 function fluid(px: number): string {
@@ -67,7 +78,7 @@ function styleDeclarations(id: string, style: TextStyle): string[] {
   ];
 }
 
-function sharedDeclarations(theme: Theme): string[] {
+function sharedDeclarations(theme: Theme, catalogue: FontCatalogue): string[] {
   const { typography, shape, motion } = theme;
   const { styles } = typography;
   // Older component styles use a numbered size scale; it follows the text styles (0 = body,
@@ -79,8 +90,8 @@ function sharedDeclarations(theme: Theme): string[] {
   );
   const [fast, base, slow] = DURATIONS[motion];
   return [
-    `--hx-font-heading: ${family(typography.fonts.heading)};`,
-    `--hx-font-body: ${family(typography.fonts.body)};`,
+    `--hx-font-heading: ${family(typography.fonts.heading, catalogue)};`,
+    `--hx-font-body: ${family(typography.fonts.body, catalogue)};`,
     `--hx-font-family: var(--hx-font-body);`,
     ...TEXT_STYLES.flatMap((id) => styleDeclarations(id, styles[id])),
     `--hx-font-size-small: ${rem(styles.small.size)};`,
@@ -132,15 +143,16 @@ const rule = (selector: string, declarations: string[]) =>
 
 /**
  * Turns a theme into the single stylesheet every public page uses (docs/theming.md).
- * Visitors can force a mode with `data-theme="light" | "dark"` on the root element.
+ * Visitors can force a mode with `data-theme="light" | "dark"` on the root element. Uploaded
+ * fonts need the catalogue that describes them (D-033).
  */
-export function themeToCss(theme: Theme): string {
+export function themeToCss(theme: Theme, catalogue: FontCatalogue = BUILT_IN_FONTS): string {
   const light = modeDeclarations(theme, 'light');
   const dark = modeDeclarations(theme, 'dark');
   const defaultMode = theme.mode.default === 'dark' ? dark : light;
 
   const blocks = [
-    rule(':root', [...sharedDeclarations(theme), ...defaultMode]),
+    rule(':root', [...sharedDeclarations(theme, catalogue), ...defaultMode]),
     rule(':root[data-theme="light"]', light),
     rule(':root[data-theme="dark"]', dark),
     rule(':lang(ar)', scriptDeclarations(theme.typography, 'arabic')),
@@ -161,4 +173,25 @@ export function themeToCss(theme: Theme): string {
     ])}\n}`,
   );
   return `${blocks.join('\n\n')}\n`;
+}
+
+/**
+ * @font-face rules for the uploaded fonts a theme uses (D-033), served by each site Worker from
+ * /fonts/library/<id>/<weight>.woff2. One file per weight covers every script the font writes.
+ */
+export function uploadedFontFaces(theme: Theme, catalogue: FontCatalogue): string {
+  const faces: string[] = [];
+  for (const [ref, scripts] of fontsInUse(theme.typography)) {
+    const entry = catalogue.get(ref);
+    if (!entry?.uploaded || !isUploadedFont(ref)) continue;
+    const weights = new Set<number>([500]);
+    for (const used of scripts.values()) for (const w of used) weights.add(w);
+    for (const weight of [...weights].sort((a, b) => a - b)) {
+      const file = availableWeight(ref, weight, catalogue);
+      faces.push(
+        `@font-face {\n  font-family: "${entry.family}";\n  font-style: normal;\n  font-weight: ${weight};\n  font-display: swap;\n  src: url("/fonts/library/${ref.slice('upload-'.length)}/${file}.woff2") format("woff2");\n}`,
+      );
+    }
+  }
+  return faces.join('\n');
 }

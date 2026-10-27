@@ -1,5 +1,4 @@
 import {
-  FONT_LIBRARY,
   FONT_ROLES,
   TEXT_STYLES,
   TYPOGRAPHY_PRESETS,
@@ -7,8 +6,8 @@ import {
   availableWeight,
   brandTheme,
   checkTypography,
-  fontsForScript,
-  type FontId,
+  type FontCatalogue,
+  type FontRef,
   type TextStyle,
   type TextStyleId,
   type Theme,
@@ -28,6 +27,7 @@ import {
   confirmAction,
   later,
 } from '../components/ui';
+import { useFontCatalogue } from '../lib/fonts';
 import { useBilingual, useI18n } from '../lib/i18n';
 import '../fonts-preview.css';
 
@@ -50,16 +50,24 @@ const SAMPLES: Record<TextStyleId, { ar: string; en: string }> = {
   spec: { ar: 'قيمة مثال: 16A · 250V', en: 'Example value: 16A · 250V' },
 };
 
-const fontStack = (typography: Typography, role: TextStyle['font']) => {
+const familyOf = (catalogue: FontCatalogue, font: FontRef) =>
+  catalogue.get(font)?.family ?? 'system-ui';
+
+const fontStack = (catalogue: FontCatalogue, typography: Typography, role: TextStyle['font']) => {
   const pair = typography.fonts[role];
-  return `"${FONT_LIBRARY[pair.latin].family}", "${FONT_LIBRARY[pair.arabic].family}", system-ui, sans-serif`;
+  return `"${familyOf(catalogue, pair.latin)}", "${familyOf(catalogue, pair.arabic)}", system-ui, sans-serif`;
 };
 
 /** The same rules the website's generated CSS applies, as inline values for the preview. */
-const previewStyle = (typography: Typography, id: TextStyleId, arabic: boolean): CSSProperties => {
+const previewStyle = (
+  catalogue: FontCatalogue,
+  typography: Typography,
+  id: TextStyleId,
+  arabic: boolean,
+): CSSProperties => {
   const style = typography.styles[id];
   return {
-    fontFamily: fontStack(typography, style.font),
+    fontFamily: fontStack(catalogue, typography, style.font),
     // The preview shows the large-screen size, scaled down so it fits the panel.
     fontSize: `${Math.min(style.size, 44)}px`,
     fontWeight: style.weight,
@@ -126,14 +134,20 @@ function FontPicker({
   value,
   onChange,
   disabled,
+  catalogue,
 }: {
   label: string;
   script: 'latin' | 'arabic';
-  value: FontId;
-  onChange: (font: FontId) => void;
+  value: FontRef;
+  onChange: (font: FontRef) => void;
   disabled: boolean;
+  catalogue: FontCatalogue;
 }) {
+  const { m } = useI18n();
   const sample = script === 'arabic' ? 'أبجد هوز ١٢٣' : 'Aa Bb Cc 123';
+  const choices = [...catalogue].filter(([, font]) => font.scripts.includes(script));
+  // A chosen font that is no longer in the library is still listed, so the choice is visible.
+  const missing = !catalogue.has(value);
   return (
     <div className="flex flex-col gap-2">
       <Field label={label}>
@@ -142,11 +156,12 @@ function FontPicker({
             {...props}
             disabled={disabled}
             value={value}
-            onChange={(event) => onChange(event.target.value as FontId)}
+            onChange={(event) => onChange(event.target.value as FontRef)}
           >
-            {fontsForScript(script).map((id) => (
+            {missing && <option value={value}>{m.fonts.missing}</option>}
+            {choices.map(([id, font]) => (
               <option key={id} value={id}>
-                {FONT_LIBRARY[id].family}
+                {font.uploaded ? `${font.name} · ${m.fonts.uploadedTag}` : font.name}
               </option>
             ))}
           </Select>
@@ -156,7 +171,7 @@ function FontPicker({
         aria-hidden
         dir={script === 'arabic' ? 'rtl' : 'ltr'}
         className="truncate rounded-lg bg-surface-2 px-3 py-2 text-xl"
-        style={{ fontFamily: `"${FONT_LIBRARY[value].family}"` }}
+        style={{ fontFamily: `"${familyOf(catalogue, value)}"` }}
       >
         {sample}
       </p>
@@ -179,11 +194,12 @@ export function TypographyEditor({
   const t = m.appearance;
   const typography = draft.typography;
   const [preset, setPreset] = useState('');
+  const catalogue = useFontCatalogue();
   const issues = checkTypography(typography);
   const issueFor = (id: TextStyleId) => issues.filter((issue) => issue.style === id);
 
   const setTypography = (next: Typography) => update({ ...draft, typography: next });
-  const setFont = (role: (typeof FONT_ROLES)[number], script: 'latin' | 'arabic', font: FontId) =>
+  const setFont = (role: (typeof FONT_ROLES)[number], script: 'latin' | 'arabic', font: FontRef) =>
     setTypography({
       ...typography,
       fonts: { ...typography.fonts, [role]: { ...typography.fonts[role], [script]: font } },
@@ -255,7 +271,9 @@ export function TypographyEditor({
               {WEIGHTS.map((w) => (
                 <option key={w} value={w}>
                   {w} · {t.weightName[String(w)]}
-                  {availableWeight(latin, w) !== w ? ` (→ ${availableWeight(latin, w)})` : ''}
+                  {availableWeight(latin, w, catalogue) !== w
+                    ? ` (→ ${availableWeight(latin, w, catalogue)})`
+                    : ''}
                 </option>
               ))}
             </Select>
@@ -382,6 +400,7 @@ export function TypographyEditor({
                     script="latin"
                     value={typography.fonts[role].latin}
                     disabled={!editable}
+                    catalogue={catalogue}
                     onChange={(font) => setFont(role, 'latin', font)}
                   />
                   <FontPicker
@@ -389,6 +408,7 @@ export function TypographyEditor({
                     script="arabic"
                     value={typography.fonts[role].arabic}
                     disabled={!editable}
+                    catalogue={catalogue}
                     onChange={(font) => setFont(role, 'arabic', font)}
                   />
                 </div>
@@ -443,10 +463,18 @@ export function TypographyEditor({
                       {styleName(id)} · {typography.styles[id].size}px
                     </dt>
                     <dd className="m-0 flex flex-col gap-1">
-                      <span lang="ar" dir="rtl" style={previewStyle(typography, id, true)}>
+                      <span
+                        lang="ar"
+                        dir="rtl"
+                        style={previewStyle(catalogue, typography, id, true)}
+                      >
                         {SAMPLES[id].ar}
                       </span>
-                      <span lang="en" dir="ltr" style={previewStyle(typography, id, false)}>
+                      <span
+                        lang="en"
+                        dir="ltr"
+                        style={previewStyle(catalogue, typography, id, false)}
+                      >
                         {SAMPLES[id].en}
                       </span>
                     </dd>

@@ -45,7 +45,14 @@ import {
   fontsInUse,
   publishable,
   themeSchema,
+  checkThemeFonts,
+  fontCatalogue,
+  isUploadedFont,
   themeToCss,
+  uploadedFontFaces,
+  uploadedFontId,
+  type FontCatalogue,
+  type Script,
   validateTheme,
   type Theme,
 } from '@hantex/theme';
@@ -108,6 +115,8 @@ async function fromDatabase(url: string): Promise<SiteData> {
     const logo = await latest('logo');
     // An uploaded logo is re-validated like everything else: the schema cleans each file again.
     uploadedLogo = logo ? logoSchema.parse(logo.data) : null;
+    const publishedTheme = theme ? themeSchema.parse(theme.data) : brandTheme;
+    catalogue = await uploadedFontsFor(client, publishedTheme);
     // The website builder's published documents (D-035): the latest version of each page, of
     // the page index, of the menus and of the header and footer.
     const builderRows = (
@@ -264,7 +273,36 @@ function defaults(): SiteData {
   };
 }
 
-/** Copies the theme's fonts (only the weights in use) and returns their @font-face rules. */
+/** The font library with the uploaded fonts the theme uses (D-033); built-in only by default. */
+let catalogue: FontCatalogue = fontCatalogue();
+
+async function uploadedFontsFor(client: pg.Client, theme: Theme): Promise<FontCatalogue> {
+  const ids = [...fontsInUse(theme.typography).keys()]
+    .filter(isUploadedFont)
+    .map((ref) => ref.slice('upload-'.length));
+  if (ids.length === 0) return fontCatalogue();
+  const rows = (
+    await client.query<{
+      id: string;
+      family: string;
+      scripts: Script[];
+      files: { weight: number }[];
+    }>('select id, family, scripts, files from fonts where id = any($1::uuid[])', [ids])
+  ).rows;
+  return fontCatalogue(
+    rows.map((row) => ({
+      id: uploadedFontId(row.id),
+      name: row.family,
+      scripts: row.scripts,
+      weights: row.files.map((f) => f.weight),
+    })),
+  );
+}
+
+/**
+ * Copies the theme's built-in fonts (only the weights in use) and returns the @font-face rules
+ * for them and for the uploaded fonts it uses, which the site Worker serves from R2.
+ */
 async function fonts(theme: Theme): Promise<string> {
   const out = join(root, 'public', 'fonts');
   await rm(out, { recursive: true, force: true });
@@ -272,7 +310,9 @@ async function fonts(theme: Theme): Promise<string> {
   const faces: string[] = [];
   // Only the fonts, scripts and weights the text styles use (D-032); a weight a font doesn't
   // ship uses its nearest file. Medium (500) is always included for small interface text.
-  for (const [id, scripts] of fontsInUse(theme.typography)) {
+  for (const [ref, scripts] of fontsInUse(theme.typography)) {
+    if (isUploadedFont(ref)) continue;
+    const id = ref;
     const font = FONT_LIBRARY[id];
     const dir = join(dirname(require.resolve(`${font.source}/package.json`)), 'files');
     for (const [subset, weights] of scripts) {
@@ -285,7 +325,8 @@ async function fonts(theme: Theme): Promise<string> {
       }
     }
   }
-  return faces.join('\n');
+  const uploaded = uploadedFontFaces(theme, catalogue);
+  return [...faces, ...(uploaded ? [uploaded] : [])].join('\n');
 }
 
 const url = process.env['HANTEX_BUILD_DATABASE_URL'];
@@ -305,6 +346,12 @@ if (builder) {
   if (issues.length > 0) {
     fail(`the published pages fail the site checks: ${issues.map((i) => i.code).join(', ')}`);
   }
+}
+const fontIssues = checkThemeFonts(data.theme.typography, catalogue);
+if (fontIssues.length > 0) {
+  fail(
+    `the published theme uses fonts the library doesn't have: ${fontIssues.map((i) => i.font).join(', ')}`,
+  );
 }
 const themeCheck = validateTheme(data.theme);
 if (!publishable(themeCheck)) fail('the published theme fails the contrast or readability checks');
@@ -413,6 +460,6 @@ await mkdir(join(root, 'src', 'data'), { recursive: true });
 await writeFile(join(root, 'src', 'data', 'site.json'), `${JSON.stringify(data, null, 2)}\n`);
 await writeFile(
   join(root, 'public', 'theme.css'),
-  `${await fonts(data.theme)}\n\n${themeToCss(data.theme)}`,
+  `${await fonts(data.theme)}\n\n${themeToCss(data.theme, catalogue)}`,
 );
 console.info(`Site build data for "${data.site.key}" written (${data.source}).`);

@@ -102,7 +102,13 @@ describe('standard roles', () => {
 describe('permission scopes (D-025)', () => {
   it('keeps platform-wide permissions Owner-only', () => {
     expect([...PLATFORM_PERMISSIONS].sort()).toEqual(
-      ['roles.manage', 'security.manage', 'sites.manage', 'staff.manageAdmins'].sort(),
+      [
+        'fonts.manage',
+        'roles.manage',
+        'security.manage',
+        'sites.manage',
+        'staff.manageAdmins',
+      ].sort(),
     );
     for (const p of PLATFORM_PERMISSIONS) expect(RESERVED_PERMISSIONS).toContain(p);
   });

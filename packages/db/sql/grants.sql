@@ -14,6 +14,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
 TO hantex_admin_app;
 -- Media library (D-044): the files themselves are in R2.
 GRANT SELECT, INSERT, UPDATE, DELETE ON media_assets TO hantex_admin_app;
+-- Uploaded fonts (D-033): the files themselves are in R2.
+GRANT SELECT, INSERT, UPDATE, DELETE ON fonts TO hantex_admin_app;
 -- Announcements (D-040): written and sent from the dashboard; deliveries are a send log.
 GRANT SELECT, INSERT, UPDATE ON announcements TO hantex_admin_app;
 GRANT SELECT, INSERT ON announcement_deliveries TO hantex_admin_app;
@@ -36,6 +38,8 @@ GRANT EXECUTE ON FUNCTION unsubscribe(uuid, uuid) TO hantex_public_app;
 GRANT SELECT ON document_versions, sites, site_domains TO hantex_build;
 -- What pages need to draw published images (D-044); not who uploaded them or their file names.
 GRANT SELECT (id, site_id, width, height, variants, alt, published_at) ON media_assets TO hantex_build;
+-- Uploaded fonts a theme uses (D-033): their files and scripts, not who confirmed the licence.
+GRANT SELECT (id, family, scripts, files) ON fonts TO hantex_build;
 
 -- Nightly backups (D-010): read-only.
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO hantex_backup;

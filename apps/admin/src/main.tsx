@@ -31,6 +31,9 @@ const MediaLibrary = lazy(() =>
 const MenusEditor = lazy(() =>
   import('./routes/menus').then((module) => ({ default: module.MenusEditor })),
 );
+const FontLibrary = lazy(() =>
+  import('./routes/fonts').then((module) => ({ default: module.FontLibrary })),
+);
 const LogoEditor = lazy(() =>
   import('./routes/logo').then((module) => ({ default: module.LogoEditor })),
 );
@@ -175,6 +178,14 @@ const router = createBrowserRouter([
         ],
       },
       { path: 'sites', element: <Sites /> },
+      {
+        path: 'fonts',
+        element: (
+          <Suspense fallback={<Loading />}>
+            <FontLibrary />
+          </Suspense>
+        ),
+      },
       { path: 'staff', element: <PlatformStaff /> },
       { path: 'roles', element: <Roles /> },
       { path: 'audit', element: <AuditLog scope="platform" /> },

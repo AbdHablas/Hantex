@@ -109,7 +109,7 @@ Next:
 
 - [x] Arabic typeface switched to Cairo, self-hosted, on the public sites and the dashboard (D-031)
 - [x] Typography & Fonts section per site: heading and body fonts (Arabic and Latin each), twelve text styles with size, weight, line height, Arabic line height and letter spacing, four presets, live bilingual preview, readability checks, publish and revert (D-032); older themes upgraded automatically
-- [ ] Custom font uploads by the Owner: WOFF2, licence confirmation, validated, served from the site's domain (D-033; built with the R2 media storage in Phase 3)
+- [x] Custom font uploads by the Owner: WOFF2, licence confirmation, validated, served from the site's domain (D-033; built 2026-10-27, see Phase 3b)
 - [ ] Shared component system: tokens shared; dashboard components; public Astro components with islands; product cards, navigation, filters, search, gallery and 3D viewer for product pages (D-034, with Phase 3 catalogue)
 - [ ] Mixed Arabic/English text isolated correctly (product names, model numbers, prices, specifications); icons mirrored only where direction matters
 - [x] Automated accessibility checks (axe, D-043) on the public site (Arabic light, English dark, 404) and eight dashboard screens; fixed the countdown's list semantics and five controls whose names didn't include their visible text
@@ -159,7 +159,10 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] choosing images in the section editor (step 3);
   - [x] SVG cleaner (`@hantex/shared/svg`): strict parser, rebuilt from an allow-list, ready
         for logo uploads;
-  - font uploads by the Owner (D-033);
+  - [x] font uploads by the Owner (D-033): Administration → Fonts; WOFF2 files read and
+        checked on the server (name, weight and scripts from the file), licence confirmation
+        recorded; offered in every website's Typography next to the built-in fonts; served
+        from each site's own address; fonts in use can't be deleted;
   - [x] logo upload with colour mapping (D-027): a full logo and an optional small mark per
         site, cleaned in the browser and checked again by the server and the build; each
         colour follows a logo colour token or stays fixed; light and dark previews; draft,

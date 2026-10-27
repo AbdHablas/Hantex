@@ -1,5 +1,5 @@
 ---
-import { themeToCss } from '@hantex/theme';
+import { fontCatalogue, themeToCss, uploadedFontFaces } from '@hantex/theme';
 import { env } from 'cloudflare:workers';
 import { renderContext } from '../builder';
 import ComingSoonPage from '../components/ComingSoonPage.astro';
@@ -44,6 +44,10 @@ const ctx =
       })
     : null;
 
+// The draft theme's styles, with any uploaded fonts it uses (D-033).
+const catalogue = fontCatalogue(data?.fonts ?? []);
+const css = data ? `${uploadedFontFaces(data.theme, catalogue)}\n${themeToCss(data.theme, catalogue)}` : '';
+
 Astro.response.headers.set('Cache-Control', 'no-store');
 Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 if (data) {
@@ -58,14 +62,14 @@ if (data) {
 
 {
   data && ctx && page ? (
-    <LivePage ctx={ctx} pageId={page.id} themeCss={{ css: themeToCss(data.theme), nonce }} theme={data.theme} />
+    <LivePage ctx={ctx} pageId={page.id} themeCss={{ css, nonce }} theme={data.theme} />
   ) : data ? (
     <ComingSoonPage
       locale={locale}
       content={data['coming-soon']}
       settings={data['site-settings']}
       preview
-      themeCss={{ css: themeToCss(data.theme), nonce }}
+      themeCss={{ css, nonce }}
       theme={data.theme}
     />
   ) : (

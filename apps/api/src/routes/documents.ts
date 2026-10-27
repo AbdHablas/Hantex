@@ -17,6 +17,7 @@ import {
   saveDraft,
 } from '../lib/documents';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
+import { requireThemeFonts } from '../lib/fonts';
 import { validate } from '../lib/validate';
 
 const kindParam = validate('param', z.object({ kind: z.enum(KINDS) }));
@@ -110,6 +111,8 @@ export const documentRoutes = new Hono<AppEnv>()
         if (logoOf(next) !== logoOf(previous) && !v.permissions.has('appearance.editLogo')) {
           throw forbidden('logo-colours-locked');
         }
+        // Uploaded fonts must exist and write the script they're chosen for (D-033).
+        await requireThemeFonts(v.db, next);
       }
       await saveDraft(v.db, v.site.id, kind, parsed.data, v.access.userId);
       await writeAudit(
@@ -149,6 +152,7 @@ export const documentRoutes = new Hono<AppEnv>()
           throw badRequest('theme-typography', { issues: checks.typography });
         }
         guardLogo(v, theme, c.req.valid('json').confirmLogoChange === true);
+        await requireThemeFonts(v.db, theme);
       }
       return c.json(await publish(c, kind, parsed.data, null));
     },
@@ -204,6 +208,7 @@ export const documentRoutes = new Hono<AppEnv>()
         const theme = parsed.data as Theme;
         if (!publishable(validateTheme(theme))) throw conflict('version-incompatible');
         guardLogo(v, theme, body.confirmLogoChange === true);
+        await requireThemeFonts(v.db, theme);
       }
       return c.json(await publish(c, kind, parsed.data, body.version));
     },

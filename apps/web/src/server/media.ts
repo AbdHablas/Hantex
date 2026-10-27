@@ -55,3 +55,28 @@ export async function serveMedia(
     },
   });
 }
+
+const FONT_PATH =
+  /^\/fonts\/library\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/([1-9]00)\.woff2$/;
+
+/**
+ * Serves fonts uploaded by the Owner (D-033) from the public bucket, at
+ * /fonts/library/<id>/<weight>.woff2. They are shared by every website and never change.
+ */
+export async function serveFont(request: Request, bucket: MediaBucket): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
+  }
+  const match = FONT_PATH.exec(new URL(request.url).pathname);
+  if (!match) return notFound();
+  const file = await bucket.get(`fonts/${match[1]}/${match[2]}.woff2`);
+  if (!file) return notFound();
+  return new Response(request.method === 'HEAD' ? null : file.body, {
+    headers: {
+      'Content-Type': 'font/woff2',
+      'Content-Length': String(file.size),
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
+}

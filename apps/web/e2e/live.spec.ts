@@ -270,6 +270,33 @@ test('an uploaded logo is served cleaned and follows light and dark mode (D-027)
   expect(svg).toMatch(/<circle[^>]*fill="#ff6600"/);
 });
 
+test('an uploaded font is served by the site and used for headings (D-033)', async ({
+  page,
+  request,
+}) => {
+  const id = '3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a';
+  const file = await request.get(`${LIVE}/fonts/library/${id}/700.woff2`);
+  expect(file.status()).toBe(200);
+  expect(file.headers()['content-type']).toBe('font/woff2');
+  expect(file.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
+  expect((await request.get(`${LIVE}/fonts/library/${id}/300.woff2`)).status()).toBe(404);
+
+  await page.goto(`${LIVE}/en/`);
+  const family = `upload-${id}`;
+  expect(
+    await page.evaluate(async (name) => {
+      await document.fonts.load(`700 32px "${name}"`, 'Heading');
+      return document.fonts.check(`700 32px "${name}"`, 'Heading');
+    }, family),
+  ).toBe(true);
+  expect(
+    await page
+      .locator('h1')
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily),
+  ).toContain(family);
+});
+
 test('a video loads nothing from YouTube until the visitor presses play', async ({ page }) => {
   const youtube: string[] = [];
   const cspErrors: string[] = [];

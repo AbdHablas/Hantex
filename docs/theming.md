@@ -92,6 +92,9 @@ palettes are added without rebuilding the platform.
     licence recorded. It then becomes available to every site.
   - The six fonts installed today (Poppins, Inter, Cairo, IBM Plex Sans
     Arabic, Tajawal, Readex Pro) stay as the built-in set.
+  - *Built (2026-10-27):* Administration → **Fonts**. Uploaded fonts appear in
+    every website's font menus marked *uploaded*, and only for the scripts
+    they write.
   - A site loads only the fonts and weights its theme uses.
 - **Logos and brand SVGs.** For each site, an administrator uploads an SVG
   logo, and optionally a separate mark.

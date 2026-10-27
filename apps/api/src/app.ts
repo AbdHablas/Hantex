@@ -19,6 +19,7 @@ import { siteConfigRoutes, sitesRoutes } from './routes/sites';
 import { siteStaffRoutes, staffRoutes } from './routes/staff';
 import { subscriberRoutes } from './routes/subscribers';
 import { announcementRoutes } from './routes/announcements';
+import { fontRoutes } from './routes/fonts';
 import { mediaRoutes } from './routes/media';
 
 /**
@@ -53,6 +54,7 @@ function staffApi() {
     .route('/roles', roleRoutes)
     .route('/audit', auditRoutes)
     .route('/theme-presets', presetRoutes)
+    .route('/fonts', fontRoutes)
     .route('/sites', sitesRoutes)
     .route('/sites/:siteKey', siteApi());
 }
