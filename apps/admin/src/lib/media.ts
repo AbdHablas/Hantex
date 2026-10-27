@@ -18,6 +18,21 @@ export interface MediaItem {
   urls: Record<string, string>;
 }
 
+/** One page of a website's media library, newest first. */
+export interface MediaPage {
+  items: MediaItem[];
+  next: string | null;
+  usedBytes: number;
+  quotaBytes: number;
+}
+
+/** The smallest stored width that is at least `min` pixels wide, for thumbnails. */
+export function thumbnail(item: MediaItem, min = 480) {
+  const widths = item.variants.map((v) => v.width).sort((a, b) => a - b);
+  const width = widths.find((w) => w >= min) ?? widths.at(-1) ?? 0;
+  return item.urls[width] ?? '';
+}
+
 export interface ProcessedImage {
   name: string;
   width: number;

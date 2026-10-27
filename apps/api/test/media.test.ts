@@ -52,6 +52,12 @@ describe('media uploads', () => {
     expect(item).toMatchObject({ width: 960, alt: { en: 'White switch' } });
     expect(list.usedBytes).toBeGreaterThan(0);
 
+    const one = await h.request('GET', path('hantex-ultra', `/${id}`), { cookie: viewer });
+    expect(await json<{ id: string; name: string }>(one)).toMatchObject({ id, name: 'plate.jpg' });
+    expect((await h.request('GET', path('second-brand', `/${id}`), { cookie: owner })).status).toBe(
+      404,
+    );
+
     const file = await h.request('GET', item.urls['480']!.replace(/^/, ''), { cookie: viewer });
     expect(file.status).toBe(200);
     expect(file.headers.get('content-type')).toBe('image/webp');

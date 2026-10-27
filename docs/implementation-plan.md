@@ -155,8 +155,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
         details (D-044); description in both languages; deletion by Owner and Administrator
         (step 2);
   - [x] public copies on publish, served from each site's `/media/`; signed links in previews;
-        images in use can't be deleted (step 3);
-  - [ ] choosing images in the section editor;
+        images in use can't be deleted;
+  - [x] choosing images in the section editor (step 3);
   - SVG sanitiser;
   - font uploads by the Owner (D-033);
   - logo upload with colour mapping (D-027).

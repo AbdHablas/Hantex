@@ -18,26 +18,20 @@ import {
   confirmAction,
   later,
 } from '../components/ui';
-import { api, sitePath } from '../lib/api';
+import { ApiError, api, sitePath } from '../lib/api';
 import { useI18n } from '../lib/i18n';
-import { ImageError, formatBytes, processImage, uploadForm, type MediaItem } from '../lib/media';
+import {
+  ImageError,
+  formatBytes,
+  processImage,
+  thumbnail,
+  uploadForm,
+  type MediaItem,
+  type MediaPage,
+} from '../lib/media';
 import { useCurrentSite } from '../lib/session';
 
 /** The website's media library (D-044): upload, describe and remove images. */
-
-interface MediaPage {
-  items: MediaItem[];
-  next: string | null;
-  usedBytes: number;
-  quotaBytes: number;
-}
-
-/** The smallest stored width that is at least `min` pixels wide, for thumbnails. */
-export function thumbnail(item: MediaItem, min = 480) {
-  const widths = item.variants.map((v) => v.width).sort((a, b) => a - b);
-  const width = widths.find((w) => w >= min) ?? widths.at(-1) ?? 0;
-  return item.urls[width] ?? '';
-}
 
 function DetailsDialog({ item, onClose }: { item: MediaItem | null; onClose: () => void }) {
   const { m, format, locale } = useI18n();
@@ -71,7 +65,28 @@ function DetailsDialog({ item, onClose }: { item: MediaItem | null; onClose: () 
       onClose();
     },
   });
+  // A fresh dialog for each image: no message left over from the last one.
+  const { reset: resetSave } = save;
+  const { reset: resetRemove } = remove;
+  useEffect(() => {
+    resetSave();
+    resetRemove();
+  }, [item, resetSave, resetRemove]);
   const editable = can('media.edit') && site?.archived !== true;
+  // Deleting is refused while pages use the image; say which ones.
+  const inUseError =
+    remove.error instanceof ApiError && remove.error.code === 'media-in-use'
+      ? (remove.error.details as {
+          pages?: { title: { ar: string; en: string } }[];
+          saved?: { name: { ar: string; en: string } }[];
+        })
+      : null;
+  const inUse = inUseError
+    ? [
+        ...(inUseError.pages ?? []).map((p) => p.title[locale] || p.title.ar || p.title.en),
+        ...(inUseError.saved ?? []).map((s) => s.name[locale] || s.name.ar || s.name.en),
+      ].join(locale === 'ar' ? '، ' : ', ')
+    : null;
   return (
     <Dialog
       open={item !== null}
@@ -125,7 +140,11 @@ function DetailsDialog({ item, onClose }: { item: MediaItem | null; onClose: () 
               />
             )}
           </Field>
-          <ErrorText error={save.error ?? remove.error} />
+          {inUse ? (
+            <Alert tone="danger">{format(t['inUse'] ?? '', { places: inUse })}</Alert>
+          ) : (
+            <ErrorText error={save.error ?? remove.error} />
+          )}
           <div className="flex flex-wrap justify-between gap-2">
             {can('media.delete') && site?.archived !== true ? (
               <Button

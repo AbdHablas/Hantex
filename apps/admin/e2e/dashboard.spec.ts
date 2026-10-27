@@ -375,6 +375,37 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await confirm(page);
   await expect(page.getByText('No images yet.')).toBeVisible();
 
+  // An image section on the second website uses an image from its own library, which then
+  // can't be deleted while the page uses it.
+  await page.goto('/s/second-site/media');
+  await page
+    .getByLabel('Upload images')
+    .setInputFiles({ name: 'plate.png', mimeType: 'image/png', buffer: png(800, 600) });
+  await expect(page.getByText('Images uploaded: 1.')).toBeVisible();
+  await page.goto('/s/second-site/pages');
+  await pageList.getByRole('link', { name: 'About us' }).click();
+  await page.getByRole('button', { name: 'Add section' }).click();
+  await page
+    .getByRole('dialog', { name: 'Choose a section' })
+    .getByRole('button', { name: /^Image\s*One image/ })
+    .click();
+  const imageField = page.getByRole('group', { name: 'Image', exact: true });
+  await expect(imageField.getByText('No image chosen.')).toBeVisible();
+  await imageField.getByRole('button', { name: 'Choose image' }).click();
+  const picker = page.getByRole('dialog', { name: 'Choose an image' });
+  await expectAccessible(page, 'image picker');
+  await picker.getByRole('button', { name: /plate\.png/ }).click();
+  await expect(picker).toBeHidden();
+  await expect(imageField.getByText('plate.png')).toBeVisible();
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
+  await page.goto('/s/second-site/media');
+  await page.getByRole('button', { name: /plate\.png/ }).click();
+  await details.getByRole('button', { name: 'Delete image' }).click();
+  await confirm(page);
+  await expect(details.getByText(/Used on: About us\./)).toBeVisible();
+  await details.getByRole('button', { name: 'Cancel' }).click();
+
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');
   await expect(page.getByText('No pages yet')).toBeVisible();

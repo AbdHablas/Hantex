@@ -200,6 +200,16 @@ export const mediaRoutes = new Hono<AppEnv>()
     },
   )
 
+  .get('/:id', requirePermission('media.view'), idParam, async (c) => {
+    const v = c.var;
+    const [row] = await v.db
+      .select()
+      .from(mediaAssets)
+      .where(and(eq(mediaAssets.id, c.req.valid('param').id), eq(mediaAssets.siteId, v.site.id)));
+    if (!row) throw notFound();
+    return c.json(asItem(v.site.key, row));
+  })
+
   .patch(
     '/:id',
     requirePermission('media.edit'),

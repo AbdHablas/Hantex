@@ -3,6 +3,7 @@ import {
   SECTIONS,
   type Bilingual,
   type Field as RegistryField,
+  type ImageRef,
   type Link,
   type RichDoc,
   type ContentSection,
@@ -14,6 +15,7 @@ import { useBilingual, useI18n } from '../../lib/i18n';
 import type { PageSummary } from '../../lib/builder';
 import { BilingualField } from '../document';
 import { Button, Field, IconButton, Input, Select } from '../ui';
+import { ImageField } from './ImageField';
 import { LinkField } from './LinkField';
 import { RichTextField } from './RichTextField';
 
@@ -97,6 +99,15 @@ function FieldControl({
         </fieldset>
       );
     }
+    case 'image':
+      return (
+        <ImageField
+          label={label}
+          value={value as ImageRef}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
     case 'link':
       return (
         <LinkField
