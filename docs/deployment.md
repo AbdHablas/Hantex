@@ -49,6 +49,12 @@ production data is never used in development or tests.
 ([Neon changelog](https://neon.com/docs/changelog/2026-06-05)). CI and local
 development use the same major version (D-023).
 
+**Host decided (D-047):** Neon's free plan: 0.5 GB storage and 100
+compute-hours a month per project, 10 branches, compute that sleeps after 5
+minutes idle (the first request after a quiet spell wakes it), 5 GB network
+transfer a month ([Neon plans](https://neon.com/docs/introduction/plans)).
+Files are in R2, so the database holds only content and settings.
+
 Branches: production, preview, development. Database users with least
 privilege: migrations (schema changes), dashboard (read/write), public site
 (insert sign-ups, read published content only), backups (read-only).

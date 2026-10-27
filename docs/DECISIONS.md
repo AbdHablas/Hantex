@@ -55,6 +55,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-044 | Image processing | Confirmed | In the dashboard, before upload: resized to a few widths, WebP, camera and location data removed; the server re-checks every file |
 | D-045 | General catalogue | Confirmed | Any kind of product on any website: categories, attributes and page templates are data per site; switches and sockets are Hantex Ultra's first categories, not built in |
 | D-046 | Videos | Confirmed | YouTube or Vimeo links, click to play: a cover image until pressed, then the provider's privacy-friendlier player |
+| D-047 | Database host | Confirmed | Neon PostgreSQL 18, free plan, through Cloudflare Hyperdrive (as built); Cloudflare D1 not used |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -996,4 +997,25 @@ then the general product catalogue (Phase 3c, D-045).
   JavaScript, the cover links to the video's own page. Free; no video storage.
   The privacy policy draft names YouTube and Vimeo as services used only after
   pressing play.
+
+## D-047 — Database host
+
+- **Status:** Confirmed — 2026-10-27 (owner: "Choose Neon PostgreSQL")
+- **Options:** Neon PostgreSQL (free plan) · Cloudflare D1 (SQLite).
+- **Choice:** Neon, as D-003 first proposed and the code is built for:
+  PostgreSQL 18, Drizzle migrations, least-privilege database users, reached
+  from the Workers through Hyperdrive. D1 would have meant rewriting the
+  database layer, migrations and the database users.
+- **Free plan, as Neon documents it (checked 2026-10-27):** 0.5 GB of storage
+  and 100 compute-hours a month per project, 10 branches per project,
+  compute that sleeps after 5 minutes idle, 5 GB of network transfer a
+  month. Images and files live in R2, not the database, so content stays
+  small. A sleeping database wakes on the next request, which can add a
+  short delay to the first dashboard request or sign-up after a quiet spell;
+  the public pages are static and unaffected.
+- **Consequences:** deployment can go ahead, step by step and with the owner's
+  approval (`docs/deployment.md`). Neon's own restore history on the free
+  plan is short, so the nightly encrypted backups to R2 (D-010) are the
+  long-term copy. The unused D1 database from the previous project stays
+  untouched (D-016).
 

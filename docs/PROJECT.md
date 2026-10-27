@@ -356,7 +356,7 @@ Runbook: [`deployment.md`](deployment.md).
 
 **First deployment, in order** (each step done by or with the owner):
 
-1. Database host: create the PostgreSQL 18 database (see open items).
+1. Neon (D-047): create the free project with PostgreSQL 18.
 2. Generate passwords and secrets on the owner's own computer. They never go
    into chat or the repository.
 3. GitHub environments, with the secrets stored there.
@@ -416,14 +416,13 @@ project most:
 | D-044 | Images processed in the browser before upload; server re-checks |
 | D-045 | General catalogue for any kind of product |
 | D-046 | Videos: YouTube or Vimeo links, click to play |
+| D-047 | Database host: Neon PostgreSQL (free plan) |
 
 ## 15. Open items
 
 These need the owner:
-- **Database host:** the owner is still choosing between Neon and Cloudflare
-  D1. The code is written for PostgreSQL 18 (via Hyperdrive). Moving to D1
-  (SQLite) would mean rewriting the database layer, migrations and the
-  least-privilege database users. Deployment is paused until this is chosen.
+- **First deployment:** the database host is chosen (Neon, D-047). The owner
+  starts with step 1 of `deployment.md` (a free Neon project) whenever ready.
 - **Cloudflare "Workers Builds" connection:** it builds on every push and
   fails, because deployment is meant to run through `deploy.yml` with
   approval. Disconnecting it, or leaving it for now, is the owner's choice.
@@ -461,7 +460,7 @@ pnpm build
 
 | Document | Contents |
 |----------|----------|
-| [`DECISIONS.md`](DECISIONS.md) | Decision log, D-001 to D-046 |
+| [`DECISIONS.md`](DECISIONS.md) | Decision log, D-001 to D-047 |
 | [`implementation-plan.md`](implementation-plan.md) | Phases and checklist |
 | [`architecture.md`](architecture.md) | Architecture and stack |
 | [`multi-site.md`](multi-site.md) | One dashboard for many websites |
