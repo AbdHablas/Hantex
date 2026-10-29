@@ -3,3 +3,5 @@ brand/logo/*.svg
 **/drizzle/**
 # Documentation is formatted by hand (wrapped prose, readable tables).
 *.md
+# Agent skills installed with `npx skills add`; third-party content, kept as published.
+.agents/
