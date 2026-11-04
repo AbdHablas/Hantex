@@ -13,6 +13,12 @@
  */
 import { FIRST_SITE } from '@hantex/db/worker';
 import {
+  DEFAULT_CATALOGUE,
+  catalogueIdsOf,
+  catalogueSchema,
+  productSchema,
+  showcaseOf,
+  type Product,
   DEFAULT_LAYOUT,
   DEFAULT_MENUS,
   DEFAULT_SAVED_SECTIONS,
@@ -126,7 +132,10 @@ async function fromDatabase(url: string): Promise<SiteData> {
       )
     ).rows;
     const builder = site.mode === 'live' ? builderContent(builderRows) : null;
-    if (builder) builder.media = await publishedMedia(client, site.id, builder);
+    if (builder) {
+      builder.showcase = await publishedShowcase(client, site.id);
+      builder.media = await publishedMedia(client, site.id, builder);
+    }
     return {
       source: 'database',
       site: {
@@ -178,6 +187,28 @@ function builderContent(rows: { kind: string; key: string; data: unknown }[]): B
 }
 
 /**
+ * The public part of the published catalogue (D-048): its structure and visible products, for
+ * the product sections and catalogue links. Re-validated like everything else.
+ */
+async function publishedShowcase(client: pg.Client, siteId: string) {
+  const rows = (
+    await client.query<{ kind: string; key: string; data: unknown }>(
+      "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('catalogue', 'product') order by kind, key, version desc",
+      [siteId],
+    )
+  ).rows;
+  const structure = rows.find((r) => r.kind === 'catalogue');
+  const catalogue = structure ? catalogueSchema.parse(structure.data) : DEFAULT_CATALOGUE;
+  const products = new Map<string, Product>();
+  for (const row of rows) {
+    if (row.kind === 'product' && catalogue.products.includes(row.key)) {
+      products.set(row.key, productSchema.parse(row.data));
+    }
+  }
+  return showcaseOf(catalogue, products);
+}
+
+/**
  * The published media library images the pages use (D-044): their sizes, stored widths and
  * descriptions. The files themselves are served by the site Worker from the public bucket.
  */
@@ -186,7 +217,7 @@ async function publishedMedia(
   siteId: string,
   builder: BuilderContent,
 ): Promise<MediaMap> {
-  const ids = [...mediaIds([Object.values(builder.pages), builder.saved])];
+  const ids = [...mediaIds([Object.values(builder.pages), builder.saved, builder.showcase])];
   if (ids.length === 0) return {};
   const rows = (
     await client.query<{
@@ -342,6 +373,7 @@ if (builder) {
     locales: data.site.locales,
     // Every image the pages use must be published (copied to the public bucket).
     media: new Set(Object.keys(builder.media ?? {})),
+    catalogue: catalogueIdsOf(builder.showcase ?? showcaseOf(DEFAULT_CATALOGUE, new Map())),
   });
   if (issues.length > 0) {
     fail(`the published pages fail the site checks: ${issues.map((i) => i.code).join(', ')}`);

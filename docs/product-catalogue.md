@@ -7,7 +7,9 @@ is a *template* or Hantex Ultra's own data, never built into the code. No prices
 and the public pages in Phase 4. **Built so far (stages 1 to 3):** categories, attribute groups and
 attributes with starter sets, finishes, series, products and variants in the dashboard, PDF files
 attached as documents with certificate verification, drafts, versions and checks before
-publishing, and CSV/Excel import and export. The public pages are still to come.
+publishing, and CSV/Excel import and export. Pages made with the website builder can show the
+catalogue through product sections and link to products, categories and series (D-048). The
+public product, category and series pages are still to come.
 
 ## Business context
 

@@ -108,12 +108,27 @@ Dashboard (React)                      API (Worker)                    Site engi
 - Media library on R2, logo upload, images, galleries, video, sharing images
   (Phase 3b).
 - Product catalogue, product grids, featured collections, carousels,
-  specification and comparison tables, product pages, 3D showcases
-  (Phase 3c, 4).
+  specification and comparison tables (*done*, D-045, D-048), product pages, 3D showcases
+  (Phase 4).
 - Mega menus, secondary and mobile-only menus, section presets library,
   per-page access rules, scheduled publishing, currencies.
 - Basic performance figures per website (from Cloudflare Web Analytics if
   approved).
+
+## Product sections (D-048)
+
+| Section | Shows | Chosen in the dashboard |
+|---------|-------|-------------------------|
+| Products | Product cards: photo, name, optional summary and finish swatches; grid or sideways carousel | All products, a category (with or without sub-categories), a series, or products picked in order; how many; columns; a button |
+| Categories and series | Cards with image and optional description | Main categories, one category's sub-categories, or series (all or picked) |
+| Specifications | One product's attribute values in their groups, and optionally its codes | The product |
+| Comparison table | Two to four products' values side by side; "Not given" where nothing was entered | The products; only rows that differ |
+
+Buttons and menu items can also lead to a product, a category or a series. Sections store only
+which items to show; everything visitors read comes from the published catalogue, and only
+visible products appear. Publish changes refuses incomplete product sections and anything that
+names a hidden or removed catalogue item. Catalogue pages (`/product/…`, `/category/…`,
+`/series/…`) come with Phase 4; until then catalogue links are left out rather than broken.
 
 ## Acceptance criteria (automated tests)
 

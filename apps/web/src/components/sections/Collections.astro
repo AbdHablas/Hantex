@@ -1,0 +1,42 @@
+---
+import { collectionsFor, type SectionOf } from '@hantex/sections';
+import { catalogueHref, pick, pictureOf, type RenderContext } from '../../builder';
+import Icon from '../Icon.astro';
+import Heading from './Heading.astro';
+import Picture from './Picture.astro';
+
+/** Cards for the main categories, a category's sub-categories or series (D-048). */
+interface Props {
+  section: SectionOf<'collections'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const items = (ctx.content.showcase ? collectionsFor(ctx.content.showcase, s) : [])
+  .map(({ type, item }) => ({
+    id: item.id,
+    name: pick(ctx, item.name),
+    description: s.showDescription ? pick(ctx, item.description) : '',
+    picture: pictureOf(ctx, item.image),
+    target: catalogueHref(ctx, type, item.slug),
+  }))
+  .filter((item) => item.name);
+const sizes = `(min-width: 64rem) ${Math.ceil(72 / s.columns)}rem, (min-width: 40rem) 50vw, 100vw`;
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.intro} id={headingId} />
+{
+  items.length > 0 && (
+    <ul class:list={['bx-grid', `cols-${s.columns}`]}>
+      {items.map((item) => (
+        <li class:list={['bx-card', 'bx-collection', { 'is-link': item.target }]}>
+          {item.picture && <Picture picture={{ ...item.picture, alt: '' }} sizes={sizes} class="bx-collection-img" />}
+          <h3>{item.target ? <a href={item.target.href}>{item.name}</a> : item.name}</h3>
+          {item.description && <p>{item.description}</p>}
+          {item.target && <Icon name="chevron" class="bx-card-arrow" />}
+        </li>
+      ))}
+    </ul>
+  )
+}

@@ -1,0 +1,52 @@
+---
+import type { ShowcaseProduct } from '@hantex/sections';
+import { catalogueHref, pick, pictureOf, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import Picture from './Picture.astro';
+
+/**
+ * One product in a products section (D-048): its photo, name, summary and finishes, all from the
+ * published catalogue. Linked to its page once the site builds product pages.
+ */
+interface Props {
+  product: ShowcaseProduct;
+  ctx: RenderContext;
+  sizes: string;
+  showSummary: boolean;
+  showFinishes: boolean;
+}
+const { product, ctx, sizes, showSummary, showFinishes } = Astro.props;
+const t = TEXT[ctx.locale];
+const picture = pictureOf(ctx, product.image);
+const target = catalogueHref(ctx, 'product', product.slug);
+const name = pick(ctx, product.name);
+const summary = showSummary ? pick(ctx, product.summary) : '';
+const finishes = showFinishes
+  ? product.finishIds.flatMap((id) => ctx.content.showcase?.finishes.find((f) => f.id === id) ?? [])
+  : [];
+---
+
+<article class:list={['bx-product', { 'is-link': target }]}>
+  <div class="bx-product-media">
+    {picture ? <Picture picture={{ ...picture, alt: '' }} sizes={sizes} /> : <span class="bx-product-blank" />}
+  </div>
+  <div class="bx-product-body">
+    <h3>{target ? <a href={target.href}>{name}</a> : name}</h3>
+    {summary && <p>{summary}</p>}
+    {
+      finishes.length > 0 && (
+        <ul class="bx-swatches" aria-label={t.finishes}>
+          {finishes.map((f) => (
+            <li title={pick(ctx, f.name)}>
+              {/* An SVG fill, not a style attribute: the sites' security policy allows no inline styles. */}
+              <svg class="bx-swatch" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="8" r="7.25" fill={f.swatch} />
+              </svg>
+              <span class="sr-only">{pick(ctx, f.name)}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</article>

@@ -104,7 +104,40 @@ export function hrefOf(ctx: RenderContext, link: Link): Href | null {
       return { href: `#${link.anchor}`, external: false };
     case 'url':
       return { href: link.url, external: true };
+    case 'product': {
+      const product = ctx.content.showcase?.products.find((p) => p.id === link.productId);
+      return product ? catalogueHref(ctx, 'product', product.slug) : null;
+    }
+    case 'category': {
+      const category = ctx.content.showcase?.categories.find((c) => c.id === link.categoryId);
+      return category ? catalogueHref(ctx, 'category', category.slug) : null;
+    }
+    case 'series': {
+      const series = ctx.content.showcase?.series.find((x) => x.id === link.seriesId);
+      return series ? catalogueHref(ctx, 'series', series.slug) : null;
+    }
   }
+}
+
+/**
+ * Whether the site builds its product, category and series pages. They come with the public
+ * catalogue pages (Phase 4); until then catalogue links lead nowhere, so product cards show
+ * without a link and menu items to the catalogue are left out, rather than leading to a
+ * missing page.
+ */
+export const CATALOGUE_PAGES = false;
+
+/** A product, category or series address (D-048), e.g. "/product/one-gang/" or "/en/series/x/". */
+export function catalogueHref(
+  ctx: Pick<RenderContext, 'locale' | 'defaultLocale'>,
+  kind: 'product' | 'category' | 'series',
+  slug: string,
+): Href | null {
+  if (!CATALOGUE_PAGES) return null;
+  return {
+    href: withSlash(localizedPath(`/${kind}/${slug}`, ctx.locale, ctx.defaultLocale)),
+    external: false,
+  };
 }
 
 /** Every address of a live site: each visible page in each language. */

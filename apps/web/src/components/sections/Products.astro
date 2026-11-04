@@ -1,0 +1,52 @@
+---
+import { productsFor, type SectionOf } from '@hantex/sections';
+import type { RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import Button from './Button.astro';
+import Heading from './Heading.astro';
+import ProductCard from './ProductCard.astro';
+
+/**
+ * Products from the catalogue (D-048): all, a category's, a series' or hand-picked, as a grid or
+ * as a carousel that scrolls sideways (CSS scroll snapping; no script, works with touch, a
+ * trackpad, the keyboard and a screen reader as an ordinary list).
+ */
+interface Props {
+  section: SectionOf<'products'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const t = TEXT[ctx.locale];
+const products = ctx.content.showcase ? productsFor(ctx.content.showcase, s) : [];
+const carousel = s.layout === 'carousel';
+const sizes = carousel
+  ? '(min-width: 64rem) 18rem, 70vw'
+  : `(min-width: 64rem) ${Math.ceil(72 / s.columns)}rem, (min-width: 40rem) 50vw, 100vw`;
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.intro} id={headingId} />
+{
+  products.length > 0 &&
+    (carousel ? (
+      <div class:list={['bx-carousel', `cols-${s.columns}`]} tabindex="0" role="region" aria-label={t.moreProducts}>
+        <ul>
+          {products.map((product) => (
+            <li>
+              <ProductCard product={product} ctx={ctx} sizes={sizes} showSummary={s.showSummary} showFinishes={s.showFinishes} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+      <ul class:list={['bx-grid', `cols-${s.columns}`]}>
+        {products.map((product) => (
+          <li>
+            <ProductCard product={product} ctx={ctx} sizes={sizes} showSummary={s.showSummary} showFinishes={s.showFinishes} />
+          </li>
+        ))}
+      </ul>
+    ))
+}
+<div class="bx-actions"><Button button={s.button} ctx={ctx} /></div>

@@ -1,0 +1,71 @@
+---
+import { compareGroups, compareProducts, formatValue, type SectionOf } from '@hantex/sections';
+import { catalogueHref, pick, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import Heading from './Heading.astro';
+
+/**
+ * Two to four products side by side (D-048), from the values entered in the catalogue. A value
+ * that wasn't entered reads "Not given", never a guess. Wide tables scroll inside their frame.
+ */
+interface Props {
+  section: SectionOf<'compare'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const t = TEXT[ctx.locale];
+const showcase = ctx.content.showcase;
+const products = showcase ? compareProducts(showcase, s) : [];
+const words = { yes: t.yes, no: t.no };
+const groups =
+  showcase && products.length >= 2
+    ? compareGroups(showcase, products, s.onlyDifferences)
+        .map((g) => ({
+          name: g.name ? pick(ctx, g.name) : t.otherSpecs,
+          rows: g.attributes
+            .filter((a) => pick(ctx, a.name))
+            .map((a) => ({
+              id: a.id,
+              name: pick(ctx, a.name),
+              values: products.map((p) => formatValue(a, p.values[a.id], ctx.locale, words)),
+            })),
+        }))
+        .filter((g) => g.rows.length > 0)
+    : [];
+const columns = products.map((p) => ({ id: p.id, name: pick(ctx, p.name), target: catalogueHref(ctx, 'product', p.slug) }));
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.intro} id={headingId} />
+{
+  groups.length > 0 && (
+    <>
+      <div class="bx-table-scroll" tabindex="0" role="region" aria-label={t.scrollTable}>
+        <table class="bx-table bx-compare">
+          <thead>
+            <tr>
+              <th scope="col">{t.specification}</th>
+              {columns.map((c) => (
+                <th scope="col">{c.target ? <a href={c.target.href}>{c.name}</a> : c.name}</th>
+              ))}
+            </tr>
+          </thead>
+          {groups.map((g) => (
+            <tbody>
+              <tr class="bx-group">
+                <th scope="colgroup" colspan={columns.length + 1}>{g.name}</th>
+              </tr>
+              {g.rows.map((r) => (
+                <tr>
+                  <th scope="row">{r.name}</th>
+                  {r.values.map((value) => (value ? <td>{value}</td> : <td class="bx-empty">{t.notGiven}</td>))}
+                </tr>
+              ))}
+            </tbody>
+          ))}
+        </table>
+      </div>
+    </>
+  )
+}

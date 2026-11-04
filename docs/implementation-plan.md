@@ -181,8 +181,11 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] series, and documents (PDF datasheets, guides, certificates) with
         certificate verification by Owner or Administrator — *stage 2, done*
   - [x] CSV/Excel import and export, checked row by row and saved as drafts — *stage 3, done*
-- [ ] Product sections: grids, featured collections, carousels,
+- [x] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
+      — *done (D-048): Products, Categories and series, Specifications and Comparison table
+      sections; links to products, categories and series. Catalogue links lead nowhere until
+      the public product pages are built (Phase 4).*
 - [ ] Enquiries and quotation requests per site
 - [x] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
       — *Sign-ups page: write once, send in chunks within ANNOUNCEMENT_DAILY_LIMIT,

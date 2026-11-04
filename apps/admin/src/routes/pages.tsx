@@ -38,6 +38,10 @@ import {
   SeparatorHorizontal,
   Sparkles,
   SquarePlay,
+  ShoppingBag,
+  FolderTree,
+  TableProperties,
+  Columns3,
   Trash2,
   Unlink,
   type LucideIcon,
@@ -422,6 +426,10 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   PanelLeft,
   Images,
   SquarePlay,
+  ShoppingBag,
+  FolderTree,
+  TableProperties,
+  Columns3,
 };
 
 const sectionIcon = (type: SectionType) => {
@@ -455,7 +463,7 @@ function AddSectionDialog({
   const { m } = useI18n();
   const bi = useBilingual();
   const b = m.builder;
-  const categories = ['intro', 'content', 'engage', 'layout'] as const;
+  const categories = ['intro', 'content', 'catalogue', 'engage', 'layout'] as const;
   return (
     <Dialog
       open={open}

@@ -56,6 +56,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-045 | General catalogue | Confirmed | Any kind of product on any website: categories, attributes and page templates are data per site; switches and sockets are Hantex Ultra's first categories, not built in |
 | D-046 | Videos | Confirmed | YouTube or Vimeo links, click to play: a cover image until pressed, then the provider's privacy-friendlier player |
 | D-047 | Database host | Confirmed | Neon PostgreSQL 18, free plan, through Cloudflare Hyperdrive (as built); Cloudflare D1 not used |
+| D-048 | Product sections and catalogue links | Confirmed (owner: "go ahead", 2026-11-04) | Four catalogue sections and links to products, categories and series; facts only from the published catalogue — see `docs/website-builder.md` |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1096,4 +1097,43 @@ then the general product catalogue (Phase 3c, D-045).
   plan is short, so the nightly encrypted backups to R2 (D-010) are the
   long-term copy. The unused D1 database from the previous project stays
   untouched (D-016).
+
+## D-048 — Product sections and catalogue links
+
+- **Status:** Confirmed — 2026-11-04 (owner: "go ahead" to the proposed product sections)
+- **What:** four sections in a new *Products* group of the section picker, and three new link
+  kinds for buttons and menus:
+  - **Products**: all visible products, a category's (optionally with its sub-categories), a
+    series', or products picked one by one (a featured collection); as a grid or a carousel
+    that scrolls sideways; summaries and finish swatches optional; a button.
+  - **Categories and series**: cards for the main categories, a category's sub-categories, or
+    series (all, or picked).
+  - **Specifications**: one product's table, made from its attribute values in their groups,
+    and optionally its product codes with their finishes.
+  - **Comparison table**: two to four products side by side; optionally only the rows that
+    differ. A value that wasn't entered reads "Not given".
+  - **Links** to a product, a category or a series.
+- **No facts in sections.** A section stores only which items to show (ids), never names,
+  values or claims; the sites draw everything from the *published* catalogue, and only visible
+  products. The section schemas refuse extra fields, so nothing can be typed in alongside.
+- **Checks.** Publish changes refuses a page whose product section is incomplete (no category,
+  series or products chosen; a comparison with fewer than two) or names a hidden or removed
+  product, category or series, and a link to one. Pages are checked against the catalogue as it
+  will be after publishing, so hiding a product that a page names is refused too, with the page
+  named. The site build runs the same checks.
+- **Addresses.** Catalogue pages will live at `/product/<address>`, `/category/<address>` and
+  `/series/<address>` (in English under `/en/…`); `product`, `category` and `series` are now
+  reserved, so no page can take them. The pages themselves come with the public product pages
+  (Phase 4). **Until then, catalogue links lead nowhere:** product cards show without a link and
+  menu items and buttons to the catalogue are left out, instead of leading to a missing page
+  (`CATALOGUE_PAGES` in `apps/web/src/builder.ts`).
+- **Data to the sites.** The site build adds a *showcase*: the published catalogue's structure
+  and visible products only (no hidden products, drafts, documents or certificate details).
+  Previews carry the drafts (for staff who can view the catalogue) cut down to the products the
+  previewed page shows or links to, and the site re-validates them with the same schema.
+- **Sites.** No script: the carousel is CSS scroll snapping in a labelled, keyboard-focusable
+  region; swatches are small SVGs, as the sites' Content-Security-Policy allows no inline
+  styles; numbers use Latin digits in both languages, as on packaging and datasheets. Checked at
+  360, 768, 1024 and 1440 px in Arabic and English, and with axe in light and dark.
+- **Cost:** none.
 

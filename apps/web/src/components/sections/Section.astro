@@ -2,6 +2,10 @@
 import type { ContentSection } from '@hantex/sections';
 import { pick, type RenderContext } from '../../builder';
 import Cards from './Cards.astro';
+import Collections from './Collections.astro';
+import Compare from './Compare.astro';
+import Products from './Products.astro';
+import Specs from './Specs.astro';
 import Contact from './Contact.astro';
 import Cta from './Cta.astro';
 import Faq from './Faq.astro';
@@ -66,6 +70,10 @@ const classes = [
           {section.type === 'stats' && <Stats section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'contact' && <Contact section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'newsletter' && <Newsletter section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'products' && <Products section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'collections' && <Collections section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'specs' && <Specs section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'compare' && <Compare section={section} ctx={ctx} headingId={headingId} />}
         </div>
       </section>
     ))

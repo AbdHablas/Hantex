@@ -114,7 +114,7 @@ for (const width of [360, 768, 1024, 1440]) {
       if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
     });
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ['/', '/en/', '/who-we-are/', '/en/contact/']) {
+    for (const path of ['/', '/en/', '/who-we-are/', '/en/contact/', '/range/', '/en/range/']) {
       await page.goto(`${LIVE}${path}`);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -124,6 +124,47 @@ for (const width of [360, 768, 1024, 1440]) {
     expect(cspErrors).toEqual([]);
   });
 }
+
+test('product sections show the published catalogue, and only its visible products (D-048)', async ({
+  page,
+}) => {
+  await page.goto(`${LIVE}/en/range/`);
+  const grid = page.getByRole('region', { name: 'Switch range' });
+  await expect(grid.getByRole('heading', { level: 3 })).toHaveText([
+    'Test one-gang switch',
+    'Test two-gang switch',
+  ]);
+  await expect(grid).toContainText('A test summary.');
+  await expect(grid.getByRole('list', { name: 'Finishes' }).first()).toContainText('Test black');
+  await expect(page.locator('main')).not.toContainText('Hidden test product');
+  // Picked products keep the order they were picked in.
+  const featured = page.getByRole('region', { name: 'Products, scroll for more' });
+  await expect(featured.getByRole('heading', { level: 3 })).toHaveText([
+    'Test two-gang switch',
+    'Test one-gang switch',
+  ]);
+  await expect(page.getByRole('region', { name: 'Categories' })).toContainText('A test category.');
+
+  const specs = page.getByRole('region', { name: 'Specifications' });
+  await expect(specs.getByRole('row', { name: 'Rated current 10 A' })).toBeVisible();
+  await expect(specs.getByRole('row', { name: 'USB outlet No' })).toBeVisible();
+  await expect(specs.getByRole('row', { name: 'TST-1B Test black' })).toBeVisible();
+
+  // A value that wasn't entered is shown as not given, never guessed.
+  const compare = page.getByRole('region', { name: 'Compare' });
+  await expect(compare.getByRole('row', { name: 'Rated current 10 A Not given' })).toBeVisible();
+  await expect(compare.getByRole('row', { name: 'USB outlet No Yes' })).toBeVisible();
+
+  // Catalogue pages come later: no product links, and the menu leaves the catalogue item out.
+  await expect(page.locator('a[href*="/product/"], a[href*="/category/"]')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Switch catalogue' })).toHaveCount(0);
+});
+
+test('product sections read right to left in Arabic, with Latin digits', async ({ page }) => {
+  await page.goto(`${LIVE}/range/`);
+  const specs = page.getByRole('region', { name: 'المواصفات' });
+  await expect(specs.getByRole('row', { name: 'التيار المقنن 10 A' })).toBeVisible();
+});
 
 test('the sign-up section asks for consent to news, not to a launch', async ({ page }) => {
   await page.goto(`${LIVE}/en/`);
@@ -150,6 +191,8 @@ for (const [path, scheme] of [
   ['/', 'light'],
   ['/en/', 'dark'],
   ['/en/contact/', 'light'],
+  ['/range/', 'dark'],
+  ['/en/range/', 'light'],
 ] as const) {
   test(`no serious accessibility problems (${path}, ${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });

@@ -611,6 +611,54 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByText('Not published')).toHaveCount(0);
   await expectAccessible(page, 'products');
 
+  // Product sections (D-048) choose from the catalogue; the website shows the catalogue's own
+  // names and values. Publish changes refuses a section that isn't complete.
+  await page.goto('/s/second-site/pages');
+  await pageList.getByRole('link', { name: 'Contact' }).click();
+  await page.getByRole('button', { name: 'Add section' }).click();
+  const sectionChooser = page.getByRole('dialog', { name: 'Choose a section' });
+  await expect(sectionChooser.getByRole('heading', { name: 'Products' })).toBeVisible();
+  await sectionChooser.getByRole('button', { name: /^Comparison table/ }).click();
+  const compared = page.getByRole('group', { name: 'Products (2 to 4)' });
+  await expect(compared.getByText('Nothing chosen yet.')).toBeVisible();
+  await compared.getByLabel('Add…').selectOption({ label: 'One-gang switch' });
+  await expect(compared.getByRole('listitem')).toHaveText(['One-gang switch']);
+  await expectAccessible(page, 'product section');
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
+  await expect(page.getByText(/A product section still needs/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish changes' })).toBeDisabled();
+  // The imported product is still hidden, so the site can't show it yet.
+  await compared.getByLabel('Add…').selectOption({ label: 'Two-gang switch (hidden)' });
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText(/uses a product, category or series that is hidden/)).toBeVisible();
+  await compared.getByRole('button', { name: 'Remove Two-gang switch (hidden)' }).click();
+  await expect(compared.getByRole('listitem')).toHaveText(['One-gang switch']);
+  // One visible product isn't a comparison yet, so the section goes.
+  await page.getByRole('button', { name: 'Actions for Comparison table' }).click();
+  await page.getByRole('menuitem', { name: 'Remove' }).click();
+  await confirm(page);
+  // A grid of hand-picked products, with a button to a category.
+  await page.getByRole('button', { name: 'Add section' }).click();
+  await sectionChooser.getByRole('button', { name: /^Products\s*A grid/ }).click();
+  await page.getByLabel('Which products').selectOption({ label: 'Picked one by one' });
+  await expect(page.getByLabel('Most products shown')).toBeHidden();
+  await page
+    .getByRole('group', { name: 'Products', exact: true })
+    .getByLabel('Add…')
+    .selectOption({ label: 'One-gang switch' });
+  const gridButton = page.getByRole('group', { name: 'Button', exact: true });
+  await gridButton.getByLabel('English').fill('All switches');
+  await gridButton.getByLabel('Arabic').fill('كل المفاتيح');
+  await gridButton.getByLabel('Leads to').selectOption({ label: 'A product category' });
+  await expect(gridButton.getByLabel('Category')).toHaveValue(/.+/);
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
+  await expect(page.getByText(/A product section still needs/)).toBeHidden();
+  await page.getByRole('button', { name: 'Publish changes' }).click();
+  await confirm(page);
+  await expect(page.getByText('Changes published.')).toBeVisible();
+
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');
   await expect(page.getByText('No pages yet')).toBeVisible();

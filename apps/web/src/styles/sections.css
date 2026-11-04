@@ -705,3 +705,223 @@
 .bx-video-note {
   font-size: 0.8125rem;
 }
+
+/* Products (D-048): cards in a grid, or a carousel that scrolls sideways with snapping. */
+.bx-product {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+  text-align: start;
+}
+.bx-product.is-link {
+  transition:
+    transform var(--hx-duration-base),
+    border-color var(--hx-duration-base),
+    box-shadow var(--hx-duration-base);
+}
+.bx-product.is-link:hover {
+  transform: translateY(-3px);
+  border-color: var(--s-link);
+  box-shadow: var(--hx-shadow-2);
+}
+.bx-product-media {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  background: color-mix(in srgb, var(--s-fg) 4%, transparent);
+}
+.bx-product-media .bx-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+.bx-product-blank {
+  width: 40%;
+  aspect-ratio: 1;
+  border: 2px dashed var(--s-border);
+  border-radius: var(--hx-radius-large);
+}
+.bx-product-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.bx-product h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+.bx .bx-product h3 a {
+  color: var(--s-fg);
+  text-decoration: none;
+}
+.bx-product h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.bx-product p {
+  margin: 0;
+  color: var(--s-muted);
+}
+.bx-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: auto 0 0;
+  padding: 0.25rem 0 0;
+  list-style: none;
+}
+.bx-swatch {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+.bx-swatch circle {
+  stroke: var(--s-border);
+  stroke-width: 1.5;
+}
+
+.bx-carousel {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 0.25rem;
+  padding-block: 0.25rem 1rem;
+  border-radius: var(--hx-radius-large);
+}
+.bx-carousel:focus-visible {
+  outline: 2px solid var(--s-link);
+  outline-offset: 2px;
+}
+.bx-carousel ul {
+  display: grid;
+  grid-auto-columns: 75%;
+  grid-auto-flow: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bx-carousel li {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+@media (min-width: 40rem) {
+  .bx-carousel ul {
+    grid-auto-columns: calc((100% - 1rem) / 2.3);
+  }
+}
+@media (min-width: 64rem) {
+  .bx-carousel.cols-3 ul {
+    grid-auto-columns: calc((100% - 2rem) / 3.2);
+  }
+  .bx-carousel.cols-4 ul {
+    grid-auto-columns: calc((100% - 3rem) / 4.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bx-product.is-link,
+  .bx-product.is-link:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Categories and series */
+.bx-collection {
+  overflow: hidden;
+}
+.bx-collection .bx-collection-img {
+  display: block;
+  width: calc(100% + 3rem);
+  max-width: none;
+  margin: -1.5rem -1.5rem 1rem;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 0;
+}
+.bx-collection h3 {
+  margin: 0 0 0.5rem;
+}
+
+/* Specification and comparison tables */
+.bx-specs {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 50rem;
+}
+.al-center .bx-specs {
+  margin-inline: auto;
+}
+.bx-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+.bx-table caption {
+  padding-bottom: 0.5rem;
+  font-weight: 600;
+  text-align: start;
+}
+.bx-table th,
+.bx-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--s-border);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.bx-table tbody th {
+  width: 45%;
+  color: var(--s-muted);
+  font-weight: 500;
+}
+.bx-code {
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+}
+[dir='rtl'] .bx-code {
+  text-align: end;
+}
+.bx-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+}
+.bx-table-scroll:focus-visible {
+  outline: 2px solid var(--s-link);
+  outline-offset: 2px;
+}
+.bx-compare {
+  min-width: 36rem;
+}
+.bx-compare thead th {
+  font-weight: 600;
+}
+.bx-compare tbody th {
+  width: auto;
+  min-width: 9rem;
+}
+.bx-compare .bx-group th {
+  padding-top: 1rem;
+  color: var(--s-fg);
+  font-weight: 600;
+}
+.bx-compare tr:last-child > * {
+  border-bottom: 0;
+}
+.bx-empty {
+  color: var(--s-muted);
+  font-style: italic;
+}

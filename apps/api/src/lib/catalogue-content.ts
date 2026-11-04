@@ -5,6 +5,7 @@ import {
   fileIds,
   mediaIds,
   productSchema,
+  showcaseOf,
   type Catalogue,
   type Product,
 } from '@hantex/sections';
@@ -138,4 +139,15 @@ export async function catalogueFileUses(db: Reader, siteId: string, fileId: stri
     ...catalogueFileUsesOf(await publishedCatalogue(db, siteId), fileId),
   ];
   return [...new Map(all.map((x) => [`${x.type}:${x.id}`, x])).values()];
+}
+
+/**
+ * The public part of the catalogue (D-048) that pages may show: from the drafts, as it will be
+ * after publishing, or as published.
+ */
+export async function catalogueShowcase(db: Reader, siteId: string, drafts: boolean) {
+  const { catalogue, products } = drafts
+    ? await draftCatalogue(db, siteId)
+    : await publishedCatalogue(db, siteId);
+  return showcaseOf(catalogue, products);
 }

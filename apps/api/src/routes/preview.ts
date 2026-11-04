@@ -2,12 +2,21 @@ import { siteDomains } from '@hantex/db/worker';
 import { and, eq, ne } from 'drizzle-orm';
 import { fontsInUse, type Theme } from '@hantex/theme';
 import { Hono } from 'hono';
-import { itemId, mediaIds } from '@hantex/sections';
+import {
+  itemId,
+  linksIn,
+  linksInSection,
+  mediaIds,
+  showcaseForSections,
+  type ContentSection,
+  type Link,
+} from '@hantex/sections';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { DOCUMENTS, KINDS, currentDraft, latestPublished } from '../lib/documents';
 import { conflict, forbidden, notFound } from '../lib/errors';
 import { draftContent, publishedContent } from '../lib/site-content';
+import { catalogueShowcase } from '../lib/catalogue-content';
 import { previewMedia } from '../lib/media-library';
 import { PREVIEW_TTL_SECONDS, signPreview } from '../lib/preview';
 import { uploadedFonts } from '../lib/fonts';
@@ -89,13 +98,39 @@ export const previewRoutes = new Hono<AppEnv>().post(
         saved: content.saved,
       };
       if (page) data['page'] = { id: page, locale: locale ?? v.site.defaultLocale };
+      // The catalogue the page shows (D-048): draft products with the draft pages for staff who
+      // may view the catalogue, the published catalogue otherwise. Only the products the shown
+      // page uses or links to are sent.
+      const shown = page ? content.pages.get(page) : undefined;
+      const saved = new Map(content.saved.items.map((item) => [item.id, item.section]));
+      const sections: ContentSection[] = (shown?.sections ?? []).flatMap((s) =>
+        s.type === 'saved' ? (saved.get(s.settings.savedId) ?? []) : [s],
+      );
+      const links: Link[] = [
+        ...(shown ? linksIn(shown) : []),
+        ...sections.flatMap(linksInSection),
+        ...Object.values(content.menus).flatMap((items) =>
+          items.flatMap((item) => [item.link, ...item.children.map((child) => child.link)]),
+        ),
+        content.layout.header.button.link,
+      ];
+      const showcase = showcaseForSections(
+        await catalogueShowcase(
+          v.db,
+          v.site.id,
+          drafts.builder === true && v.permissions.has('catalogue.view'),
+        ),
+        sections,
+        links.flatMap((link) => (link.type === 'product' ? [link.productId] : [])),
+      );
+      data['builder'] = { ...(data['builder'] as object), showcase };
       // The images the shown page uses, with signed links to copies of unpublished ones.
       data['media'] = await previewMedia(
         v.db,
         { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) },
         v.site,
         c.env.PREVIEW_SIGNING_SECRET,
-        mediaIds([page ? content.pages.get(page) : null, content.saved]),
+        mediaIds([shown ?? null, content.saved, showcase]),
         Math.floor(Date.now() / 1000) + PREVIEW_TTL_SECONDS,
       );
     }

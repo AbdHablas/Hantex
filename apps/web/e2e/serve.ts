@@ -18,7 +18,19 @@ import {
   sites,
   syncStandardRoles,
 } from '@hantex/db';
-import { newSection, richDocFromText, savedReference, starterContent } from '@hantex/sections';
+import {
+  DEFAULT_CATALOGUE,
+  newPage,
+  newProduct,
+  newSection,
+  richDocFromText,
+  savedReference,
+  starterContent,
+  type Bilingual,
+  type Catalogue,
+  type Page,
+  type Product,
+} from '@hantex/sections';
 import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { eq } from 'drizzle-orm';
 import { execFileSync, spawn } from 'node:child_process';
@@ -179,6 +191,145 @@ about.seo.image = { mediaId: IMAGE_ID };
 // /about was this page's earlier address (Publish changes keeps it as a redirect).
 about.slug = 'who-we-are';
 content.index.redirects = [{ from: '/about', to: aboutId }];
+// A catalogue (D-048) and a page made of product sections. Names and values are test data.
+const T = (en: string, ar: string) => ({ en, ar });
+const catalogue: Catalogue = {
+  ...DEFAULT_CATALOGUE,
+  categories: [
+    {
+      id: 'catswitch',
+      name: T('Test switches', 'مفاتيح تجريبية'),
+      slug: 'switches',
+      parentId: null,
+      main: true,
+      description: T('A test category.', 'فئة تجريبية.'),
+      image: { mediaId: IMAGE_ID },
+      attributeIds: ['attgangs', 'attcurrent', 'attusb'],
+    },
+    {
+      id: 'catsocket',
+      name: T('Test sockets', 'مقابس تجريبية'),
+      slug: 'sockets',
+      parentId: null,
+      main: true,
+      description: T('', ''),
+      image: null,
+      attributeIds: ['attgangs'],
+    },
+  ],
+  groups: [{ id: 'grpelec', name: T('Electrical', 'كهربائية') }],
+  attributes: [
+    {
+      id: 'attgangs',
+      name: T('Gangs', 'عدد الأزرار'),
+      groupId: 'grpelec',
+      type: 'number',
+      unit: '',
+      choices: [],
+      filterable: true,
+    },
+    {
+      id: 'attcurrent',
+      name: T('Rated current', 'التيار المقنن'),
+      groupId: 'grpelec',
+      type: 'number',
+      unit: 'A',
+      choices: [],
+      filterable: false,
+    },
+    {
+      id: 'attusb',
+      name: T('USB outlet', 'منفذ USB'),
+      groupId: null,
+      type: 'yes-no',
+      unit: '',
+      choices: [],
+      filterable: false,
+    },
+  ],
+  finishes: [
+    {
+      id: 'fnwhite',
+      name: T('Test white', 'أبيض تجريبي'),
+      swatch: '#f4f4f2',
+      material: 'plastic',
+      image: null,
+    },
+    {
+      id: 'fnblack',
+      name: T('Test black', 'أسود تجريبي'),
+      swatch: '#1b1e24',
+      material: 'plastic',
+      image: null,
+    },
+  ],
+  series: [
+    {
+      id: 'seralpha',
+      name: T('Test series', 'سلسلة تجريبية'),
+      slug: 'alpha',
+      description: T('', ''),
+      image: null,
+      finishIds: ['fnwhite'],
+      documents: [],
+    },
+  ],
+  products: ['prdone', 'prdtwo', 'prdhidden'],
+};
+const product = (name: Bilingual, slug: string, extra: Partial<Product>): Product => ({
+  ...newProduct(name, slug, 'catswitch'),
+  visible: true,
+  ...extra,
+});
+const products: Record<string, Product> = {
+  prdone: product(T('Test one-gang switch', 'مفتاح تجريبي واحد'), 'one-gang', {
+    seriesId: 'seralpha',
+    summary: T('A test summary.', 'ملخص تجريبي.'),
+    images: [{ mediaId: IMAGE_ID }],
+    values: { attgangs: { number: 1 }, attcurrent: { number: 10 }, attusb: { yes: false } },
+    variants: [
+      { id: 'varwhite', sku: 'TST-1W', finishId: 'fnwhite', name: T('', ''), images: [] },
+      { id: 'varblack', sku: 'TST-1B', finishId: 'fnblack', name: T('', ''), images: [] },
+    ],
+  }),
+  prdtwo: product(T('Test two-gang switch', 'مفتاح تجريبي مزدوج'), 'two-gang', {
+    values: { attgangs: { number: 2 }, attusb: { yes: true } },
+  }),
+  prdhidden: product(T('Hidden test product', 'منتج مخفي'), 'hidden', { visible: false }),
+};
+const grid = newSection('products');
+grid.settings.title = T('Switch range', 'مجموعة المفاتيح');
+grid.settings.source = 'category';
+grid.settings.categoryId = 'catswitch';
+const carousel = newSection('products');
+carousel.settings.title = T('Featured', 'مختارات');
+carousel.settings.source = 'picked';
+carousel.settings.productIds = ['prdtwo', 'prdone'];
+carousel.settings.layout = 'carousel';
+const collections = newSection('collections');
+collections.settings.title = T('Categories', 'الفئات');
+const specs = newSection('specs');
+specs.settings.title = T('Specifications', 'المواصفات');
+specs.settings.productId = 'prdone';
+const compare = newSection('compare');
+compare.settings.title = T('Compare', 'مقارنة');
+compare.settings.productIds = ['prdone', 'prdtwo'];
+const range: Page = {
+  ...newPage(T('Range', 'المنتجات'), 'range'),
+  sections: [grid, carousel, collections, specs, compare],
+};
+const RANGE_ID = 'pgrange01';
+content.pages[RANGE_ID] = range;
+content.index.order.push(RANGE_ID);
+// Catalogue pages aren't built yet, so this menu item is left out rather than lead nowhere.
+content.menus.header.push({
+  id: 'mncat001',
+  label: T('Switch catalogue', 'كتالوج المفاتيح'),
+  link: { type: 'category', categoryId: 'catswitch' },
+  visible: true,
+  children: [],
+});
+
 // An uploaded logo (D-027): the dark square follows the theme's logo colours, the orange dot
 // stays fixed. No mark, so the lockup is also the browser-tab icon.
 const cleanedLogo = sanitizeSvg(
@@ -210,6 +361,14 @@ await db.insert(documentVersions).values([
   { siteId: liveId, kind: 'menus', version: 1, data: content.menus },
   { siteId: liveId, kind: 'layout', version: 1, data: content.layout },
   { siteId: liveId, kind: 'saved-sections', version: 1, data: saved },
+  { siteId: liveId, kind: 'catalogue', version: 1, data: catalogue },
+  ...Object.entries(products).map(([id, data]) => ({
+    siteId: liveId,
+    kind: 'product' as const,
+    key: id,
+    version: 1,
+    data,
+  })),
   ...Object.entries(content.pages).map(([id, page]) => ({
     siteId: liveId,
     kind: 'page' as const,

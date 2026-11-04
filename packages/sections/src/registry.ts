@@ -44,7 +44,17 @@ export type Visibility = z.infer<typeof visibilitySchema>;
 
 /* ------------------------------------ Dashboard field kinds ------------------------------------ */
 
-export type Field =
+/** Shows a field only while another setting of the same section has one of some values. */
+export interface FieldCondition {
+  when?: { key: string; in: readonly string[] };
+}
+
+/** What a catalogue field picks from the website's catalogue (D-048). */
+export type CatalogueKind = 'product' | 'category' | 'series';
+
+export type Field = FieldKind & FieldCondition;
+
+type FieldKind =
   | { kind: 'text'; key: string; label: Bilingual; max: number; multiline?: boolean }
   /** One value for both languages, e.g. a figure or a model number. */
   | { kind: 'plain'; key: string; label: Bilingual; max: number }
@@ -63,6 +73,10 @@ export type Field =
       label: Bilingual;
       options: { value: string | number; label: Bilingual }[];
     }
+  /** One product, category or series of the website's catalogue, or none yet. */
+  | { kind: 'catalogue'; key: string; label: Bilingual; of: CatalogueKind }
+  /** Several products or series, in the order chosen. */
+  | { kind: 'catalogueList'; key: string; label: Bilingual; of: 'product' | 'series'; max: number }
   | {
       kind: 'list';
       key: string;
@@ -205,6 +219,64 @@ const gallerySchema = z.strictObject({
   items: z.array(galleryItem).min(1).max(24),
 });
 
+/* -------------------------------------- Catalogue sections -------------------------------------- */
+
+/**
+ * Sections that show the website's own catalogue (D-048). They store only which items to show,
+ * never product facts: names, photos and values always come from the published catalogue, so a
+ * section can't say anything the catalogue doesn't. Incomplete choices are allowed while editing
+ * and refused by Publish changes (`checkSite`).
+ */
+export const PRODUCT_SOURCES = ['all', 'category', 'series', 'picked'] as const;
+const productsSchema = z.strictObject({
+  title: bilingual(120),
+  intro: bilingual(400),
+  /** Every visible product, a category's, a series', or products picked one by one. */
+  source: z.enum(PRODUCT_SOURCES),
+  categoryId: itemId.nullable(),
+  /** With a category: also the products of its sub-categories. */
+  includeSubcategories: z.boolean(),
+  seriesId: itemId.nullable(),
+  productIds: z.array(itemId).max(24),
+  /** The most products shown (picked products are all shown, up to 24). */
+  limit: z.number().int().min(1).max(48),
+  layout: z.enum(['grid', 'carousel']),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+  showSummary: z.boolean(),
+  /** Small swatches of the finishes a product comes in. */
+  showFinishes: z.boolean(),
+  button: buttonSchema,
+});
+
+export const COLLECTION_SOURCES = ['main', 'subcategories', 'series'] as const;
+const collectionsSchema = z.strictObject({
+  title: bilingual(120),
+  intro: bilingual(400),
+  /** The main categories, one category's sub-categories, or series. */
+  source: z.enum(COLLECTION_SOURCES),
+  categoryId: itemId.nullable(),
+  /** Series in this order; every series when none is picked. */
+  seriesIds: z.array(itemId).max(24),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+  showDescription: z.boolean(),
+});
+
+const specsSchema = z.strictObject({
+  title: bilingual(120),
+  productId: itemId.nullable(),
+  /** The product's codes, each with its finish or name. */
+  showCodes: z.boolean(),
+});
+
+const compareSchema = z.strictObject({
+  title: bilingual(120),
+  intro: bilingual(400),
+  /** Two to four products, side by side. */
+  productIds: z.array(itemId).max(4),
+  /** Leave out rows where every product has the same value. */
+  onlyDifferences: z.boolean(),
+});
+
 const id = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
 
 export const SECTION_TYPES = [
@@ -222,6 +294,10 @@ export const SECTION_TYPES = [
   'contact',
   'newsletter',
   'divider',
+  'products',
+  'collections',
+  'specs',
+  'compare',
 ] as const;
 export type SectionType = (typeof SECTION_TYPES)[number];
 
@@ -230,7 +306,7 @@ interface Definition<S extends z.ZodType> {
   description: Bilingual;
   /** lucide-react icon name for the dashboard's section picker. */
   icon: string;
-  category: 'intro' | 'content' | 'engage' | 'layout';
+  category: 'intro' | 'content' | 'catalogue' | 'engage' | 'layout';
   schema: S;
   defaults: () => z.infer<S>;
   fields: Field[];
@@ -574,6 +650,195 @@ export const SECTIONS = {
       },
     ],
   }),
+  products: define({
+    name: L('Products', 'منتجات'),
+    description: L(
+      'A grid or carousel of products: all, a category, a series or hand-picked.',
+      'شبكة أو شريط منتجات: الكل أو فئة أو سلسلة أو منتجات مختارة.',
+    ),
+    icon: 'ShoppingBag',
+    category: 'catalogue',
+    schema: productsSchema,
+    defaults: () => ({
+      title: emptyText(),
+      intro: emptyText(),
+      source: 'all' as const,
+      categoryId: null,
+      includeSubcategories: true,
+      seriesId: null,
+      productIds: [],
+      limit: 8,
+      layout: 'grid' as const,
+      columns: 4 as const,
+      showSummary: true,
+      showFinishes: true,
+      button: noButton(),
+    }),
+    fields: [
+      titleField,
+      introField,
+      {
+        kind: 'select',
+        key: 'source',
+        label: L('Which products', 'أي المنتجات'),
+        options: [
+          { value: 'all', label: L('All products', 'كل المنتجات') },
+          { value: 'category', label: L('A category', 'فئة') },
+          { value: 'series', label: L('A series', 'سلسلة') },
+          { value: 'picked', label: L('Picked one by one', 'مختارة واحدًا واحدًا') },
+        ],
+      },
+      {
+        kind: 'catalogue',
+        key: 'categoryId',
+        of: 'category',
+        label: L('Category', 'الفئة'),
+        when: { key: 'source', in: ['category'] },
+      },
+      {
+        kind: 'toggle',
+        key: 'includeSubcategories',
+        label: L('Include sub-categories', 'تضمين الفئات الفرعية'),
+        when: { key: 'source', in: ['category'] },
+      },
+      {
+        kind: 'catalogue',
+        key: 'seriesId',
+        of: 'series',
+        label: L('Series', 'السلسلة'),
+        when: { key: 'source', in: ['series'] },
+      },
+      {
+        kind: 'catalogueList',
+        key: 'productIds',
+        of: 'product',
+        max: 24,
+        label: L('Products', 'المنتجات'),
+        when: { key: 'source', in: ['picked'] },
+      },
+      {
+        kind: 'select',
+        key: 'limit',
+        label: L('Most products shown', 'أقصى عدد للمنتجات'),
+        options: [3, 4, 6, 8, 12, 16, 24, 48].map((n) => ({
+          value: n,
+          label: L(String(n), String(n)),
+        })),
+        when: { key: 'source', in: ['all', 'category', 'series'] },
+      },
+      {
+        kind: 'select',
+        key: 'layout',
+        label: L('Layout', 'التخطيط'),
+        options: [
+          { value: 'grid', label: L('Grid', 'شبكة') },
+          { value: 'carousel', label: L('Carousel (scrolls sideways)', 'شريط يُمرَّر أفقيًا') },
+        ],
+      },
+      columnsField,
+      { kind: 'toggle', key: 'showSummary', label: L('Show summaries', 'إظهار الملخصات') },
+      { kind: 'toggle', key: 'showFinishes', label: L('Show finishes', 'إظهار التشطيبات') },
+      { kind: 'button', key: 'button', label: L('Button', 'الزر') },
+    ],
+  }),
+  collections: define({
+    name: L('Categories and series', 'الفئات والسلاسل'),
+    description: L(
+      'Cards for the main categories, sub-categories or series, from the catalogue.',
+      'بطاقات للفئات الرئيسية أو الفرعية أو السلاسل من الكتالوج.',
+    ),
+    icon: 'FolderTree',
+    category: 'catalogue',
+    schema: collectionsSchema,
+    defaults: () => ({
+      title: emptyText(),
+      intro: emptyText(),
+      source: 'main' as const,
+      categoryId: null,
+      seriesIds: [],
+      columns: 3 as const,
+      showDescription: true,
+    }),
+    fields: [
+      titleField,
+      introField,
+      {
+        kind: 'select',
+        key: 'source',
+        label: L('Show', 'إظهار'),
+        options: [
+          { value: 'main', label: L('Main categories', 'الفئات الرئيسية') },
+          { value: 'subcategories', label: L("A category's sub-categories", 'فئات فرعية لفئة') },
+          { value: 'series', label: L('Series', 'السلاسل') },
+        ],
+      },
+      {
+        kind: 'catalogue',
+        key: 'categoryId',
+        of: 'category',
+        label: L('Category', 'الفئة'),
+        when: { key: 'source', in: ['subcategories'] },
+      },
+      {
+        kind: 'catalogueList',
+        key: 'seriesIds',
+        of: 'series',
+        max: 24,
+        label: L('Series (all when none is picked)', 'السلاسل (كلها إن لم تختر شيئًا)'),
+        when: { key: 'source', in: ['series'] },
+      },
+      columnsField,
+      { kind: 'toggle', key: 'showDescription', label: L('Show descriptions', 'إظهار الأوصاف') },
+    ],
+  }),
+  specs: define({
+    name: L('Specifications', 'المواصفات'),
+    description: L(
+      "A product's specification table, from its catalogue values.",
+      'جدول مواصفات منتج من قيمه في الكتالوج.',
+    ),
+    icon: 'TableProperties',
+    category: 'catalogue',
+    schema: specsSchema,
+    defaults: () => ({ title: emptyText(), productId: null, showCodes: true }),
+    fields: [
+      titleField,
+      { kind: 'catalogue', key: 'productId', of: 'product', label: L('Product', 'المنتج') },
+      { kind: 'toggle', key: 'showCodes', label: L('Show product codes', 'إظهار رموز المنتج') },
+    ],
+  }),
+  compare: define({
+    name: L('Comparison table', 'جدول مقارنة'),
+    description: L(
+      'Two to four products side by side, from their catalogue values.',
+      'منتجان إلى أربعة جنبًا إلى جنب من قيمها في الكتالوج.',
+    ),
+    icon: 'Columns3',
+    category: 'catalogue',
+    schema: compareSchema,
+    defaults: () => ({
+      title: emptyText(),
+      intro: emptyText(),
+      productIds: [],
+      onlyDifferences: false,
+    }),
+    fields: [
+      titleField,
+      introField,
+      {
+        kind: 'catalogueList',
+        key: 'productIds',
+        of: 'product',
+        max: 4,
+        label: L('Products (2 to 4)', 'المنتجات (من 2 إلى 4)'),
+      },
+      {
+        kind: 'toggle',
+        key: 'onlyDifferences',
+        label: L('Only rows that differ', 'الصفوف المختلفة فقط'),
+      },
+    ],
+  }),
 } satisfies Record<SectionType, Definition<z.ZodType>>;
 
 /* ---------------------------------------- Section data ---------------------------------------- */
@@ -604,6 +869,10 @@ const contentVariants = [
   variant('contact', contactSchema),
   variant('newsletter', newsletterSchema),
   variant('divider', dividerSchema),
+  variant('products', productsSchema),
+  variant('collections', collectionsSchema),
+  variant('specs', specsSchema),
+  variant('compare', compareSchema),
 ] as const;
 
 /** A section with its own content: one of the registered types. */

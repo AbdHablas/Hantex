@@ -6,6 +6,7 @@ import {
   pageSchema,
   pagesIndexSchema,
   savedSectionsSchema,
+  showcaseSchema,
 } from '@hantex/sections';
 import { LOCALES, comingSoonSchema, siteSettingsSchema } from '@hantex/shared';
 import { themeSchema, uploadedFontSchema } from '@hantex/theme';
@@ -31,6 +32,8 @@ const payloadSchema = z.object({
         menus: menusSchema,
         layout: layoutSchema,
         saved: savedSectionsSchema.optional(),
+        /** The catalogue items the page shows (D-048). */
+        showcase: showcaseSchema.optional(),
       })
       .optional(),
     page: z.object({ id: itemId, locale: z.enum(LOCALES) }).optional(),

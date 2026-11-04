@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  LINK_TYPES,
   RESERVED_SLUGS,
   bilingual,
   emptyText,
@@ -10,7 +11,13 @@ import {
   slugSchema,
 } from './primitives';
 import type { Bilingual, Link } from './primitives';
-import { contentSectionSchema, sectionSchema } from './registry';
+import { contentSectionSchema, sectionSchema, type ContentSection } from './registry';
+import {
+  catalogueLinkLive,
+  sectionCatalogueRefs,
+  sectionIncomplete,
+  type CatalogueIds,
+} from './showcase';
 
 /**
  * A website's structure (D-035, D-037): pages made of sections, the page index (order, home page,
@@ -156,7 +163,11 @@ export interface SiteIssue {
     | 'missing-title'
     | 'broken-link'
     | 'missing-saved-section'
-    | 'missing-image';
+    | 'missing-image'
+    /** A product section names a product, category or series that isn't public (D-048). */
+    | 'missing-catalogue-item'
+    /** A product section still needs a category, series or products chosen. */
+    | 'incomplete-section';
   /** The page or menu item concerned. */
   target: string;
   detail?: string;
@@ -172,6 +183,11 @@ export interface SiteDraft {
   locales: readonly string[];
   /** The website's media library images; when given, images that no longer exist are reported. */
   media?: ReadonlySet<string>;
+  /**
+   * The catalogue that will be public (D-048); when given, links and product sections that name
+   * hidden or removed products, categories or series are reported.
+   */
+  catalogue?: CatalogueIds;
 }
 
 /**
@@ -217,7 +233,33 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
   const checkLink = (link: Link, target: string) => {
     if (link.type === 'page' && !live(link.pageId)) {
       issues.push({ code: 'broken-link', target, detail: link.pageId });
+    } else if (site.catalogue && !catalogueLinkLive(link, site.catalogue)) {
+      const id =
+        link.type === 'product'
+          ? link.productId
+          : link.type === 'category'
+            ? link.categoryId
+            : link.type === 'series'
+              ? link.seriesId
+              : '';
+      issues.push({ code: 'broken-link', target, detail: `${link.type}:${id}` });
     }
+  };
+  const checkCatalogue = (section: ContentSection, target: string) => {
+    const missing = sectionIncomplete(section);
+    if (missing)
+      issues.push({ code: 'incomplete-section', target, detail: `${section.id}:${missing}` });
+    if (!site.catalogue) return;
+    const refs = sectionCatalogueRefs(section);
+    const report = (kind: string, ids: string[], known: ReadonlySet<string>) => {
+      for (const id of ids) {
+        if (!known.has(id))
+          issues.push({ code: 'missing-catalogue-item', target, detail: `${kind}:${id}` });
+      }
+    };
+    report('product', refs.products, site.catalogue.products);
+    report('category', refs.categories, site.catalogue.categories);
+    report('series', refs.series, site.catalogue.series);
   };
   for (const [area, items] of Object.entries(site.menus)) {
     for (const item of items) {
@@ -236,7 +278,10 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
     if (!page?.visible) continue;
     for (const link of linksIn(page)) checkLink(link, `page:${pageId}`);
     for (const section of page.sections) {
-      if (section.type !== 'saved') continue;
+      if (section.type !== 'saved') {
+        checkCatalogue(section, `page:${pageId}`);
+        continue;
+      }
       if (saved.has(section.settings.savedId)) used.add(section.settings.savedId);
       else issues.push({ code: 'missing-saved-section', target: `page:${pageId}` });
     }
@@ -244,7 +289,9 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
   // Links inside saved sections count wherever a public page uses them.
   for (const savedId of used) {
     const item = saved.get(savedId);
-    if (item) for (const link of linksInSection(item.section)) checkLink(link, `saved:${savedId}`);
+    if (!item) continue;
+    for (const link of linksInSection(item.section)) checkLink(link, `saved:${savedId}`);
+    checkCatalogue(item.section, `saved:${savedId}`);
   }
   if (site.media) {
     const checkImages = (value: unknown, target: string) => {
@@ -261,6 +308,11 @@ export function checkSite(site: SiteDraft): SiteIssue[] {
   }
   return issues;
 }
+
+/** Issues caused by the catalogue (D-048): hidden or removed items, as opposed to page problems. */
+export const isCatalogueIssue = (issue: SiteIssue) =>
+  issue.code === 'missing-catalogue-item' ||
+  (issue.code === 'broken-link' && /^(product|category|series):/.test(issue.detail ?? ''));
 
 /** Every link a page's sections contain. */
 export function linksIn(page: Page): Link[] {
@@ -285,7 +337,7 @@ function collect(value: unknown, links: Link[]) {
   const record = value as Record<string, unknown>;
   if (
     typeof record['type'] === 'string' &&
-    ['none', 'page', 'url', 'section'].includes(record['type'])
+    (LINK_TYPES as readonly string[]).includes(record['type'])
   ) {
     const parsed = linkSchema.safeParse(record);
     if (parsed.success) links.push(parsed.data);

@@ -16,6 +16,7 @@ import { useBilingual, useI18n } from '../../lib/i18n';
 import type { PageSummary } from '../../lib/builder';
 import { BilingualField } from '../document';
 import { Button, Field, IconButton, Input, Select } from '../ui';
+import { CatalogueList, CatalogueSelect } from './CatalogueField';
 import { ImageField } from './ImageField';
 import { LinkField } from './LinkField';
 import { RichTextField } from './RichTextField';
@@ -183,6 +184,27 @@ function FieldControl({
           )}
         </Field>
       );
+    case 'catalogue':
+      return (
+        <CatalogueSelect
+          of={field.of}
+          label={label}
+          value={value as string | null}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
+    case 'catalogueList':
+      return (
+        <CatalogueList
+          of={field.of}
+          label={label}
+          value={value as string[]}
+          max={field.max}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      );
     case 'list': {
       const items = value as (Values & { id: string })[];
       const itemName = bi(field.itemLabel);
@@ -239,9 +261,13 @@ function Fields({
   onChange,
   ...rest
 }: FormProps & { fields: RegistryField[]; values: Values; onChange: (values: Values) => void }) {
+  // Fields shown only for some values of another setting, e.g. a category for "a category's products".
+  const shown = fields.filter(
+    (field) => !field.when || field.when.in.includes(String(values[field.when.key])),
+  );
   return (
     <div className="grid gap-4">
-      {fields.map((field) => (
+      {shown.map((field) => (
         <FieldControl
           key={field.key}
           field={field}
@@ -273,6 +299,9 @@ export function SectionForm({
   const definition = SECTIONS[section.type];
   return (
     <div className="grid gap-6">
+      {definition.category === 'catalogue' && (
+        <p className="text-sm text-muted-foreground">{b['catalogueHelp']}</p>
+      )}
       <Fields
         fields={definition.fields}
         values={section.settings}

@@ -1,7 +1,9 @@
 import { documentDrafts, documentVersions, users, type DocumentKind } from '@hantex/db/worker';
 import {
+  catalogueIdsOf,
   checkCatalogue,
   fileIds,
+  isCatalogueIssue,
   checkSite,
   itemId,
   layoutSchema,
@@ -23,6 +25,7 @@ import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
 import {
+  catalogueShowcase,
   draftCatalogue,
   lockCatalogue,
   publishedCatalogue,
@@ -414,12 +417,19 @@ export const builderRoutes = new Hono<AppEnv>()
     const v = c.var;
     const items = await changes(v);
     const content = await draftContent(v.db, v.site.id);
+    // Pages are checked against the catalogue as it will be once these changes are published.
+    const nextCatalogue = await catalogueShowcase(
+      v.db,
+      v.site.id,
+      items.some((i) => isCatalogue(i.kind) && i.allowed),
+    );
     return c.json({
       items: items.map(({ kind, key, allowed }) => ({ kind, key, allowed })),
       issues: checkSite({
         ...content,
         locales: v.site.locales,
         media: await libraryIds(v.db, v.site.id),
+        catalogue: catalogueIdsOf(nextCatalogue),
       }),
       catalogueIssues: items.some((i) => isCatalogue(i.kind)) ? await catalogueIssues(v) : [],
     });
@@ -456,18 +466,25 @@ export const builderRoutes = new Hono<AppEnv>()
       const touchesBuilder = items.some((i) =>
         ['page', 'pages', 'menus', 'layout', 'saved-sections'].includes(i.kind),
       );
+      const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
       let redirects: PagesIndex['redirects'] = [];
-      if (touchesBuilder) {
-        const next = await draftContent(v.db, v.site.id);
-        const issues = checkSite({
-          ...next,
+      // The pages that will be live: the drafts when they change, otherwise the published ones.
+      const nextPages = touchesBuilder
+        ? await draftContent(v.db, v.site.id)
+        : await publishedContent(v.db, v.site.id);
+      /** Pages checked against the catalogue that will be live (D-048). */
+      const siteIssues = async (db: Reader) =>
+        checkSite({
+          ...nextPages,
           locales: v.site.locales,
           media: await libraryIds(v.db, v.site.id),
+          catalogue: catalogueIdsOf(await catalogueShowcase(db, v.site.id, touchesCatalogue)),
         });
+      if (touchesBuilder) {
+        const issues = await siteIssues(v.db);
         if (issues.length > 0) throw conflict('site-issues', { issues });
-        redirects = newRedirects(await publishedContent(v.db, v.site.id), next);
+        redirects = newRedirects(await publishedContent(v.db, v.site.id), nextPages);
       }
-      const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
 
       const published: { kind: string; key: string; version: number }[] = [];
       await v.db.transaction(async (tx) => {
@@ -499,6 +516,13 @@ export const builderRoutes = new Hono<AppEnv>()
           }
           const issues = await catalogueIssues(v, tx);
           if (issues.length > 0) throw conflict('catalogue-issues', { issues });
+          // Hiding or removing a product, category or series must not break a page. Only the
+          // catalogue's own effect on the pages is checked here: the rest was checked above, or
+          // when the pages were published.
+          if (nextPages.index.order.length > 0) {
+            const pageIssues = (await siteIssues(tx)).filter(isCatalogueIssue);
+            if (pageIssues.length > 0) throw conflict('site-issues', { issues: pageIssues });
+          }
         }
         for (const item of items) {
           let data = item.data;

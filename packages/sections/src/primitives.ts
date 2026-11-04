@@ -33,6 +33,10 @@ export const RESERVED_SLUGS = [
   'sitemap.xml',
   '404',
   '_astro',
+  // Catalogue addresses (D-048): /product/<slug>, /category/<slug>, /series/<slug>.
+  'product',
+  'category',
+  'series',
 ] as const;
 
 /** Where a button or menu item leads. */
@@ -44,7 +48,20 @@ export const linkSchema = z.discriminatedUnion('type', [
     url: optionalHttpsUrl.refine((v) => v !== '', 'Required'),
   }),
   z.strictObject({ type: z.literal('section'), anchor: slugSchema }),
+  /** The website's own catalogue (D-048): a visible product, a category or a series. */
+  z.strictObject({ type: z.literal('product'), productId: itemId }),
+  z.strictObject({ type: z.literal('category'), categoryId: itemId }),
+  z.strictObject({ type: z.literal('series'), seriesId: itemId }),
 ]);
+export const LINK_TYPES = [
+  'none',
+  'page',
+  'url',
+  'section',
+  'product',
+  'category',
+  'series',
+] as const;
 export type Link = z.infer<typeof linkSchema>;
 
 /** Icons the sites can draw. */

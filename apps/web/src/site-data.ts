@@ -5,7 +5,15 @@ import type {
   SiteSettings,
   SiteTemplate,
 } from '@hantex/shared';
-import type { Layout, MediaMap, Menus, Page, PagesIndex, SavedSections } from '@hantex/sections';
+import type {
+  Layout,
+  MediaMap,
+  Menus,
+  Page,
+  PagesIndex,
+  SavedSections,
+  Showcase,
+} from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
 import data from './data/site.json';
 
@@ -17,6 +25,8 @@ export interface BuilderContent {
   layout: Layout;
   /** Saved sections the pages reuse by reference (D-038). */
   saved?: SavedSections;
+  /** The public part of the catalogue (D-048): structure and visible products. */
+  showcase?: Showcase;
   /** The published media library images the pages use (D-044), by id. */
   media?: MediaMap;
 }
