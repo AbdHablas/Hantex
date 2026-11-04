@@ -46,6 +46,7 @@ const en = (site: string): Block[] => [
   {
     list: [
       'When you sign up for news: your email address or WhatsApp number, the language you used, the date, and which version of the consent text you agreed to.',
+      'When you send an enquiry or ask for a quotation: your name, your email address or WhatsApp number, the company and quantity if you give them, your message, the product you asked about, the language, the date, and which version of the consent text you agreed to.',
       'To stop automated sign-ups, Cloudflare Turnstile checks that the form is sent by a person. Cloudflare processes technical information about your connection and browser for this check.',
       'To limit repeated attempts, we keep a counter linked to a one-way code made from your IP address. Your IP address itself is not stored.',
       'If statistics are switched on, Cloudflare Web Analytics counts page views without cookies and without identifying you.',
@@ -56,7 +57,7 @@ const en = (site: string): Block[] => [
   },
   { h: 'Why we use it' },
   {
-    p: 'Only to send you the news you asked for, such as our launch, and to keep the website secure. We do not sell your data or use it for advertising.',
+    p: 'Only to send you the news you asked for, such as our launch, to answer your enquiries, and to keep the website secure. We do not sell your data or use it for advertising.',
   },
   { h: 'Services we use' },
   {
@@ -70,7 +71,7 @@ const en = (site: string): Block[] => [
   },
   { h: 'How long we keep it' },
   {
-    p: 'We keep your sign-up until you unsubscribe or ask us to delete it, or for at most [retention period]. Encrypted backups of our database are deleted after [30] days, and monthly backups after [12] months.',
+    p: 'We keep your sign-up until you unsubscribe or ask us to delete it, or for at most [retention period]. We keep an enquiry for as long as we need it to answer you and follow up, and at most [enquiry retention period]. Encrypted backups of our database are deleted after [30] days, and monthly backups after [12] months.',
   },
   { h: 'Your choices and rights' },
   {
@@ -97,6 +98,7 @@ const ar = (site: string): Block[] => [
   {
     list: [
       'عند اشتراكك لتلقي الأخبار: بريدك الإلكتروني أو رقم واتساب، واللغة التي استخدمتها، والتاريخ، ونسخة نص الموافقة التي وافقت عليها.',
+      'عند إرسالك استفسارًا أو طلب عرض سعر: اسمك، وبريدك الإلكتروني أو رقم واتساب، والشركة والكمية إن ذكرتهما، ورسالتك، والمنتج الذي سألت عنه، واللغة، والتاريخ، ونسخة نص الموافقة التي وافقت عليها.',
       'لمنع الاشتراكات الآلية، تتحقق خدمة Cloudflare Turnstile من أن النموذج يرسله شخص. تعالج Cloudflare معلومات تقنية عن اتصالك ومتصفحك لهذا التحقق.',
       'للحد من المحاولات المتكررة، نحتفظ بعدّاد مرتبط برمز أحادي الاتجاه مأخوذ من عنوان IP الخاص بك. لا نخزّن عنوان IP نفسه.',
       'إذا كانت الإحصاءات مفعّلة، تحسب Cloudflare Web Analytics زيارات الصفحات دون ملفات تعريف الارتباط ودون التعرّف عليك.',
@@ -107,7 +109,7 @@ const ar = (site: string): Block[] => [
   },
   { h: 'لماذا نستخدمها' },
   {
-    p: 'فقط لإرسال الأخبار التي طلبتها، مثل موعد الإطلاق، وللحفاظ على أمان الموقع. لا نبيع بياناتك ولا نستخدمها للإعلانات.',
+    p: 'فقط لإرسال الأخبار التي طلبتها، مثل موعد الإطلاق، وللرد على استفساراتك، وللحفاظ على أمان الموقع. لا نبيع بياناتك ولا نستخدمها للإعلانات.',
   },
   { h: 'الخدمات التي نستخدمها' },
   {
@@ -121,7 +123,7 @@ const ar = (site: string): Block[] => [
   },
   { h: 'مدة الاحتفاظ' },
   {
-    p: 'نحتفظ باشتراكك حتى تلغيه أو تطلب حذفه، أو لمدة أقصاها [مدة الاحتفاظ]. تُحذف النسخ الاحتياطية المشفّرة لقاعدة بياناتنا بعد [30] يومًا، والنسخ الشهرية بعد [12] شهرًا.',
+    p: 'نحتفظ باشتراكك حتى تلغيه أو تطلب حذفه، أو لمدة أقصاها [مدة الاحتفاظ]. ونحتفظ بالاستفسار ما دمنا نحتاجه للرد عليك ومتابعته، ولمدة أقصاها [مدة الاحتفاظ بالاستفسارات]. تُحذف النسخ الاحتياطية المشفّرة لقاعدة بياناتنا بعد [30] يومًا، والنسخ الشهرية بعد [12] شهرًا.',
   },
   { h: 'خياراتك وحقوقك' },
   {

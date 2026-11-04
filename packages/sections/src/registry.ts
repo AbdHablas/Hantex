@@ -277,6 +277,15 @@ const compareSchema = z.strictObject({
   onlyDifferences: z.boolean(),
 });
 
+const enquirySchema = z.strictObject({
+  title: bilingual(120),
+  text: bilingual(300),
+  /** What the form starts as; the visitor can change it. */
+  kind: z.enum(['enquiry', 'quote']),
+  /** A product the enquiries are about, or none for general enquiries (D-051). */
+  productId: itemId.nullable(),
+});
+
 const id = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0');
 
 export const SECTION_TYPES = [
@@ -298,6 +307,7 @@ export const SECTION_TYPES = [
   'collections',
   'specs',
   'compare',
+  'enquiry',
 ] as const;
 export type SectionType = (typeof SECTION_TYPES)[number];
 
@@ -839,6 +849,41 @@ export const SECTIONS = {
       },
     ],
   }),
+  enquiry: define({
+    name: L('Enquiry form', 'نموذج استفسار'),
+    description: L(
+      'Questions and quotation requests, with consent and the security check.',
+      'أسئلة وطلبات عروض أسعار مع الموافقة والتحقق الأمني.',
+    ),
+    icon: 'MessageSquareText',
+    category: 'engage',
+    schema: enquirySchema,
+    defaults: () => ({
+      title: emptyText(),
+      text: emptyText(),
+      kind: 'enquiry' as const,
+      productId: null,
+    }),
+    fields: [
+      titleField,
+      { kind: 'text', key: 'text', label: L('Text', 'النص'), max: 300, multiline: true },
+      {
+        kind: 'select',
+        key: 'kind',
+        label: L('Starts as', 'يبدأ كـ'),
+        options: [
+          { value: 'enquiry', label: L('A question', 'سؤال') },
+          { value: 'quote', label: L('A quotation request', 'طلب عرض سعر') },
+        ],
+      },
+      {
+        kind: 'catalogue',
+        key: 'productId',
+        of: 'product',
+        label: L('About a product (optional)', 'بخصوص منتج (اختياري)'),
+      },
+    ],
+  }),
 } satisfies Record<SectionType, Definition<z.ZodType>>;
 
 /* ---------------------------------------- Section data ---------------------------------------- */
@@ -873,6 +918,7 @@ const contentVariants = [
   variant('collections', collectionsSchema),
   variant('specs', specsSchema),
   variant('compare', compareSchema),
+  variant('enquiry', enquirySchema),
 ] as const;
 
 /** A section with its own content: one of the registered types. */

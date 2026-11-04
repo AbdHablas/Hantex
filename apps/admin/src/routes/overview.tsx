@@ -44,6 +44,7 @@ import { useCurrentSite } from '../lib/session';
 
 interface Overview {
   site: { key: string; mode: string; archived: boolean };
+  enquiries?: { new: number };
   subscribers: {
     total: number;
     last7Days: number;
@@ -148,6 +149,14 @@ export function SiteOverview() {
       {header}
       <div className="flex flex-col gap-4">
         {data.site.archived && <Alert tone="warning">{t.archived}</Alert>}
+        {(data.enquiries?.new ?? 0) > 0 && site.permissions.includes('enquiries.view') && (
+          <Alert tone="accent">
+            {format(t.newEnquiries, { n: number.format(data.enquiries?.new ?? 0) })}{' '}
+            <Link className="font-medium underline" to={`/s/${site.key}/enquiries`}>
+              {t.openEnquiries}
+            </Link>
+          </Alert>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard

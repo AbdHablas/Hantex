@@ -14,7 +14,7 @@ or extended later without rebuilding anything.
 | **Owner** | You. Full control, including staff accounts, roles and taking the site live. At least one Owner must always exist. |
 | **Administrator** | A trusted manager who runs the website day to day, without control over Owners, roles or going live. |
 | **Content Manager** | Updates and publishes website content, Coming Soon details and (later) products and news. |
-| **Sales & Enquiries** | Follows up launch sign-ups and (later) enquiries and quotation requests. Sees customer contact details; does not edit the website. |
+| **Sales & Enquiries** | Follows up launch sign-ups, and enquiries and quotation requests (D-051). Sees customer contact details; does not edit the website. |
 | **Editor** | Prepares drafts and uploads images; someone else publishes. |
 | **Viewer** | Read-only access to content and statistics; never sees customer personal data. |
 
@@ -41,6 +41,7 @@ or extended later without rebuilding anything.
 | Sign-ups and enquiries: export (CSV) | ✓ | ✓ | — | ✓ | — | — |
 | Sign-ups and enquiries: delete (e.g. on request) | ✓ | ✓ | — | — | — | — |
 | Sign-ups: send announcement emails (D-040) | ✓ | ✓ | — | — | — | — |
+| Enquiries: mark replied or closed *(D-051)* | ✓ | ✓ | — | ✓ | — | — |
 | Pages, sections and menus: view *(D-035)* | ✓ | ✓ | ✓ | View | ✓ | View |
 | Pages, sections, menus, header and footer: edit drafts *(D-035)* | ✓ | ✓ | ✓ | — | ✓ | — |
 | Website settings: SEO & contact (contact details, social links, SEO defaults, privacy note) | ✓ | ✓ | View | View | — | View |

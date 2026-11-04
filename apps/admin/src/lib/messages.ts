@@ -75,6 +75,7 @@ const en = {
     appearance: 'Appearance',
     logo: 'Logo',
     subscribers: 'Sign-ups',
+    enquiries: 'Enquiries',
     general: 'General',
     seoContact: 'SEO & contact',
     team: 'Team',
@@ -147,6 +148,8 @@ const en = {
     jobs: 'Recent publishing',
     noJobs: 'Nothing published yet.',
     archived: 'This website is archived and read-only.',
+    newEnquiries: 'New enquiries waiting for a reply: {n}.',
+    openEnquiries: 'Open enquiries',
   },
 
   docs: {
@@ -238,6 +241,27 @@ const en = {
     deleteConfirm: 'Delete this sign-up permanently? Do this when the person asks to be removed.',
     email: 'Email',
     whatsapp: 'WhatsApp',
+  },
+
+  enquiries: {
+    title: 'Enquiries',
+    intro:
+      'Questions and quotation requests sent from the website. This is personal data: answer by email or WhatsApp, then mark each one replied or closed.',
+    export: 'Export CSV',
+    show: 'Show',
+    all: 'All',
+    status: { new: 'New', replied: 'Replied', closed: 'Closed' } as Record<string, string>,
+    enquiry: 'Question',
+    quote: 'Quotation request',
+    contact: 'Contact',
+    product: 'Product',
+    quantity: 'Quantity',
+    company: 'Company',
+    statusOf: 'Status of {name}’s enquiry',
+    deleteOf: 'Delete {name}’s enquiry',
+    deleteConfirm:
+      'Delete this enquiry permanently? Do this when the person asks, or when it is no longer needed.',
+    empty: 'No enquiries here.',
   },
 
   announce: {
@@ -1402,6 +1426,7 @@ const ar: Messages = {
     appearance: 'المظهر',
     logo: 'الشعار',
     subscribers: 'المشتركون',
+    enquiries: 'الاستفسارات',
     general: 'عام',
     seoContact: 'البحث والتواصل',
     team: 'الفريق',
@@ -1471,6 +1496,8 @@ const ar: Messages = {
     jobs: 'آخر عمليات النشر',
     noJobs: 'لم يُنشر شيء بعد.',
     archived: 'هذا الموقع مؤرشف وللقراءة فقط.',
+    newEnquiries: 'استفسارات جديدة بانتظار الرد: {n}.',
+    openEnquiries: 'فتح الاستفسارات',
   },
 
   docs: {
@@ -1561,6 +1588,27 @@ const ar: Messages = {
     deleteConfirm: 'حذف هذا الاشتراك نهائيًا؟ افعل ذلك عندما يطلب الشخص إزالته.',
     email: 'البريد الإلكتروني',
     whatsapp: 'واتساب',
+  },
+
+  enquiries: {
+    title: 'الاستفسارات',
+    intro:
+      'أسئلة وطلبات عروض أسعار أُرسلت من الموقع. هذه بيانات شخصية: ردّ بالبريد أو واتساب، ثم حدّد كل استفسار كمُجاب أو مغلق.',
+    export: 'تصدير CSV',
+    show: 'إظهار',
+    all: 'الكل',
+    status: { new: 'جديد', replied: 'تم الرد', closed: 'مغلق' },
+    enquiry: 'سؤال',
+    quote: 'طلب عرض سعر',
+    contact: 'وسيلة التواصل',
+    product: 'المنتج',
+    quantity: 'الكمية',
+    company: 'الشركة',
+    statusOf: 'حالة استفسار {name}',
+    deleteOf: 'حذف استفسار {name}',
+    deleteConfirm:
+      'حذف هذا الاستفسار نهائيًا؟ افعل ذلك عندما يطلب الشخص، أو حين لا تعود بحاجة إليه.',
+    empty: 'لا توجد استفسارات هنا.',
   },
 
   announce: {

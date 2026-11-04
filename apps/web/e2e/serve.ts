@@ -363,9 +363,12 @@ specs.settings.productId = 'prdone';
 const compare = newSection('compare');
 compare.settings.title = T('Compare', 'مقارنة');
 compare.settings.productIds = ['prdone', 'prdtwo'];
+const enquirySection = newSection('enquiry');
+enquirySection.settings.title = T('Talk to us', 'تحدث إلينا');
+enquirySection.settings.kind = 'quote';
 const range: Page = {
   ...newPage(T('Range', 'المنتجات'), 'range'),
-  sections: [grid, carousel, collections, specs, compare],
+  sections: [grid, carousel, collections, specs, compare, enquirySection],
 };
 const RANGE_ID = 'pgrange01';
 content.pages[RANGE_ID] = range;

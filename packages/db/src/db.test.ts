@@ -78,6 +78,7 @@ describe('migrations', () => {
       'document_drafts',
       'document_versions',
       'email_challenges',
+      'enquiries',
       'enrolment_tickets',
       'fonts',
       'form_rate_limits',
@@ -422,6 +423,33 @@ describe('least-privilege database users', () => {
     await expect(asRole('hantex_public_app', 'select * from users')).rejects.toThrow(
       permissionDenied,
     );
+  });
+
+  it('lets the public site add an enquiry but never read, change, delete or set its status (D-051)', async () => {
+    const enquire = `insert into enquiries (site_id, kind, product_id, product_name, name, contact_type, contact_value, company, quantity, message, locale, consent_version) values ($1, 'quote', 'prd000001', 'A switch', 'Sam', 'email', 'sam@example.test', '', 20, 'Price for 20?', 'en', 'enquiry-v1')`;
+    expect((await asRole('hantex_public_app', enquire, [siteA])).rowCount).toBe(1);
+    await expect(
+      asRole(
+        'hantex_public_app',
+        `insert into enquiries (site_id, kind, name, contact_type, contact_value, message, locale, consent_version, status) values ($1, 'enquiry', 'X', 'email', 'x@example.test', 'Hi', 'en', 'v1', 'closed')`,
+        [siteA],
+      ),
+    ).rejects.toThrow(permissionDenied);
+    for (const statement of [
+      'select * from enquiries',
+      `update enquiries set status = 'closed'`,
+      'delete from enquiries',
+    ]) {
+      await expect(asRole('hantex_public_app', statement)).rejects.toThrow(permissionDenied);
+    }
+    // Staff may change the status only.
+    await asRole('hantex_admin_app', `update enquiries set status = 'replied', updated_at = now()`);
+    await expect(
+      asRole('hantex_admin_app', `update enquiries set message = 'changed'`),
+    ).rejects.toThrow(permissionDenied);
+    await expect(
+      asRole('hantex_admin_app', `update enquiries set status = 'lost'`),
+    ).rejects.toThrow();
   });
 
   it('lets the public site remove exactly one sign-up of its own site, through unsubscribe() only', async () => {

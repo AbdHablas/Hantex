@@ -52,6 +52,7 @@ describe('dashboard navigation', () => {
       'appearance',
       'logo',
       'subscribers',
+      'enquiries',
       'general',
       'seo-contact',
       'team',

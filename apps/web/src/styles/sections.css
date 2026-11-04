@@ -1112,3 +1112,85 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* Enquiry and quotation form (D-051) */
+.enquiry {
+  max-width: 44rem;
+}
+.al-center .enquiry {
+  margin-inline: auto;
+}
+.enquiry-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+.enquiry[data-state='done'] .enquiry-fields {
+  display: none;
+}
+.enquiry-about {
+  margin: 0;
+  font-weight: 600;
+}
+.enquiry .segmented {
+  justify-self: start;
+}
+.enquiry-grid {
+  display: grid;
+  gap: 0.75rem 1rem;
+}
+@media (min-width: 40rem) {
+  .enquiry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.enquiry input[type='text'],
+.enquiry input[type='number'],
+.enquiry textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius);
+  background: var(--hx-color-background);
+  color: var(--hx-color-text);
+  font: inherit;
+}
+.enquiry textarea {
+  resize: vertical;
+}
+.enquiry input:focus-visible,
+.enquiry textarea:focus-visible {
+  outline: 2px solid var(--s-link);
+  outline-offset: 1px;
+}
+.enquiry-hint {
+  margin: 0.25rem 0 0;
+  color: var(--s-muted);
+  font-size: 0.8125rem;
+}
+.enquiry-consent {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  font-size: 0.9375rem;
+}
+.enquiry-consent input {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.2rem;
+  accent-color: var(--s-link);
+}
+.enquiry button {
+  justify-self: start;
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.enquiry[data-state='sending'] .spinner {
+  display: inline-block;
+}
+.cx-actions {
+  margin-top: 1.25rem;
+}

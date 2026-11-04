@@ -1,4 +1,4 @@
-import { documentDrafts, publishJobs, subscribers } from '@hantex/db/worker';
+import { documentDrafts, enquiries, publishJobs, subscribers } from '@hantex/db/worker';
 import { and, count, desc, eq, gt, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { AppEnv } from '../context';
@@ -63,6 +63,11 @@ export const overviewRoutes = new Hono<AppEnv>().get(
       .where(eq(publishJobs.siteId, siteId))
       .orderBy(desc(publishJobs.requestedAt))
       .limit(5);
+    // Counts only; who sent them needs enquiries.view (D-051).
+    const [newEnquiries] = await db
+      .select({ n: count() })
+      .from(enquiries)
+      .where(and(eq(enquiries.siteId, siteId), eq(enquiries.status, 'new')));
     const s = c.var.site;
     return c.json({
       site: {
@@ -77,6 +82,7 @@ export const overviewRoutes = new Hono<AppEnv>().get(
         daily,
         byType: Object.fromEntries(byType.map((t) => [t.type, t.n])),
       },
+      enquiries: { new: newEnquiries?.n ?? 0 },
       documents,
       jobs,
     });

@@ -1,0 +1,25 @@
+---
+import type { SectionOf } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import EnquiryForm from '../EnquiryForm.astro';
+import Heading from './Heading.astro';
+
+/** An enquiry form (D-051), general or about one product of the catalogue. */
+interface Props {
+  section: SectionOf<'enquiry'>;
+  ctx: RenderContext;
+  headingId: string;
+}
+const { section, ctx, headingId } = Astro.props;
+const s = section.settings;
+const product = s.productId ? ctx.content.showcase?.products.find((p) => p.id === s.productId) : undefined;
+---
+
+<Heading ctx={ctx} title={s.title} intro={s.text} id={headingId} />
+<EnquiryForm
+  locale={ctx.locale}
+  id={`enquiry-${section.id}`}
+  kind={s.kind}
+  product={product ? { id: product.id, name: pick(ctx, product.name) } : null}
+  preview={ctx.preview}
+/>

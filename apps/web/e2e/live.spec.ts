@@ -4,6 +4,7 @@ import { newSection, starterContent } from '@hantex/sections';
 import { brandTheme } from '@hantex/theme';
 import { expect, test } from '@playwright/test';
 import { createHmac } from 'node:crypto';
+import pg from 'pg';
 
 /**
  * A second website, live and made entirely of website-builder pages (D-035), built from content
@@ -210,6 +211,48 @@ test('a product page shows only what the catalogue holds (D-048)', async ({ page
     'href',
     'https://live.example.test/product/one-gang/',
   );
+});
+
+test('a product enquiry reaches the server and is refused without a passed security check (D-051)', async ({
+  page,
+}) => {
+  // A stand-in for Turnstile that hands back a token; the site Worker runs with Turnstile's
+  // always-failing test secret, so the server must refuse the enquiry and store nothing.
+  await page.route('https://challenges.cloudflare.com/**', (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      body: 'window.turnstile = { render: (el, o) => { setTimeout(() => o.callback("test-token")); return "w"; }, reset: () => {} };',
+    }),
+  );
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  await page.getByRole('link', { name: 'Ask about this product' }).click();
+  const form = page.getByRole('region', { name: 'Ask about this product' });
+  await expect(form).toContainText('About: Test one-gang switch');
+  await form.getByText('A quotation', { exact: true }).click();
+  await expect(form.getByRole('radio', { name: 'A quotation' })).toBeChecked();
+  await form.getByLabel('Name').fill('Visitor');
+  // Checked in the browser first, with the same rules as the server.
+  await form.getByRole('button', { name: 'Send' }).click();
+  await expect(form.getByRole('status')).toHaveText(
+    'Enter a valid email address or WhatsApp number.',
+  );
+  await form.getByLabel('Email or WhatsApp number').fill('visitor@example.test');
+  await form.getByLabel('Quantity (optional)').fill('20');
+  await form.getByLabel('Your message').fill('Price for 20, please.');
+  await form.getByLabel(/I agree that/).check();
+  await page.waitForFunction(() => 'turnstile' in window);
+  await form.getByRole('button', { name: 'Send' }).click();
+  await expect(form.getByRole('status')).toHaveText('The security check failed. Please try again.');
+
+  const url = new URL(
+    process.env['HANTEX_TEST_DATABASE_URL'] ?? 'postgres://postgres@127.0.0.1:54329/postgres',
+  );
+  url.pathname = `/${process.env['E2E_DATABASE']}`;
+  const client = new pg.Client({ connectionString: url.toString() });
+  await client.connect();
+  const rows = await client.query('select 1 from enquiries');
+  await client.end();
+  expect(rows.rowCount).toBe(0);
 });
 
 test('category and series pages list their visible products', async ({ page }) => {

@@ -20,6 +20,7 @@ import { roleRoutes } from './routes/roles';
 import { siteConfigRoutes, sitesRoutes } from './routes/sites';
 import { siteStaffRoutes, staffRoutes } from './routes/staff';
 import { subscriberRoutes } from './routes/subscribers';
+import { enquiryRoutes } from './routes/enquiries';
 import { announcementRoutes } from './routes/announcements';
 import { fontRoutes } from './routes/fonts';
 import { mediaRoutes } from './routes/media';
@@ -39,6 +40,7 @@ function siteApi() {
     .route('/catalogue', catalogueRoutes)
     .route('/preview', previewRoutes)
     .route('/subscribers', subscriberRoutes)
+    .route('/enquiries', enquiryRoutes)
     .route('/announcements', announcementRoutes)
     .route('/media', mediaRoutes)
     .route('/publish', publishJobRoutes)

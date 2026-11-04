@@ -1,5 +1,5 @@
 import { createPoolDb } from '@hantex/db/client';
-import { FIRST_SITE, ensureSite, subscribers } from '@hantex/db/worker';
+import { FIRST_SITE, enquiries, ensureSite, subscribers } from '@hantex/db/worker';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
@@ -62,6 +62,33 @@ describe('sign-up store, as the public database user', () => {
 
   it('can never read sign-ups back', async () => {
     await expect(publicClient.query('select * from subscribers')).rejects.toThrow(
+      /permission denied/,
+    );
+  });
+});
+
+describe('enquiry store, as the public database user (D-051)', () => {
+  it('adds an enquiry with status new, and can never read it back', async () => {
+    const store = signupStore(publicClient, siteId);
+    await store.insertEnquiry({
+      kind: 'enquiry',
+      productId: null,
+      productName: '',
+      name: 'Store test',
+      contactType: 'whatsapp',
+      contactValue: '+963933000777',
+      company: '',
+      quantity: null,
+      message: 'Hello',
+      locale: 'ar',
+      consentVersion: 'enquiry-consent-v1',
+    });
+    const [row] = await owner.db
+      .select()
+      .from(enquiries)
+      .where(eq(enquiries.contactValue, '+963933000777'));
+    expect(row).toMatchObject({ siteId, status: 'new', name: 'Store test' });
+    await expect(publicClient.query('select * from enquiries')).rejects.toThrow(
       /permission denied/,
     );
   });

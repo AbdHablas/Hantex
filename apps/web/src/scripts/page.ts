@@ -177,6 +177,112 @@ if (form) {
   });
 }
 
+/*
+ * Enquiries and quotation requests (D-051). Turnstile loads when the visitor starts filling in
+ * a form; each form has its own widget. The server checks everything again.
+ */
+let turnstileLoading: Promise<void> | null = null;
+const loadTurnstile = () =>
+  (turnstileLoading ??= window.turnstile
+    ? Promise.resolve()
+    : new Promise<void>((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.onload = () => resolve();
+        document.head.appendChild(script);
+      }));
+
+for (const enquiry of document.querySelectorAll<HTMLFormElement>('form[data-enquiry]')) {
+  const message = enquiry.querySelector<HTMLElement>('.message');
+  const button = enquiry.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const buttonLabel = enquiry.querySelector<HTMLElement>('[data-button-label]');
+  const messages = JSON.parse(message?.dataset['messages'] ?? '{}') as Record<string, string>;
+  let token = '';
+  let widget: string | undefined;
+  const say = (key: string, tone: 'error' | 'success') => {
+    if (!message) return;
+    message.textContent = messages[key] ?? messages['request-error'] ?? key;
+    message.dataset['tone'] = tone;
+  };
+  enquiry.addEventListener(
+    'focusin',
+    () => {
+      void loadTurnstile().then(() => {
+        const holder = enquiry.querySelector<HTMLElement>('[data-turnstile]');
+        if (holder && window.turnstile && widget === undefined) {
+          widget = window.turnstile.render(holder, {
+            sitekey: enquiry.dataset['turnstileKey'] ?? '',
+            callback: (value) => (token = value),
+            'expired-callback': () => (token = ''),
+          });
+        }
+      });
+    },
+    { once: true },
+  );
+  enquiry.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(enquiry);
+    const field = (name: string) => {
+      const value = data.get(name);
+      return typeof value === 'string' ? value.trim() : '';
+    };
+    if (!field('name')) return say('name-required', 'error');
+    const contact = normalizeContact(field('contact'));
+    if (!contact.ok) return say(contact.error, 'error');
+    const quantityText = field('quantity');
+    const quantity = quantityText === '' ? null : Number(quantityText);
+    if (
+      quantity !== null &&
+      !(Number.isInteger(quantity) && quantity >= 1 && quantity <= 1_000_000)
+    ) {
+      return say('invalid-quantity', 'error');
+    }
+    if (!field('message')) return say('message-required', 'error');
+    if (data.get('consent') !== 'on') return say('consent-required', 'error');
+    if (!token) return say('captcha-failed', 'error');
+    if (button) button.disabled = true;
+    if (buttonLabel) buttonLabel.textContent = button?.dataset['sending'] ?? '';
+    enquiry.dataset['state'] = 'sending';
+    fetch('/api/enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: field('kind') === 'quote' ? 'quote' : 'enquiry',
+        productId: enquiry.dataset['product'] || null,
+        name: field('name'),
+        contact: field('contact'),
+        company: field('company'),
+        quantity,
+        message: field('message'),
+        consent: true,
+        locale: enquiry.dataset['locale'],
+        turnstileToken: token,
+        website: field('website'),
+      }),
+    })
+      .then(async (response) => {
+        const body = (await response.json().catch(() => ({}))) as { error?: string };
+        if (response.ok) {
+          enquiry.reset();
+          enquiry.dataset['state'] = 'done';
+          say('thanks', 'success');
+        } else {
+          say(body.error ?? 'request-error', 'error');
+        }
+      })
+      .catch(() => say('request-error', 'error'))
+      .finally(() => {
+        token = '';
+        window.turnstile?.reset(widget);
+        if (enquiry.dataset['state'] === 'sending') delete enquiry.dataset['state'];
+        if (button) button.disabled = false;
+        if (buttonLabel) buttonLabel.textContent = button?.dataset['label'] ?? '';
+      });
+  });
+}
+
 /* Draft previews show one page: links to other addresses stay inside the dashboard's preview. */
 if (document.body.hasAttribute('data-preview')) {
   document.addEventListener('click', (event) => {

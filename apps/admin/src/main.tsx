@@ -10,6 +10,7 @@ import { AcceptInvitation, Recover, SignIn } from './routes/auth';
 import { Account, AuditLog, Home, Roles, SiteSettings, Sites } from './routes/platform';
 import { AppearanceEditor, SiteSettingsEditor } from './routes/editors';
 import { ComingSoonEditor, SitePage, Subscribers } from './routes/site';
+import { Enquiries } from './routes/enquiries';
 import { PlatformStaff, SiteStaff } from './routes/staff';
 import { Loading } from './components/ui';
 import './styles.css';
@@ -187,6 +188,14 @@ const router = createBrowserRouter([
             element: (
               <SitePage>
                 <Subscribers />
+              </SitePage>
+            ),
+          },
+          {
+            path: 'enquiries',
+            element: (
+              <SitePage>
+                <Enquiries />
               </SitePage>
             ),
           },

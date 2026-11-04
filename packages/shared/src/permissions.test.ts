@@ -7,7 +7,7 @@ import {
   permissionsOf,
 } from './permissions';
 
-// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035, D-040, D-045).
+// The approved matrix (docs/roles-and-permissions.md, D-019, D-022, D-035, D-040, D-045, D-051).
 const EXPECTED: Record<string, string[]> = {
   owner: Object.keys(PERMISSIONS),
   administrator: [
@@ -31,6 +31,10 @@ const EXPECTED: Record<string, string[]> = {
     'subscribers.export',
     'subscribers.delete',
     'subscribers.announce',
+    'enquiries.view',
+    'enquiries.export',
+    'enquiries.manage',
+    'enquiries.delete',
     'appearance.edit',
     'appearance.publish',
     'staff.view',
@@ -60,6 +64,9 @@ const EXPECTED: Record<string, string[]> = {
     'settings.view',
     'subscribers.view',
     'subscribers.export',
+    'enquiries.view',
+    'enquiries.export',
+    'enquiries.manage',
   ],
   editor: [
     'dashboard.view',

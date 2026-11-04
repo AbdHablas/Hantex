@@ -27,11 +27,17 @@ GRANT SELECT, INSERT, UPDATE ON sites TO hantex_admin_app;
 GRANT SELECT, INSERT ON document_versions, audit_log TO hantex_admin_app;
 -- Sign-ups: view, export and delete only — sign-ups arrive through the public site.
 GRANT SELECT, DELETE ON subscribers TO hantex_admin_app;
+-- Enquiries (D-051): read, delete, and only their status can change.
+GRANT SELECT, DELETE ON enquiries TO hantex_admin_app;
+GRANT UPDATE (status, updated_at) ON enquiries TO hantex_admin_app;
 
 -- Public site endpoints (apps/web): add sign-ups (cannot read them back), rate limits,
 -- and read published content. Each site's Worker supplies site_id from its own configuration.
 GRANT INSERT (site_id, contact_type, contact_value, locale, consent_version) ON subscribers TO hantex_public_app;
 GRANT SELECT, INSERT, UPDATE ON form_rate_limits TO hantex_public_app;
+-- Enquiries (D-051): add only, never read back; the status starts as 'new'.
+GRANT INSERT (site_id, kind, product_id, product_name, name, contact_type, contact_value, company,
+  quantity, message, locale, consent_version) ON enquiries TO hantex_public_app;
 GRANT SELECT ON document_versions TO hantex_public_app;
 -- One-click unsubscribe: removes one sign-up of the site, nothing else (migration 0006).
 GRANT EXECUTE ON FUNCTION unsubscribe(uuid, uuid) TO hantex_public_app;

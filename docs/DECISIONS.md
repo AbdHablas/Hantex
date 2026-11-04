@@ -59,6 +59,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-048 | Product sections and catalogue links | Confirmed (owner: "go ahead", 2026-11-04) | Four catalogue sections and links to products, categories and series; facts only from the published catalogue — see `docs/website-builder.md` |
 | D-049 | Public product, category and series pages | Confirmed (owner: "go ahead", 2026-11-04) | One static page per visible product, category and series, from the published catalogue only — see `docs/product-catalogue.md` |
 | D-050 | Catalogue redirects and public files | Confirmed (owner: "go ahead", 2026-11-04) | Old product, category and series addresses redirect; only files the site offers are public |
+| D-051 | Enquiries and quotation requests | Confirmed (owner: "go ahead", 2026-11-04) | Product-page and section forms, stored per site through the insert-only public user; answered from the dashboard |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1184,5 +1185,38 @@ then the general product catalogue (Phase 3c, D-045).
   is kept, so publishing it again later restores it.
 - **Still to note:** a certificate that expires stays downloadable from its address until the
   next Publish changes, though the next site build already leaves it off the pages.
+- **Cost:** none.
+
+## D-051 — Enquiries and quotation requests
+
+- **Status:** Confirmed — 2026-11-04 (owner: "go ahead" to enquiries before filters and search)
+- **Where visitors ask:** every product page has an *Ask about this product* button and form;
+  the website builder has an *Enquiry form* section (general, or about one product). The
+  visitor chooses a question or a quotation request and gives a name, an email address or
+  WhatsApp number, optionally a company and a quantity, a message, and consent
+  (`enquiry-consent-v1`).
+- **Same protections as sign-ups:** only the site's own pages may post (origin check); 8 KB
+  at most; a hidden honeypot field; five enquiries per visitor per hour, counted against a
+  one-way code of the IP address (never the address itself); Cloudflare Turnstile, failing
+  closed. Text is limited in length and may not contain control characters. Enquiries are
+  accepted only by live websites.
+- **Facts from the site, not the visitor:** the website and the product's name are taken from
+  the site's own build data; a request naming an unknown or hidden product is refused, and a
+  request can't set a product name or a status.
+- **Storage:** an `enquiries` table (migration 0012). The public site's database user may only
+  insert the visitor's fields and can't read anything back; the status always starts as *new*.
+  The dashboard's user may read and delete enquiries and change only their status.
+- **Dashboard:** an *Enquiries* page for each website, under Audience: newest first, filtered
+  by status (new first), searchable, with email and WhatsApp links, *replied* and *closed*,
+  CSV export (cells that spreadsheets could run as formulas are neutralised) and deletion. The
+  overview shows how many enquiries are new, without who sent them. Status changes, exports
+  and deletions go to the audit log with masked contact details.
+- **Permissions:** `enquiries.view`, `enquiries.export` and `enquiries.manage` for Owner,
+  Administrator and Sales & Enquiries; `enquiries.delete` for Owner and Administrator.
+- **Privacy:** the privacy policy draft (D-041) now describes enquiries and has an
+  `[enquiry retention period]` placeholder for the owner to fill in.
+- **Not yet:** email alerts to staff when an enquiry arrives (they would need the email service
+  in each site's Worker; to be decided at deployment), and automatic deletion after the
+  retention period.
 - **Cost:** none.
 

@@ -494,6 +494,52 @@ export const subscribers = pgTable(
   ],
 );
 
+/* ------------------------------------------------------------------------------------------
+ * Enquiries and quotation requests (D-051), per site. Like sign-ups, the public site's database
+ * user may only INSERT them and never read them back; site_id and the product's name come from
+ * the site's own build data, never from the request. Staff answer them from the dashboard.
+ * ---------------------------------------------------------------------------------------- */
+
+export const enquiries = pgTable(
+  'enquiries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    /** 'enquiry' (a question) or 'quote' (a quotation request). */
+    kind: text('kind').notNull(),
+    /** The catalogue product asked about, if any, and its name as the visitor saw it. */
+    productId: text('product_id'),
+    productName: text('product_name').notNull().default(''),
+    name: text('name').notNull(),
+    contactType: text('contact_type').notNull(),
+    contactValue: text('contact_value').notNull(),
+    company: text('company').notNull().default(''),
+    quantity: integer('quantity'),
+    message: text('message').notNull(),
+    locale: text('locale').notNull(),
+    consentVersion: text('consent_version').notNull(),
+    /** new → replied → closed, set by staff. */
+    status: text('status').notNull().default('new'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('enquiries_site_idx').on(t.siteId, t.createdAt),
+    check('enquiries_kind_check', sql`${t.kind} in ('enquiry', 'quote')`),
+    check('enquiries_contact_type_check', sql`${t.contactType} in ('email', 'whatsapp')`),
+    check('enquiries_locale_check', sql`${t.locale} in ('ar', 'en')`),
+    check('enquiries_status_check', sql`${t.status} in ('new', 'replied', 'closed')`),
+    check(
+      'enquiries_lengths_check',
+      sql`char_length(${t.name}) <= 100 and char_length(${t.company}) <= 120 and char_length(${t.message}) <= 2000 and char_length(${t.productName}) <= 120 and char_length(${t.contactValue}) <= 254`,
+    ),
+    check(
+      'enquiries_quantity_check',
+      sql`${t.quantity} is null or (${t.quantity} between 1 and 1000000)`,
+    ),
+  ],
+);
+
 /**
  * The media library (D-044): images a site's staff uploaded, already resized and stripped of
  * camera data by the dashboard. Files live in R2 under the site's private space; a file becomes

@@ -42,6 +42,7 @@ import {
   FolderTree,
   TableProperties,
   Columns3,
+  MessageSquareText,
   Trash2,
   Unlink,
   type LucideIcon,
@@ -430,6 +431,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   FolderTree,
   TableProperties,
   Columns3,
+  MessageSquareText,
 };
 
 const sectionIcon = (type: SectionType) => {

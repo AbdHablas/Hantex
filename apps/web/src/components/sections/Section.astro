@@ -8,6 +8,7 @@ import Products from './Products.astro';
 import Specs from './Specs.astro';
 import Contact from './Contact.astro';
 import Cta from './Cta.astro';
+import Enquiry from './Enquiry.astro';
 import Faq from './Faq.astro';
 import Features from './Features.astro';
 import Gallery from './Gallery.astro';
@@ -74,6 +75,7 @@ const classes = [
           {section.type === 'collections' && <Collections section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'specs' && <Specs section={section} ctx={ctx} headingId={headingId} />}
           {section.type === 'compare' && <Compare section={section} ctx={ctx} headingId={headingId} />}
+          {section.type === 'enquiry' && <Enquiry section={section} ctx={ctx} headingId={headingId} />}
         </div>
       </section>
     ))

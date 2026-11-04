@@ -124,7 +124,8 @@ Dashboard (React)                      API (Worker)                    Site engi
 | Specifications | One product's attribute values in their groups, and optionally its codes | The product |
 | Comparison table | Two to four products' values side by side; "Not given" where nothing was entered | The products; only rows that differ |
 
-Buttons and menu items can also lead to a product, a category or a series. Sections store only
+An *Enquiry form* section (D-051) takes questions and quotation requests, general or about one
+product. Buttons and menu items can also lead to a product, a category or a series. Sections store only
 which items to show; everything visitors read comes from the published catalogue, and only
 visible products appear. Publish changes refuses incomplete product sections and anything that
 names a hidden or removed catalogue item. Catalogue links lead to the product, category and

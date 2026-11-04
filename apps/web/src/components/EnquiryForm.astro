@@ -1,0 +1,92 @@
+---
+import type { Locale } from '@hantex/shared';
+import { TEXT } from '../i18n';
+import { SITE } from '../site-data';
+
+/**
+ * An enquiry or quotation request (D-051): name, email or WhatsApp, optional company and
+ * quantity, a message, consent and Turnstile. Sent by src/scripts/page.ts to /api/enquiry; the
+ * product's name is added by the server from the site's own data. Drafts can't send.
+ */
+interface Props {
+  locale: Locale;
+  /** A distinct prefix for the form's ids, so a page can hold more than one form. */
+  id: string;
+  kind: 'enquiry' | 'quote';
+  product?: { id: string; name: string } | null;
+  preview?: boolean;
+}
+const { locale, id, kind, product = null, preview = false } = Astro.props;
+const t = TEXT[locale];
+const e = t.enquiry;
+const siteName = SITE.site.name[locale] || SITE.site.name.ar || SITE.site.name.en;
+const messages = { thanks: e.thanks, ...t.errors, ...e.errors };
+---
+
+<form
+  class="enquiry"
+  data-enquiry
+  data-locale={locale}
+  data-product={product?.id ?? ''}
+  data-turnstile-key={SITE.turnstileSiteKey}
+  novalidate
+>
+  <div class="enquiry-fields">
+    {product && <p class="enquiry-about">{e.about.replace('{product}', product.name)}</p>}
+    <fieldset class="segmented">
+      <legend class="field-label">{e.kind}</legend>
+      <label>
+        <input type="radio" name="kind" value="enquiry" checked={kind === 'enquiry'} />
+        <span>{e.kindEnquiry}</span>
+      </label>
+      <label>
+        <input type="radio" name="kind" value="quote" checked={kind === 'quote'} />
+        <span>{e.kindQuote}</span>
+      </label>
+    </fieldset>
+    <div class="enquiry-grid">
+      <div>
+        <label class="field-label" for={`${id}-name`}>{e.name}</label>
+        <input id={`${id}-name`} name="name" type="text" required maxlength="100" autocomplete="name" />
+      </div>
+      <div>
+        <label class="field-label" for={`${id}-contact`}>{e.contact}</label>
+        <input
+          id={`${id}-contact`}
+          name="contact"
+          type="text"
+          dir="ltr"
+          required
+          maxlength="254"
+          autocomplete="email"
+          aria-describedby={`${id}-contact-hint`}
+        />
+        <p class="enquiry-hint" id={`${id}-contact-hint`}>{e.contactHint}</p>
+      </div>
+      <div>
+        <label class="field-label" for={`${id}-company`}>{e.company}</label>
+        <input id={`${id}-company`} name="company" type="text" maxlength="120" autocomplete="organization" />
+      </div>
+      <div>
+        <label class="field-label" for={`${id}-quantity`}>{e.quantity}</label>
+        <input id={`${id}-quantity`} name="quantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" dir="ltr" />
+      </div>
+    </div>
+    <label class="field-label" for={`${id}-message`}>{e.message}</label>
+    <textarea id={`${id}-message`} name="message" required maxlength="2000" rows="5"></textarea>
+    <div class="honeypot" aria-hidden="true">
+      <label for={`${id}-website`}>Website</label>
+      <input id={`${id}-website`} name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+    <label class="enquiry-consent">
+      <input name="consent" type="checkbox" required />
+      <span>{e.consent.replace('{site}', siteName)}</span>
+    </label>
+    <div data-turnstile></div>
+    <button class="btn btn-primary" type="submit" data-label={e.send} data-sending={t.sending} disabled={preview}>
+      <span class="spinner" aria-hidden="true"></span>
+      <span data-button-label>{e.send}</span>
+    </button>
+  </div>
+  <p class="message" role="status" aria-live="polite" data-messages={JSON.stringify(messages)}></p>
+</form>

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import pg from 'pg';
 
 /**
  * The first Owner's whole path in a real browser, with a virtual passkey authenticator standing
@@ -658,6 +659,36 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Publish changes' }).click();
   await confirm(page);
   await expect(page.getByText('Changes published.')).toBeVisible();
+
+  // Enquiries (D-051) arrive from the website; here one is added to the database directly.
+  const database = new URL(
+    process.env['HANTEX_TEST_DATABASE_URL'] ?? 'postgres://postgres@127.0.0.1:54329/postgres',
+  );
+  database.pathname = `/${process.env['E2E_DATABASE']}`;
+  const client = new pg.Client({ connectionString: database.toString() });
+  await client.connect();
+  await client.query(
+    `insert into enquiries (site_id, kind, product_id, product_name, name, contact_type, contact_value, quantity, message, locale, consent_version)
+     select id, 'quote', null, 'One-gang switch', 'Test visitor', 'whatsapp', '+963933000123', 50, 'Price for 50?', 'ar', 'enquiry-consent-v1'
+     from sites where key = 'second-site'`,
+  );
+  await client.end();
+  await page.goto('/s/second-site');
+  await expect(page.getByText('New enquiries waiting for a reply: 1.')).toBeVisible();
+  await page.getByRole('link', { name: 'Open enquiries' }).click();
+  const enquiry = page.getByRole('article', { name: 'Test visitor' });
+  await expect(enquiry).toContainText('Quotation request');
+  await expect(enquiry).toContainText('One-gang switch');
+  await expect(enquiry.getByRole('link', { name: '+963933000123' })).toHaveAttribute(
+    'href',
+    'https://wa.me/963933000123',
+  );
+  await expectAccessible(page, 'enquiries');
+  await enquiry.getByLabel('Status of Test visitor’s enquiry').selectOption({ label: 'Replied' });
+  // The list shows new enquiries first; this one now shows under Replied.
+  await expect(page.getByText('No enquiries here.')).toBeVisible();
+  await page.getByLabel('Show').selectOption({ label: 'Replied' });
+  await expect(page.getByRole('article', { name: 'Test visitor' })).toBeVisible();
 
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');

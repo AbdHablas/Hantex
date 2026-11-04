@@ -9,6 +9,7 @@ import ProductGrid from '../sections/ProductGrid.astro';
 import Picture from '../sections/Picture.astro';
 import SpecTables from '../sections/SpecTables.astro';
 import SiteLayout from '../SiteLayout.astro';
+import EnquiryForm from '../EnquiryForm.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Downloads from './Downloads.astro';
 
@@ -85,6 +86,7 @@ const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some
         {seriesHref && series && <a class="cx-eyebrow" href={seriesHref.href}>{pick(ctx, series.name)}</a>}
         <h1>{name}</h1>
         {summary && <p class="cx-lead">{summary}</p>}
+        <p class="cx-actions"><a class="btn btn-primary" href="#enquiry">{t.enquiry.ask}</a></p>
         {
           finishes.length > 0 && (
             <div class="cx-finishes">
@@ -114,6 +116,10 @@ const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some
       )
     }
     <Downloads ctx={ctx} documents={product.documents} headingId="downloads" />
+    <section class="cx-block" aria-labelledby="enquiry" id="enquiry-section">
+      <h2 class="bx-title" id="enquiry" tabindex="-1">{t.enquiry.title}</h2>
+      <EnquiryForm locale={ctx.locale} id="product-enquiry" kind="enquiry" product={{ id: product.id, name }} preview={ctx.preview} />
+    </section>
     {
       related.length > 0 && (
         <section class="cx-block" aria-labelledby="related">

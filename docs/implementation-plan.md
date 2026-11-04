@@ -186,7 +186,11 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       — *done (D-048): Products, Categories and series, Specifications and Comparison table
       sections; links to products, categories and series, which lead to the catalogue pages
       (D-049).*
-- [ ] Enquiries and quotation requests per site
+- [x] Enquiries and quotation requests per site — *done (D-051): form on every product page
+      and as an "Enquiry form" section; checked like sign-ups (origin, honeypot, rate limit,
+      Turnstile); stored by the insert-only public database user; dashboard Enquiries page with
+      status, search, CSV export and deletion; new-enquiry count on the overview. Email alerts
+      to staff still to come.*
 - [x] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
       — *Sign-ups page: write once, send in chunks within ANNOUNCEMENT_DAILY_LIMIT,
       one-click unsubscribe on the website; WhatsApp numbers exported. Resend's

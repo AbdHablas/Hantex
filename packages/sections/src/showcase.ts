@@ -414,6 +414,9 @@ export function sectionCatalogueRefs(section: ContentSection): CatalogueRefs {
     case 'compare':
       refs.products.push(...section.settings.productIds);
       break;
+    case 'enquiry':
+      if (section.settings.productId) refs.products.push(section.settings.productId);
+      break;
   }
   return refs;
 }
@@ -487,7 +490,11 @@ export function showcaseForSections(
     if (section.type === 'collections' && section.settings.showDescription) descriptions = true;
     if (section.type === 'products') {
       for (const p of productsFor(showcase, section.settings)) keep.add(p.id);
-    } else if (section.type === 'specs' || section.type === 'compare') {
+    } else if (
+      section.type === 'specs' ||
+      section.type === 'compare' ||
+      section.type === 'enquiry'
+    ) {
       for (const id of sectionCatalogueRefs(section).products) keep.add(id);
     }
   }
