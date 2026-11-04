@@ -58,6 +58,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-047 | Database host | Confirmed | Neon PostgreSQL 18, free plan, through Cloudflare Hyperdrive (as built); Cloudflare D1 not used |
 | D-048 | Product sections and catalogue links | Confirmed (owner: "go ahead", 2026-11-04) | Four catalogue sections and links to products, categories and series; facts only from the published catalogue — see `docs/website-builder.md` |
 | D-049 | Public product, category and series pages | Confirmed (owner: "go ahead", 2026-11-04) | One static page per visible product, category and series, from the published catalogue only — see `docs/product-catalogue.md` |
+| D-050 | Catalogue redirects and public files | Confirmed (owner: "go ahead", 2026-11-04) | Old product, category and series addresses redirect; only files the site offers are public |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1161,8 +1162,27 @@ then the general product catalogue (Phase 3c, D-045).
   picture.
 - **Static.** Pages are built once per publish; a visit runs no database query. No script.
 - **Still to come** (rest of Phase 4): filters and search (Pagefind), enquiry buttons,
-  structured data, Apple-style page blocks and 3D. A product, category or series whose address
-  changes doesn't yet leave a redirect from its old address, as builder pages do; this is to
-  follow.
+  structured data, Apple-style page blocks and 3D. Redirects for changed addresses were
+  added by D-050.
+- **Cost:** none.
+
+## D-050 — Catalogue redirects and public files
+
+- **Status:** Confirmed — 2026-11-04 (owner: "go ahead" to the proposed follow-up)
+- **Redirects.** When Publish changes changes the address of a public product, category or
+  series, it records the old address on the catalogue document (at most 500, newest kept). The
+  site build turns each into a permanent redirect (301) to the item's current address, in every
+  language and with or without the final slash, so shared links keep working. A redirect is
+  dropped when another item of the same kind takes the old address, and none is written while
+  its item is hidden or removed.
+- **Public files.** Until now, publishing copied every PDF attached to a visible product or a
+  series to the public bucket, including certificates nobody had checked: never linked, but
+  reachable by anyone who had the exact address. Now Publish changes copies only the files the
+  site offers (D-049: ordinary documents of visible products and of series, and certificates
+  that are checked and valid), and takes back the public copy of any other published file, for
+  example when a product is hidden or a certificate's check is withdrawn. The private original
+  is kept, so publishing it again later restores it.
+- **Still to note:** a certificate that expires stays downloadable from its address until the
+  next Publish changes, though the next site build already leaves it off the pages.
 - **Cost:** none.
 

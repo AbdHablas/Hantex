@@ -20,7 +20,7 @@ const json = async <T>(response: Response) => (await response.json()) as T;
 const both = (en: string) => ({ ar: en ? `ع ${en}` : '', en });
 const base = `/api/sites/${SITE}/catalogue`;
 
-type Structure = Omit<Catalogue, 'version' | 'products'>;
+type Structure = Omit<Catalogue, 'version' | 'products' | 'redirects'>;
 interface Listing {
   structure: Structure;
   structureChanged: boolean;

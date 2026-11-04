@@ -20,6 +20,7 @@ import {
   catalogueSchema,
   fileIds,
   productSchema,
+  redirectPaths,
   showcaseOf,
   type Product,
   DEFAULT_LAYOUT,
@@ -518,6 +519,16 @@ if (builder) {
       return [`${oldPath.slice(0, -1)} ${newPath} 301`, `${oldPath} ${newPath} 301`];
     });
   });
+  // Old addresses of products, categories and series (D-050), to their current address.
+  for (const { from, to } of redirectPaths(
+    builder.showcase ?? showcaseOf(DEFAULT_CATALOGUE, new Map()),
+  )) {
+    for (const l of data.site.locales) {
+      const oldPath = withSlash(localizedPath(from, l, data.site.defaultLocale));
+      const newPath = withSlash(localizedPath(to, l, data.site.defaultLocale));
+      lines.push(`${oldPath.slice(0, -1)} ${newPath} 301`, `${oldPath} ${newPath} 301`);
+    }
+  }
   if (lines.length > 0) await writeFile(redirectsFile, `${[...new Set(lines)].join('\n')}\n`);
 }
 

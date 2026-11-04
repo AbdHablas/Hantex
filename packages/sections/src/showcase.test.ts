@@ -11,8 +11,10 @@ import {
   newPage,
   newProduct,
   newSection,
+  nextRedirects,
   productsFor,
   publicDocuments,
+  redirectPaths,
   sectionSchema,
   showcaseForSections,
   showcaseOf,
@@ -384,5 +386,30 @@ describe('documents on the websites', () => {
       },
     ]);
     expect(publicDocuments([verified], '2027-01-02')).toEqual([]);
+  });
+});
+
+describe('redirects for changed addresses (D-050)', () => {
+  it('records a changed address and drops one taken again', () => {
+    const { catalogue, products } = fixture();
+    const before = showcaseOf(catalogue, products);
+    const renamed = new Map(products);
+    renamed.set('prdone', { ...products.get('prdone')!, slug: 'one-new' });
+    const after = showcaseOf(catalogue, renamed);
+    const redirects = nextRedirects(before, after, []);
+    expect(redirects).toEqual([{ kind: 'product', from: 'one', to: 'prdone' }]);
+    expect(redirectPaths({ ...after, redirects })).toEqual([
+      { from: '/product/one', to: '/product/one-new' },
+    ]);
+    // Another product takes the old address: the page wins and the redirect goes.
+    const reused = new Map(renamed);
+    reused.set('prdtwo', { ...products.get('prdtwo')!, slug: 'one' });
+    expect(nextRedirects(after, showcaseOf(catalogue, reused), redirects)).toEqual([
+      { kind: 'product', from: 'two', to: 'prdtwo' },
+    ]);
+    // A hidden product's redirect leads nowhere, so none is written for the site.
+    const hidden = new Map(renamed);
+    hidden.set('prdone', { ...renamed.get('prdone')!, visible: false });
+    expect(redirectPaths({ ...showcaseOf(catalogue, hidden), redirects })).toEqual([]);
   });
 });

@@ -217,7 +217,7 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - home page;
   - [x] product, category and series pages from the published catalogue (D-049) — *done:
         photos, specifications, codes, downloads, checked certificates, breadcrumbs, sitemap;
-        still to come: filters, Apple-style blocks, redirects for changed addresses*;
+        old addresses redirect (D-050); still to come: filters, Apple-style blocks*;
   - category filters;
   - search (Pagefind);
   - enquiry forms.

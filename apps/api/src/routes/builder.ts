@@ -4,6 +4,8 @@ import {
   checkCatalogue,
   fileIds,
   isCatalogueIssue,
+  nextRedirects,
+  showcaseOf,
   checkSite,
   itemId,
   layoutSchema,
@@ -40,7 +42,7 @@ import {
 } from '../lib/documents';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { libraryIds, publishMedia } from '../lib/media-library';
-import { fileLibraryIds, publishFiles } from '../lib/site-files';
+import { fileLibraryIds, publishFiles, withdrawFiles } from '../lib/site-files';
 import { startRebuild } from '../lib/rebuild';
 import { draftContent, newRedirects, publishedContent, sameData } from '../lib/site-content';
 import { requireThemeFonts } from '../lib/fonts';
@@ -516,6 +518,21 @@ export const builderRoutes = new Hono<AppEnv>()
           }
           const issues = await catalogueIssues(v, tx);
           if (issues.length > 0) throw conflict('catalogue-issues', { issues });
+          // A product, category or series whose address changes leaves a redirect (D-050),
+          // stored on the catalogue document that is published with it.
+          const nextCatalogue = await draftCatalogue(tx, v.site.id);
+          const redirects = nextRedirects(
+            await catalogueShowcase(tx, v.site.id, false),
+            showcaseOf(nextCatalogue.catalogue, nextCatalogue.products),
+            nextCatalogue.catalogue.redirects,
+          );
+          if (!sameData(redirects, nextCatalogue.catalogue.redirects)) {
+            const data = { ...nextCatalogue.catalogue, redirects };
+            await saveDraft(tx, v.site.id, 'catalogue', data, v.access.userId);
+            const item = items.find((i) => i.kind === 'catalogue');
+            if (item) item.data = data;
+            else items.push({ kind: 'catalogue', key: '', data, allowed: true });
+          }
           // Hiding or removing a product, category or series must not break a page. Only the
           // catalogue's own effect on the pages is checked here: the rest was checked above, or
           // when the pages were published.
@@ -570,7 +587,11 @@ export const builderRoutes = new Hono<AppEnv>()
         const visible = [live.catalogue, [...live.products.values()].filter((p) => p.visible)];
         const stores = { private: v.deps.media(c.env), public: v.deps.publicMedia(c.env) };
         await publishMedia(v.db, stores, v.site, mediaIds(visible));
-        await publishFiles(v.db, stores, v.site, fileIds(visible));
+        // Only files the site offers go public: never an unchecked or expired certificate, nor a
+        // hidden product's documents; any such file published earlier is taken back (D-050).
+        const offered = fileIds(showcaseOf(live.catalogue, live.products));
+        await publishFiles(v.db, stores, v.site, offered);
+        await withdrawFiles(v.db, stores, v.site, offered);
       }
       const { job, result } = await startRebuild(c);
       await writeAudit(

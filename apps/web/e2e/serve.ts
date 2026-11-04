@@ -276,6 +276,8 @@ const catalogue: Catalogue = {
     },
   ],
   products: ['prdone', 'prdtwo', 'prdhidden'],
+  // The product's earlier address, as Publish changes records it (D-050).
+  redirects: [{ kind: 'product', from: 'old-one', to: 'prdone' }],
 };
 // A published PDF (D-045) offered as a datasheet and as a checked certificate; a second, unchecked
 // certificate must never appear on the site.

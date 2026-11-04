@@ -71,11 +71,14 @@ test('a saved section appears on every page that uses it', async ({ page }) => {
   }
 });
 
-test('a page’s old address leads to its new one', async ({ request }) => {
+test('a page’s or product’s old address leads to its new one', async ({ request }) => {
   for (const [from, to] of [
     ['/about', '/who-we-are/'],
     ['/about/', '/who-we-are/'],
     ['/en/about', '/en/who-we-are/'],
+    // A product's old address (D-050).
+    ['/product/old-one', '/product/one-gang/'],
+    ['/en/product/old-one/', '/en/product/one-gang/'],
   ]) {
     const response = await request.get(`${LIVE}${from}`, { maxRedirects: 0 });
     expect(response.status(), from).toBe(301);

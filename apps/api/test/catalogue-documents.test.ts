@@ -9,6 +9,9 @@ import { createHarness, type Harness } from './harness';
  */
 
 let h: Harness;
+/** The product and datasheet the tests below share, in order. */
+let productId: string;
+let fileId: string;
 let owner: string;
 let admin: string;
 let manager: string;
@@ -19,7 +22,7 @@ const json = async <T>(response: Response) => (await response.json()) as T;
 const both = (en: string) => ({ ar: en ? `ع ${en}` : '', en });
 const base = `/api/sites/${SITE}/catalogue`;
 
-type Structure = Omit<Catalogue, 'version' | 'products'>;
+type Structure = Omit<Catalogue, 'version' | 'products' | 'redirects'>;
 interface Listing {
   structure: Structure;
   products: { id: string; seriesId: string | null }[];
@@ -185,9 +188,6 @@ describe('files', () => {
 });
 
 describe('series and documents', () => {
-  let productId: string;
-  let fileId: string;
-
   it('refuses series with unknown finishes, and removing a series a product uses', async () => {
     const bad = await h.request('PUT', `${base}/structure`, {
       cookie: owner,
@@ -317,6 +317,45 @@ describe('series and documents', () => {
       200,
     );
     expect([...h.media.files.keys()].some((k) => k.includes(unused))).toBe(false);
+  });
+});
+
+describe('public files (D-050)', () => {
+  const publish = () =>
+    h.request('POST', `/api/sites/${SITE}/changes/publish`, { cookie: owner, body: {} });
+  const isPublic = (id: string) =>
+    [...h.publicMedia.files.keys()].includes(`sites/${SITE}/files/${id}.pdf`);
+
+  it('publishes a certificate only once checked, and takes files back when no longer offered', async () => {
+    const certFile = await uploaded();
+    const p = await product(productId);
+    const withCert: Product = {
+      ...p,
+      documents: [...p.documents, certificate(certFile, { id: 'cert000003' })],
+    };
+    expect((await saveProduct(productId, withCert)).status).toBe(200);
+    const first = await publish();
+    expect(first.status, await first.clone().text()).toBe(200);
+    // Unchecked: the file stays private, while the datasheet is public.
+    expect(isPublic(certFile)).toBe(false);
+    expect(isPublic(fileId)).toBe(true);
+
+    expect((await verify(productId, 'cert000003', true)).status).toBe(200);
+    const second = await publish();
+    expect(second.status, await second.clone().text()).toBe(200);
+    expect(isPublic(certFile)).toBe(true);
+
+    // Hidden: the product's own files are taken back, though they stay stored. The datasheet's
+    // file is also a checked certificate of the series, which still offers it.
+    expect(
+      (await saveProduct(productId, { ...(await product(productId)), visible: false })).status,
+    ).toBe(200);
+    const third = await publish();
+    expect(third.status, await third.clone().text()).toBe(200);
+    expect(isPublic(certFile)).toBe(false);
+    expect((await files()).find((f) => f.id === certFile)?.published).toBe(false);
+    expect([...h.media.files.keys()].some((k) => k.endsWith(`/files/${certFile}.pdf`))).toBe(true);
+    expect(isPublic(fileId)).toBe(true);
   });
 });
 

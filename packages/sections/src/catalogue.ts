@@ -210,6 +210,16 @@ export const seriesSchema = z.strictObject({
 export type Series = z.infer<typeof seriesSchema>;
 
 export const MAX_PRODUCTS = 5000;
+export const MAX_REDIRECTS = 500;
+
+export const catalogueRedirectSchema = z.strictObject({
+  kind: z.enum(['product', 'category', 'series']),
+  /** The old address. */
+  from: slugSchema,
+  /** What it led to; the redirect follows its current address. */
+  to: itemId,
+});
+export type CatalogueRedirect = z.infer<typeof catalogueRedirectSchema>;
 
 export const catalogueSchema = z.strictObject({
   version: z.literal(1),
@@ -221,6 +231,11 @@ export const catalogueSchema = z.strictObject({
   series: z.array(seriesSchema).max(200).default([]),
   /** Every product of the site, in display order. */
   products: z.array(itemId).max(MAX_PRODUCTS),
+  /**
+   * Old addresses of products, categories and series, recorded by Publish changes when an
+   * address changes (D-050), so shared links keep working. Never edited by hand.
+   */
+  redirects: z.array(catalogueRedirectSchema).max(MAX_REDIRECTS).default([]),
 });
 export type Catalogue = z.infer<typeof catalogueSchema>;
 
@@ -232,6 +247,7 @@ export const DEFAULT_CATALOGUE: Catalogue = {
   finishes: [],
   series: [],
   products: [],
+  redirects: [],
 };
 
 /** A product's value for one attribute; its kind must match the attribute's type. */

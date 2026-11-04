@@ -18,7 +18,7 @@ const json = async <T>(response: Response) => (await response.json()) as T;
 const both = (en: string) => ({ ar: en ? `ع ${en}` : '', en });
 const base = `/api/sites/${SITE}/catalogue`;
 
-const STRUCTURE: Omit<Catalogue, 'version' | 'products'> = {
+const STRUCTURE: Omit<Catalogue, 'version' | 'products' | 'redirects'> = {
   categories: [
     {
       id: 'switches01',

@@ -5,6 +5,8 @@ import {
   type Product,
   type Showcase,
 } from '@hantex/sections';
+import { documentVersions, sites } from '@hantex/db/worker';
+import { and, desc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHarness, type Harness } from './harness';
 
@@ -21,7 +23,7 @@ const json = async <T>(response: Response) => (await response.json()) as T;
 const both = (en: string) => ({ ar: `ع ${en}`, en });
 const catalogueBase = `/api/sites/${SITE}/catalogue`;
 
-type Structure = Omit<Catalogue, 'version' | 'products'>;
+type Structure = Omit<Catalogue, 'version' | 'products' | 'redirects'>;
 const STRUCTURE: Structure = {
   categories: [
     {
@@ -51,6 +53,8 @@ const STRUCTURE: Structure = {
   series: [],
 };
 
+const siteId = async () =>
+  (await h.db.select({ id: sites.id }).from(sites).where(eq(sites.key, SITE)))[0]?.id;
 const publish = () =>
   h.request('POST', `/api/sites/${SITE}/changes/publish`, { cookie: owner, body: {} });
 const getProduct = async (id: string) =>
@@ -201,5 +205,26 @@ describe('product sections', () => {
     expect(showcase.products.map((p) => p.id)).not.toContain(three);
     expect(showcase.categories.map((c) => c.id)).toEqual(['switches01']);
     expect(showcase.products.every((p) => p.documents.length === 0)).toBe(true);
+  });
+
+  it('leaves a redirect when a product address changes (D-050)', async () => {
+    const p = await getProduct(one);
+    expect((await saveProduct(one, { ...p, slug: 'one-renamed' })).status).toBe(200);
+    const published = await publish();
+    expect(published.status, await published.clone().text()).toBe(200);
+    const [row] = await h.db
+      .select({ data: documentVersions.data })
+      .from(documentVersions)
+      .where(
+        and(eq(documentVersions.kind, 'catalogue'), eq(documentVersions.siteId, (await siteId())!)),
+      )
+      .orderBy(desc(documentVersions.version))
+      .limit(1);
+    expect((row?.data as Catalogue).redirects).toEqual([{ kind: 'product', from: 'one', to: one }]);
+    // The draft keeps it too, so the catalogue shows no unpublished change.
+    const listing = await json<{ structureChanged: boolean }>(
+      await h.request('GET', catalogueBase, { cookie: owner }),
+    );
+    expect(listing.structureChanged).toBe(false);
   });
 });

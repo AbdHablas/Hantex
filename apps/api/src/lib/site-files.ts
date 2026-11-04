@@ -1,5 +1,5 @@
 import { mediaAssets, siteFiles, type Database } from '@hantex/db/worker';
-import { and, eq, inArray, isNull, sum } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull, sum } from 'drizzle-orm';
 import { copyFile, privateFileKey, publicFileKey } from './media-store';
 import type { Stores } from './media-library';
 
@@ -48,6 +48,39 @@ export async function publishFiles(
     await db.update(siteFiles).set({ publishedAt: new Date() }).where(eq(siteFiles.id, row.id));
   }
   return rows.length;
+}
+
+/**
+ * Takes back the public copy of every published file the website no longer offers (D-050): a
+ * hidden or removed product's documents, and certificates that aren't checked or have expired.
+ * The private original stays, so publishing it again later copies it back.
+ */
+export async function withdrawFiles(
+  db: Database,
+  stores: Stores,
+  site: { id: string; key: string },
+  offered: ReadonlySet<string>,
+): Promise<number> {
+  const rows = await db
+    .select({ id: siteFiles.id })
+    .from(siteFiles)
+    .where(and(eq(siteFiles.siteId, site.id), isNotNull(siteFiles.publishedAt)));
+  const withdrawn = rows.filter((row) => !offered.has(row.id));
+  if (withdrawn.length === 0) return 0;
+  await stores.public.delete(withdrawn.map((row) => publicFileKey(site.key, row.id)));
+  await db
+    .update(siteFiles)
+    .set({ publishedAt: null })
+    .where(
+      and(
+        eq(siteFiles.siteId, site.id),
+        inArray(
+          siteFiles.id,
+          withdrawn.map((row) => row.id),
+        ),
+      ),
+    );
+  return withdrawn.length;
 }
 
 /** Bytes a website stores: its images and its files share one quota. */

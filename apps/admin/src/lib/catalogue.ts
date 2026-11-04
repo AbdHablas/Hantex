@@ -9,7 +9,7 @@ import { useCurrentSite } from './session';
  * published with the rest of the site through Publish changes.
  */
 
-export type CatalogueStructure = Omit<Catalogue, 'version' | 'products'>;
+export type CatalogueStructure = Omit<Catalogue, 'version' | 'products' | 'redirects'>;
 
 export interface ProductSummary {
   id: string;

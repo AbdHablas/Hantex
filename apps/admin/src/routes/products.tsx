@@ -726,7 +726,7 @@ function ProductForm({ productId }: { productId: string }) {
     save.reset();
     setProduct(next);
   };
-  const catalogue = { ...structure, version: 1, products: [] } as Catalogue;
+  const catalogue: Catalogue = { ...structure, version: 1, products: [], redirects: [] };
   const attributes = productAttributes(catalogue, product);
   const groups = [
     ...structure.groups.map((g) => ({ id: g.id, name: bi(g.name) })),

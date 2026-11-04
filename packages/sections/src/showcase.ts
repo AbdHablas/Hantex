@@ -4,7 +4,9 @@ import {
   attributeGroupSchema,
   attributeSchema,
   attributeValueSchema,
+  catalogueRedirectSchema,
   certificateSchema,
+  MAX_REDIRECTS,
   finishSchema,
   isCertified,
   skuSchema,
@@ -12,6 +14,7 @@ import {
   type Attribute,
   type AttributeValue,
   type Catalogue,
+  type CatalogueRedirect,
   type DocumentRef,
   type Product,
 } from './catalogue';
@@ -108,6 +111,8 @@ export const showcaseSchema = z.strictObject({
   groups: z.array(attributeGroupSchema).max(30),
   attributes: z.array(attributeSchema).max(300),
   products: z.array(showcaseProductSchema).max(MAX_PRODUCTS),
+  /** Old catalogue addresses that lead to current ones (D-050). */
+  redirects: z.array(catalogueRedirectSchema).max(MAX_REDIRECTS),
 });
 export type Showcase = z.infer<typeof showcaseSchema>;
 
@@ -118,6 +123,7 @@ export const EMPTY_SHOWCASE: Showcase = {
   groups: [],
   attributes: [],
   products: [],
+  redirects: [],
 };
 
 /** Documents a website may offer: certificates only when checked and valid on `today`. */
@@ -219,6 +225,7 @@ export function showcaseOf(
     groups: catalogue.groups,
     attributes: catalogue.attributes,
     products: list,
+    redirects: catalogue.redirects,
   };
 }
 
@@ -511,6 +518,7 @@ export function showcaseForSections(
     groups: showcase.groups,
     attributes: showcase.attributes.filter((a) => used.has(a.id)),
     products,
+    redirects: [],
   };
 }
 
@@ -556,3 +564,52 @@ export const paragraphs = (text: string) =>
     .split(/\n\s*\n/)
     .map((p) => p.trim())
     .filter(Boolean);
+
+/* ---------------------------------------- Redirects ---------------------------------------- */
+
+/** The public items of each kind, by id, with their current address. */
+function addresses(showcase: Showcase) {
+  return {
+    product: new Map(showcase.products.map((p) => [p.id, p.slug])),
+    category: new Map(showcase.categories.map((c) => [c.id, c.slug])),
+    series: new Map(showcase.series.map((x) => [x.id, x.slug])),
+  };
+}
+
+/**
+ * The catalogue's redirects after publishing (D-050): the earlier ones, plus one for each public
+ * product, category or series whose address changes. A redirect is dropped when its old address
+ * is taken again by an item of the same kind, so a live page always wins. The newest are kept.
+ */
+export function nextRedirects(
+  before: Showcase,
+  after: Showcase,
+  existing: CatalogueRedirect[],
+): CatalogueRedirect[] {
+  const old = addresses(before);
+  const now = addresses(after);
+  const added: CatalogueRedirect[] = [];
+  for (const kind of ['product', 'category', 'series'] as const) {
+    for (const [id, slug] of old[kind]) {
+      const current = now[kind].get(id);
+      if (current !== undefined && current !== slug) added.push({ kind, from: slug, to: id });
+    }
+  }
+  const taken = (r: CatalogueRedirect) => [...now[r.kind].values()].includes(r.from);
+  const merged = [
+    ...existing.filter((r) => !added.some((a) => a.kind === r.kind && a.from === r.from)),
+    ...added,
+  ].filter((r) => !taken(r));
+  return merged.slice(-MAX_REDIRECTS);
+}
+
+/** Each redirect as old and new address (without language prefix), when its target is public. */
+export function redirectPaths(showcase: Showcase): { from: string; to: string }[] {
+  const now = addresses(showcase);
+  return showcase.redirects.flatMap((r) => {
+    const slug = now[r.kind].get(r.to);
+    return slug && slug !== r.from
+      ? [{ from: cataloguePath(r.kind, r.from), to: cataloguePath(r.kind, slug) }]
+      : [];
+  });
+}
