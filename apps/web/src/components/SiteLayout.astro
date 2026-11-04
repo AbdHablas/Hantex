@@ -2,7 +2,8 @@
 import type { Locale } from '@hantex/shared';
 import type { MenuItem } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
-import { hrefOf, pageHref, pick, type RenderContext } from '../builder';
+import { localizedPath } from '@hantex/sections';
+import { hrefOf, pageHref, pick, withSlash, type RenderContext } from '../builder';
 import { TEXT, dirOf } from '../i18n';
 import { SITE } from '../site-data';
 import Analytics from './Analytics.astro';
@@ -34,9 +35,11 @@ interface Props {
   /** A draft theme's stylesheet, inlined with a nonce (previews only). */
   themeCss?: { css: string; nonce: string };
   theme?: Theme;
+  /** Whether site search indexes this page's content (D-052); never for previews. */
+  indexed?: boolean;
 }
 
-const { ctx, title, description, noindex, share = null, hrefFor, themeCss, theme = SITE.theme } = Astro.props;
+const { ctx, title, description, noindex, share = null, hrefFor, themeCss, theme = SITE.theme, indexed = true } = Astro.props;
 const { locale, preview, settings } = ctx;
 const layout = ctx.content.layout;
 const t = TEXT[locale];
@@ -45,6 +48,8 @@ const siteName = site.name[locale] || site.name.ar || site.name.en;
 const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
 const here = hrefFor(locale);
 const homeHref = ctx.content.index.home ? pageHref(ctx, ctx.content.index.home) : here;
+// Site search (D-052): its page in this language.
+const searchHref = withSlash(localizedPath('/search', locale, ctx.defaultLocale));
 
 /** Menu items with somewhere to go (or with children that do), in this language. */
 const menu = (items: MenuItem[]) =>
@@ -151,6 +156,13 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
         }
         <div class="tools">
           {
+            !preview && (
+              <a class="tool" href={searchHref} aria-label={t.search.link} title={t.search.link}>
+                <Icon name="search" />
+              </a>
+            )
+          }
+          {
             layout.header.showLanguage &&
               otherLocales.map((l) => (
                 <a class="tool tool-text" href={hrefFor(l)} hreflang={l} lang={l}>
@@ -213,7 +225,7 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
       </div>
     </header>
 
-    <main id="main">
+    <main id="main" data-pagefind-body={indexed && !preview ? '' : undefined}>
       <slot />
     </main>
 

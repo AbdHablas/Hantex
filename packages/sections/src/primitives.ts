@@ -37,6 +37,9 @@ export const RESERVED_SLUGS = [
   'product',
   'category',
   'series',
+  // Site search (D-052) and its index files.
+  'search',
+  'pagefind',
 ] as const;
 
 /** Where a button or menu item leads. */

@@ -1,0 +1,41 @@
+---
+import { localizedPath } from '@hantex/sections';
+import type { Locale } from '@hantex/shared';
+import { withSlash, type RenderContext } from '../builder';
+import { TEXT } from '../i18n';
+import { SITE } from '../site-data';
+import SiteLayout from './SiteLayout.astro';
+
+/**
+ * Site search (D-052): Pagefind's index, built with the site, searched in the visitor's browser
+ * in the page's language. Nothing is sent to a server. Results are drawn as plain text.
+ */
+interface Props {
+  ctx: RenderContext;
+}
+const { ctx } = Astro.props;
+const t = TEXT[ctx.locale].search;
+const siteName = SITE.site.name[ctx.locale] || SITE.site.name.ar || SITE.site.name.en;
+const hrefFor = (l: Locale) => withSlash(localizedPath('/search', l, ctx.defaultLocale));
+---
+
+<SiteLayout ctx={ctx} title={`${t.title} — ${siteName}`} description="" noindex={true} hrefFor={hrefFor} indexed={false}>
+  <div class="bx container cx-page cx-search">
+    <h1>{t.title}</h1>
+    <form
+      role="search"
+      data-search
+      data-messages={JSON.stringify({ results: t.results, none: t.none, searching: t.searching, failed: t.failed })}
+    >
+      <label class="field-label" for="search-q">{t.label}</label>
+      <div class="cx-search-row">
+        <input id="search-q" name="q" type="search" placeholder={t.placeholder} autocomplete="off" maxlength="200" required />
+        <button class="btn btn-primary" type="submit">{t.submit}</button>
+      </div>
+    </form>
+    <noscript><p class="cx-lead">{t.noScript}</p></noscript>
+    <p class="cx-filter-status" role="status" aria-live="polite" data-search-status></p>
+    <ol class="cx-results" data-search-results></ol>
+  </div>
+</SiteLayout>
+<script src="../scripts/search.ts"></script>

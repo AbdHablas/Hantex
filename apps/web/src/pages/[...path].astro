@@ -5,6 +5,7 @@ import { CATALOGUE_PAGES, livePaths, renderContext, withSlash } from '../builder
 import CategoryPage from '../components/catalogue/CategoryPage.astro';
 import ProductPage from '../components/catalogue/ProductPage.astro';
 import SeriesPage from '../components/catalogue/SeriesPage.astro';
+import SearchPage from '../components/SearchPage.astro';
 import ComingSoonPage from '../components/ComingSoonPage.astro';
 import LivePage from '../components/LivePage.astro';
 import MaintenancePage from '../components/MaintenancePage.astro';
@@ -48,7 +49,12 @@ export function getStaticPaths() {
             })),
           )
         : [];
-    return [...pages, ...catalogue];
+    // Site search (D-052), one page per language.
+    const search = SITE.site.locales.map((locale) => ({
+      params: { path: param(withSlash(localizedPath('/search', locale, SITE.site.defaultLocale))) },
+      props: { locale, pageId: null, search: true },
+    }));
+    return [...pages, ...catalogue, ...search];
   }
   return SITE.site.locales.map((locale) => ({
     params: { path: locale === SITE.site.defaultLocale ? undefined : locale },
@@ -56,13 +62,14 @@ export function getStaticPaths() {
   }));
 }
 
-const { locale, pageId, catalogue } = Astro.props as {
+const { locale, pageId, catalogue, search } = Astro.props as {
   locale: Locale;
   pageId: string | null;
+  search?: boolean;
   catalogue?: { kind: 'product' | 'category' | 'series'; id: string };
 };
 const ctx =
-  (pageId || catalogue) && SITE.builder
+  (pageId || catalogue || search) && SITE.builder
     ? renderContext({
         locale,
         locales: SITE.site.locales,
@@ -76,7 +83,9 @@ const showcase = SITE.builder?.showcase;
 ---
 
 {
-  ctx && catalogue?.kind === 'product' ? (
+  ctx && search ? (
+    <SearchPage ctx={ctx} />
+  ) : ctx && catalogue?.kind === 'product' ? (
     <ProductPage ctx={ctx} product={showcase!.products.find((p) => p.id === catalogue.id)!} />
   ) : ctx && catalogue?.kind === 'category' ? (
     <CategoryPage ctx={ctx} category={showcase!.categories.find((c) => c.id === catalogue.id)!} />

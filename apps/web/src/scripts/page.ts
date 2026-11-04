@@ -283,6 +283,44 @@ for (const enquiry of document.querySelectorAll<HTMLFormElement>('form[data-enqu
   });
 }
 
+/*
+ * Category filters (D-052): any ticked value within a filter, every filter that has a tick.
+ * Products that don't match are hidden; the count is announced to screen readers.
+ */
+const filters = document.querySelector<HTMLFormElement>('form[data-filters]');
+const filterList = document.querySelector<HTMLElement>('[data-filter-list]');
+if (filters && filterList) {
+  filters.hidden = false;
+  const items = [...filterList.querySelectorAll<HTMLElement>(':scope > li')];
+  const status = filters.querySelector<HTMLElement>('[data-filter-status]');
+  const none = filters.querySelector<HTMLElement>('[data-filter-none]');
+  const total = items.length;
+  const apply = () => {
+    const chosen = [...filters.querySelectorAll<HTMLFieldSetElement>('[data-filter-group]')]
+      .map((group) =>
+        [...group.querySelectorAll<HTMLInputElement>('input:checked')].map((i) => i.value),
+      )
+      .filter((values) => values.length > 0);
+    let shown = 0;
+    for (const item of items) {
+      const tokens = new Set((item.dataset['filter'] ?? '').split(' '));
+      const match = chosen.every((values) => values.some((v) => tokens.has(v)));
+      item.hidden = !match;
+      if (match) shown++;
+    }
+    if (status) {
+      status.textContent = (filters.dataset['showing'] ?? '')
+        .replace('{n}', String(shown))
+        .replace('{total}', String(total));
+    }
+    if (none) none.hidden = shown > 0;
+  };
+  filters.addEventListener('change', apply);
+  // After the reset has cleared the boxes.
+  filters.addEventListener('reset', () => setTimeout(apply));
+  filters.addEventListener('submit', (event) => event.preventDefault());
+}
+
 /* Draft previews show one page: links to other addresses stay inside the dashboard's preview. */
 if (document.body.hasAttribute('data-preview')) {
   document.addEventListener('click', (event) => {

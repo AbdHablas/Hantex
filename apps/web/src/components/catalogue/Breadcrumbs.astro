@@ -14,7 +14,7 @@ const t = TEXT[ctx.locale];
 const home = ctx.content.index.home;
 ---
 
-<nav class="cx-crumbs" aria-label={t.breadcrumb}>
+<nav class="cx-crumbs" data-pagefind-ignore aria-label={t.breadcrumb}>
   <ol>
     {home && <li><a href={pageHref(ctx, home)}>{t.home}</a></li>}
     {trail.map((item) => <li>{item.href ? <a href={item.href}>{item.label}</a> : item.label}</li>)}

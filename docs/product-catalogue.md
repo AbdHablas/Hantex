@@ -101,8 +101,8 @@ team.
   meet WCAG AA. Arabic right-to-left comes first, with English alongside.
 - Pages are static: no database query when someone views a page (D-006).
   Filters and search run in the browser from indexes generated at build
-  time, so they cost nothing per visit. Search uses Pagefind (MIT licence),
-  and its Arabic support is to be checked.
+  time, so they cost nothing per visit. Search uses Pagefind (MIT licence);
+  its Arabic support was checked with Arabic test pages (D-052).
 - Structured data for search engines (schema.org `Product`) is generated
   only from facts that have been entered.
 

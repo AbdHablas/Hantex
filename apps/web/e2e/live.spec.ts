@@ -129,6 +129,8 @@ for (const width of [360, 768, 1024, 1440]) {
       '/en/product/one-gang/',
       '/en/category/switches/',
       '/series/alpha/',
+      '/search/',
+      '/en/search/',
     ]) {
       await page.goto(`${LIVE}${path}`);
       const overflow = await page.evaluate(
@@ -255,6 +257,69 @@ test('a product enquiry reaches the server and is refused without a passed secur
   expect(rows.rowCount).toBe(0);
 });
 
+test('category filters narrow the list, and clearing shows every product again (D-052)', async ({
+  page,
+}) => {
+  await page.goto(`${LIVE}/en/category/switches/`);
+  const filters = page.getByRole('form', { name: 'Filter products' });
+  await expect(filters).toBeVisible();
+  const products = page.getByRole('region', { name: 'Products', exact: true });
+  const names = products.locator('li:visible').getByRole('heading', { level: 3 });
+  await expect(names).toHaveText(['Test one-gang switch', 'Test two-gang switch']);
+  await filters.getByRole('group', { name: 'Gangs' }).getByLabel('2').check();
+  await expect(names).toHaveText(['Test two-gang switch']);
+  await expect(filters.getByRole('status')).toHaveText('Showing 1 of 2 products');
+  // Across filters, every one must match: no two-gang switch comes in black.
+  await filters.getByRole('group', { name: 'Finishes' }).getByLabel('Test black').check();
+  await expect(names).toHaveCount(0);
+  await expect(filters.getByText('No products match these choices.')).toBeVisible();
+  await filters.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(names).toHaveText(['Test one-gang switch', 'Test two-gang switch']);
+});
+
+test('site search finds products in English and Arabic, and nothing hidden (D-052)', async ({
+  page,
+}) => {
+  const cspErrors: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
+  });
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  await page.getByRole('link', { name: 'Search' }).click();
+  await expect(page).toHaveURL(`${LIVE}/en/search/`);
+  const search = page.getByRole('search');
+  await search.getByLabel('Search this website').fill('two-gang');
+  await search.getByRole('button', { name: 'Search' }).click();
+  const results = page.locator('[data-search-results]');
+  await expect(results.getByRole('link', { name: 'Test two-gang switch' })).toHaveAttribute(
+    'href',
+    '/en/product/two-gang/',
+  );
+  await expect(page.getByRole('status').filter({ hasText: 'Results' })).toBeVisible();
+  // A shared address searches straight away; hidden products were never indexed.
+  await page.goto(`${LIVE}/en/search/?q=Hidden`);
+  await expect(page.getByText('No results for “Hidden”.')).toBeVisible();
+  // Arabic searches the Arabic pages.
+  await page.goto(`${LIVE}/search/?q=${encodeURIComponent('مزدوج')}`);
+  await expect(
+    page.locator('[data-search-results]').getByRole('link', { name: 'مفتاح تجريبي مزدوج' }),
+  ).toBeVisible();
+  expect(cspErrors).toEqual([]);
+});
+
+test('only search may compile WebAssembly (D-052)', async ({ request }) => {
+  const csp = async (path: string) =>
+    (await request.get(`${LIVE}${path}`)).headers()['content-security-policy'] ?? '';
+  for (const path of ['/search/', '/en/search/', '/pagefind/pagefind.js']) {
+    expect(await csp(path), path).toContain("'wasm-unsafe-eval'");
+  }
+  for (const path of ['/', '/en/product/one-gang/']) {
+    const policy = await csp(path);
+    expect(policy, path).toContain("script-src 'self'");
+    expect(policy, path).not.toContain('wasm-unsafe-eval');
+  }
+});
+
 test('category and series pages list their visible products', async ({ page }) => {
   await page.goto(`${LIVE}/en/category/switches/`);
   const products = page.getByRole('region', { name: 'Products', exact: true });
@@ -314,6 +379,8 @@ for (const [path, scheme] of [
   ['/en/product/one-gang/', 'dark'],
   ['/en/category/switches/', 'light'],
   ['/series/alpha/', 'dark'],
+  ['/en/search/', 'light'],
+  ['/search/', 'dark'],
 ] as const) {
   test(`no serious accessibility problems (${path}, ${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });

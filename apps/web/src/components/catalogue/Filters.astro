@@ -1,0 +1,70 @@
+---
+import { filterGroups, formatValue, type ShowcaseProduct } from '@hantex/sections';
+import { pick, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+
+/**
+ * Category filters (D-052): the attributes marked filterable, and the finishes, with how many
+ * products have each value. Within one filter any ticked value matches; across filters all must.
+ * The form is hidden until src/scripts/page.ts runs, so without JavaScript every product shows.
+ */
+interface Props {
+  ctx: RenderContext;
+  products: ShowcaseProduct[];
+}
+const { ctx, products } = Astro.props;
+const t = TEXT[ctx.locale];
+const showcase = ctx.content.showcase!;
+const words = { yes: t.yes, no: t.no };
+const groups = filterGroups(showcase, products).map((g) => ({
+  id: g.id,
+  name: g.attribute ? pick(ctx, g.attribute.name) : t.finishes,
+  options: g.options.map((o) => ({
+    token: o.token,
+    count: o.count,
+    label: g.attribute
+      ? formatValue(g.attribute, o.value ?? undefined, ctx.locale, words)
+      : pick(ctx, showcase.finishes.find((f) => f.id === o.finishId)?.name ?? { ar: '', en: '' }),
+  })),
+}));
+const total = products.length;
+---
+
+{
+  groups.length > 0 && (
+    <form
+      class="cx-filters"
+      data-pagefind-ignore
+      data-filters
+      data-total={total}
+      data-showing={t.filters.showing}
+      aria-label={t.filters.title}
+      hidden
+    >
+      <h2 class="cx-label">{t.filters.title}</h2>
+      <div class="cx-filter-groups">
+        {groups.map((g) => (
+          <fieldset data-filter-group>
+            <legend>{g.name}</legend>
+            {g.options.map((o) => (
+              <label>
+                <input type="checkbox" name={g.id} value={o.token} />
+                <span>{o.label}</span>
+                <span class="cx-count" aria-hidden="true">
+                  {o.count}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        ))}
+      </div>
+      <div class="cx-filter-bar">
+        <p class="cx-filter-status" role="status" aria-live="polite" data-filter-status>
+          {t.filters.showing.replace('{n}', String(total)).replace('{total}', String(total))}
+        </p>
+        <button type="reset" class="btn btn-secondary btn-small">{t.filters.clear}</button>
+      </div>
+      <p class="cx-filter-none" data-filter-none hidden>{t.filters.none}</p>
+    </form>
+  )
+}

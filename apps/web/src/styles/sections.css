@@ -1194,3 +1194,115 @@
 .cx-actions {
   margin-top: 1.25rem;
 }
+
+/* Category filters (D-052) */
+.cx-filters {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+}
+.cx-filters[hidden],
+[data-filter-list] > li[hidden] {
+  display: none;
+}
+.cx-filter-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+}
+.cx-filters fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cx-filters legend {
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.cx-filters label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 2rem;
+}
+.cx-filters input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--s-link);
+}
+.cx-count {
+  color: var(--s-muted);
+  font-size: 0.8125rem;
+}
+.cx-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+.cx-filter-status {
+  margin: 0;
+  color: var(--s-muted);
+}
+.cx-filter-none {
+  margin: 1rem 0 0;
+  font-weight: 600;
+}
+
+/* Site search (D-052) */
+.cx-search form {
+  max-width: 40rem;
+}
+.cx-search-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.cx-search-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius);
+  background: var(--hx-color-background);
+  color: var(--hx-color-text);
+  font: inherit;
+}
+.cx-search-row input:focus-visible {
+  outline: 2px solid var(--s-link);
+  outline-offset: 1px;
+}
+.cx-search [data-search-status] {
+  margin: 1.5rem 0 1rem;
+}
+.cx-results {
+  display: grid;
+  gap: 1rem;
+  max-width: 46rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cx-results li {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--s-border);
+}
+.cx-results h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+}
+.cx-results p {
+  margin: 0;
+  color: var(--s-muted);
+  overflow-wrap: anywhere;
+}
+.cx-results mark {
+  background: color-mix(in srgb, var(--s-link) 22%, transparent);
+  color: inherit;
+}

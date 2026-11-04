@@ -620,3 +620,93 @@ export function redirectPaths(showcase: Showcase): { from: string; to: string }[
       : [];
   });
 }
+
+/* ---------------------------------------- Category filters ---------------------------------------- */
+
+/** One filter on a category page: an attribute marked filterable, or the finishes. */
+export interface FilterGroup {
+  /** `a:<attribute id>` or `finish`. */
+  id: string;
+  /** The attribute, or null for finishes. */
+  attribute: Attribute | null;
+  options: {
+    token: string;
+    value: AttributeValue | null;
+    finishId: string | null;
+    count: number;
+  }[];
+}
+
+/** A value's filter token, e.g. `a:attgangs=2`; text values aren't filtered. */
+function valueToken(attributeId: string, value: AttributeValue): string | null {
+  if ('choice' in value) return `a:${attributeId}=${value.choice}`;
+  if ('yes' in value) return `a:${attributeId}=${value.yes ? 'yes' : 'no'}`;
+  if ('number' in value) return `a:${attributeId}=${value.number}`;
+  return null;
+}
+
+/** The filter tokens a product matches (D-052). */
+export function productFilterTokens(showcase: Showcase, product: ShowcaseProduct): string[] {
+  const filterable = new Set(showcase.attributes.filter((a) => a.filterable).map((a) => a.id));
+  const tokens: string[] = [];
+  for (const [id, value] of Object.entries(product.values)) {
+    if (!filterable.has(id)) continue;
+    const token = valueToken(id, value);
+    if (token) tokens.push(token);
+  }
+  for (const finishId of product.finishIds) tokens.push(`finish=${finishId}`);
+  return tokens;
+}
+
+/**
+ * The filters worth offering for a list of products (D-052): each filterable choice, yes/no or
+ * number attribute, and the finishes, when the products have at least two different values.
+ * Options follow the attribute's choice order, numbers ascending, and the catalogue's finishes.
+ */
+export function filterGroups(showcase: Showcase, products: ShowcaseProduct[]): FilterGroup[] {
+  const groups: FilterGroup[] = [];
+  for (const attribute of showcase.attributes) {
+    if (!attribute.filterable || attribute.type === 'text') continue;
+    const counts = new Map<string, { value: AttributeValue; count: number }>();
+    for (const product of products) {
+      const value = product.values[attribute.id];
+      const token = value ? valueToken(attribute.id, value) : null;
+      if (!value || !token) continue;
+      const entry = counts.get(token) ?? { value, count: 0 };
+      entry.count++;
+      counts.set(token, entry);
+    }
+    if (counts.size < 2) continue;
+    const order = (value: AttributeValue) =>
+      'choice' in value
+        ? attribute.choices.findIndex((c) => c.id === value.choice)
+        : 'number' in value
+          ? value.number
+          : 'yes' in value
+            ? Number(!value.yes)
+            : 0;
+    const options = [...counts]
+      .map(([token, { value, count }]) => ({ token, value, finishId: null, count }))
+      .sort((a, b) => order(a.value) - order(b.value));
+    groups.push({ id: `a:${attribute.id}`, attribute, options });
+  }
+  const finishCounts = new Map<string, number>();
+  for (const product of products) {
+    for (const id of product.finishIds) finishCounts.set(id, (finishCounts.get(id) ?? 0) + 1);
+  }
+  if (finishCounts.size >= 2) {
+    groups.push({
+      id: 'finish',
+      attribute: null,
+      options: showcase.finishes
+        .filter((f) => finishCounts.has(f.id))
+        .map((f) => ({
+          token: `finish=${f.id}`,
+          value: null,
+          finishId: f.id,
+          count: finishCounts.get(f.id)!,
+        })),
+    });
+  }
+  return groups;
+}

@@ -222,8 +222,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] product, category and series pages from the published catalogue (D-049) — *done:
         photos, specifications, codes, downloads, checked certificates, breadcrumbs, sitemap;
         old addresses redirect (D-050); still to come: filters, Apple-style blocks*;
-  - category filters;
-  - search (Pagefind);
+  - [x] category filters — *done (D-052): filterable attributes and finishes, in the browser*;
+  - [x] search (Pagefind) — *done (D-052): a search page per language, Arabic checked*;
   - enquiry forms.
 - [ ] 3D on product pages: viewer with poster fallback, finish variants, and "view on your wall" for true-scale models (D-029)
 - [ ] 3D Product Studio, stage 2:

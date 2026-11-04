@@ -6,12 +6,14 @@ import {
   collectionsFor,
   compareGroups,
   compareProducts,
+  filterGroups,
   formatValue,
   linkSchema,
   newPage,
   newProduct,
   newSection,
   nextRedirects,
+  productFilterTokens,
   productsFor,
   publicDocuments,
   redirectPaths,
@@ -411,5 +413,38 @@ describe('redirects for changed addresses (D-050)', () => {
     const hidden = new Map(renamed);
     hidden.set('prdone', { ...renamed.get('prdone')!, visible: false });
     expect(redirectPaths({ ...showcaseOf(catalogue, hidden), redirects })).toEqual([]);
+  });
+});
+
+describe('category filters (D-052)', () => {
+  it('offers filterable attributes with at least two values, and finishes', () => {
+    const { catalogue, products } = fixture();
+    const withFinish = new Map(products);
+    withFinish.set('prdtwo', {
+      ...products.get('prdtwo')!,
+      variants: [{ id: 'vartwo1', sku: '', finishId: 'fnblack', name: T(''), images: [] }],
+    });
+    const showcase = showcaseOf(
+      {
+        ...catalogue,
+        finishes: [
+          ...catalogue.finishes,
+          { id: 'fnblack', name: T('Black'), swatch: '#000000', material: 'plastic', image: null },
+        ],
+      },
+      withFinish,
+    );
+    const groups = filterGroups(showcase, showcase.products);
+    // Gangs (filterable, 1 and 2) and the finishes; USB is not filterable, current not either.
+    expect(groups.map((g) => g.id)).toEqual(['a:attgangs', 'finish']);
+    expect(groups[0]!.options.map((o) => [o.token, o.count])).toEqual([
+      ['a:attgangs=1', 1],
+      ['a:attgangs=2', 1],
+    ]);
+    expect(groups[1]!.options.map((o) => o.finishId)).toEqual(['fnwhite', 'fnblack']);
+    const one = showcase.products.find((p) => p.id === 'prdone')!;
+    expect(productFilterTokens(showcase, one)).toEqual(['a:attgangs=1', 'finish=fnwhite']);
+    // One value only: nothing to choose between.
+    expect(filterGroups(showcase, [one])).toEqual([]);
   });
 });

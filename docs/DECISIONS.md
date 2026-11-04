@@ -60,6 +60,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-049 | Public product, category and series pages | Confirmed (owner: "go ahead", 2026-11-04) | One static page per visible product, category and series, from the published catalogue only — see `docs/product-catalogue.md` |
 | D-050 | Catalogue redirects and public files | Confirmed (owner: "go ahead", 2026-11-04) | Old product, category and series addresses redirect; only files the site offers are public |
 | D-051 | Enquiries and quotation requests | Confirmed (owner: "go ahead", 2026-11-04) | Product-page and section forms, stored per site through the insert-only public user; answered from the dashboard |
+| D-052 | Category filters and site search | Confirmed (owner: "go ahead", 2026-11-04) | Filters in the browser on category pages; Pagefind 1.6.0 search per language; WebAssembly allowed on search only |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1162,7 +1163,8 @@ then the general product catalogue (Phase 3c, D-045).
   categories. The pages are listed in the sitemap. A product's first photo is its sharing
   picture.
 - **Static.** Pages are built once per publish; a visit runs no database query. No script.
-- **Still to come** (rest of Phase 4): filters and search (Pagefind), enquiry buttons,
+- **Still to come** (rest of Phase 4): filters and search (Pagefind, done in D-052), enquiry
+  buttons (done in D-051),
   structured data, Apple-style page blocks and 3D. Redirects for changed addresses were
   added by D-050.
 - **Cost:** none.
@@ -1219,4 +1221,28 @@ then the general product catalogue (Phase 3c, D-045).
   in each site's Worker; to be decided at deployment), and automatic deletion after the
   retention period.
 - **Cost:** none.
+
+## D-052 — Category filters and site search
+
+- **Status:** Confirmed — 2026-11-04 (owner: "go ahead")
+- **Filters:** category pages offer a filter for each attribute marked *filterable* (choice,
+  yes/no and number attributes; text isn't filtered) and for finishes, whenever the category's
+  products have at least two different values, with how many products have each. Any ticked
+  value within a filter matches; every filter with a tick must match. The products are filtered
+  in the browser, with the count announced to screen readers; without JavaScript the filters
+  stay hidden and every product shows.
+- **Search:** each live website has a search page in each language (`/search/`, `/en/search/`)
+  and a search button in the header. Pagefind (MIT), version 1.6.0, the latest when added,
+  indexes the built pages after each build (`apps/web/scripts/search-index.ts`): the builder's
+  pages and the product, category and series pages, never previews, the Coming Soon page, forms,
+  filters or breadcrumbs. Each language has its own index and word stemming; Arabic search was
+  checked with Arabic test pages. Searching happens in the visitor's browser: nothing is sent to
+  a server and nothing costs anything per search. A search address can be shared (`?q=…`).
+  Results are drawn as plain text with highlighted words, and only links on the site itself.
+- **Security policy:** Pagefind compiles WebAssembly, which the sites' policy didn't allow. Only
+  the search pages and Pagefind's own files now allow it (`'wasm-unsafe-eval'`, which permits
+  WebAssembly only, not JavaScript `eval`); every other page keeps the same policy. A test keeps
+  the policies in step and checks the exception stays this narrow.
+- **Addresses:** `search` and `pagefind` are reserved, so no page can take them.
+- **Cost:** none. The index adds a few small files to each website's build.
 

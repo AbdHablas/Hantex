@@ -15,8 +15,10 @@ interface Props {
   layout?: 'grid' | 'carousel';
   showSummary?: boolean;
   showFinishes?: boolean;
+  /** Filter tokens for each product, for the category page's filters (D-052). */
+  tokens?: (product: ShowcaseProduct) => string[];
 }
-const { products, ctx, columns, layout = 'grid', showSummary = true, showFinishes = true } = Astro.props;
+const { products, ctx, columns, layout = 'grid', showSummary = true, showFinishes = true, tokens } = Astro.props;
 const t = TEXT[ctx.locale];
 const carousel = layout === 'carousel';
 const sizes = carousel
@@ -37,9 +39,9 @@ const sizes = carousel
         </ul>
       </div>
     ) : (
-      <ul class:list={['bx-grid', `cols-${columns}`]}>
+      <ul class:list={['bx-grid', `cols-${columns}`]} data-filter-list={tokens ? '' : undefined}>
         {products.map((product) => (
-          <li>
+          <li data-filter={tokens ? tokens(product).join(' ') : undefined}>
             <ProductCard product={product} ctx={ctx} sizes={sizes} showSummary={showSummary} showFinishes={showFinishes} />
           </li>
         ))}

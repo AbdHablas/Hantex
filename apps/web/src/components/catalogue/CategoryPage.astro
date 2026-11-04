@@ -1,5 +1,5 @@
 ---
-import { categoryProducts, categoryTrail, cataloguePath, localizedPath, type Showcase } from '@hantex/sections';
+import { categoryProducts, categoryTrail, productFilterTokens, cataloguePath, localizedPath, type Showcase } from '@hantex/sections';
 import type { Locale } from '@hantex/shared';
 import { catalogueHref, pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
 import { TEXT } from '../../i18n';
@@ -9,6 +9,7 @@ import Picture from '../sections/Picture.astro';
 import ProductGrid from '../sections/ProductGrid.astro';
 import SiteLayout from '../SiteLayout.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
+import Filters from './Filters.astro';
 
 /**
  * A category's page (D-048): its name, description and picture, its sub-categories, and every
@@ -75,7 +76,8 @@ const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('category',
       products.length > 0 && (
         <section class="cx-block" aria-labelledby="products">
           <h2 class="bx-title" id="products">{t.products}</h2>
-          <ProductGrid products={products} ctx={ctx} columns={4} />
+          <Filters ctx={ctx} products={products} />
+          <ProductGrid products={products} ctx={ctx} columns={4} tokens={(p) => productFilterTokens(showcase, p)} />
         </section>
       )
     }
