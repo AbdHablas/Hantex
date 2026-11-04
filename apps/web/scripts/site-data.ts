@@ -15,7 +15,10 @@ import { FIRST_SITE } from '@hantex/db/worker';
 import {
   DEFAULT_CATALOGUE,
   catalogueIdsOf,
+  cataloguePages,
+  cataloguePath,
   catalogueSchema,
+  fileIds,
   productSchema,
   showcaseOf,
   type Product,
@@ -135,6 +138,7 @@ async function fromDatabase(url: string): Promise<SiteData> {
     if (builder) {
       builder.showcase = await publishedShowcase(client, site.id);
       builder.media = await publishedMedia(client, site.id, builder);
+      builder.files = await publishedFiles(client, site.id, builder);
     }
     return {
       source: 'database',
@@ -206,6 +210,22 @@ async function publishedShowcase(client: pg.Client, siteId: string) {
     }
   }
   return showcaseOf(catalogue, products);
+}
+
+/**
+ * The published files (PDF) the catalogue offers, with their size. A document whose file isn't
+ * published is left off the pages rather than linked to a missing download.
+ */
+async function publishedFiles(client: pg.Client, siteId: string, builder: BuilderContent) {
+  const ids = [...fileIds(builder.showcase)];
+  if (ids.length === 0) return {};
+  const rows = (
+    await client.query<{ id: string; bytes: number }>(
+      'select id, bytes from site_files where site_id = $1 and id = any($2::uuid[]) and published_at is not null',
+      [siteId, ids],
+    )
+  ).rows;
+  return Object.fromEntries(rows.map((r) => [r.id, { bytes: r.bytes }]));
 }
 
 /**
@@ -431,6 +451,19 @@ const sitemapPages: Record<string, string>[] = builder
   ? builder.index.order
       .filter((id) => builder.pages[id]?.visible && !builder.pages[id]?.seo.noindex)
       .map((id) => Object.fromEntries(data.site.locales.map((l) => [l, builderPath(id, l)])))
+      .concat(
+        // Catalogue pages (D-048): each visible product, each category and each series.
+        cataloguePages(builder.showcase ?? showcaseOf(DEFAULT_CATALOGUE, new Map())).map((page) =>
+          Object.fromEntries(
+            data.site.locales.map((l) => [
+              l,
+              withSlash(
+                localizedPath(cataloguePath(page.kind, page.slug), l, data.site.defaultLocale),
+              ),
+            ]),
+          ),
+        ),
+      )
   : [
       Object.fromEntries(
         data.site.locales.map((l) => [l, l === data.site.defaultLocale ? '/' : `/${l}/`]),

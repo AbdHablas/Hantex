@@ -184,8 +184,8 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 - [x] Product sections: grids, featured collections, carousels,
       specifications, comparison tables; menu links to categories and products
       — *done (D-048): Products, Categories and series, Specifications and Comparison table
-      sections; links to products, categories and series. Catalogue links lead nowhere until
-      the public product pages are built (Phase 4).*
+      sections; links to products, categories and series, which lead to the catalogue pages
+      (D-049).*
 - [ ] Enquiries and quotation requests per site
 - [x] Launch announcement: bilingual email through Resend with unsubscribe links; WhatsApp export (D-040)
       — *Sign-ups page: write once, send in chunks within ANNOUNCEMENT_DAILY_LIMIT,
@@ -215,8 +215,10 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 
 - [ ] *Product showcase* template:
   - home page;
-  - category pages with filters;
-  - series and product pages built from Apple-style blocks;
+  - [x] product, category and series pages from the published catalogue (D-049) — *done:
+        photos, specifications, codes, downloads, checked certificates, breadcrumbs, sitemap;
+        still to come: filters, Apple-style blocks, redirects for changed addresses*;
+  - category filters;
   - search (Pagefind);
   - enquiry forms.
 - [ ] 3D on product pages: viewer with poster fallback, finish variants, and "view on your wall" for true-scale models (D-029)

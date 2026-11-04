@@ -15,6 +15,7 @@ import {
   fonts,
   mediaAssets,
   runMigrations,
+  siteFiles,
   sites,
   syncStandardRoles,
 } from '@hantex/db';
@@ -276,6 +277,17 @@ const catalogue: Catalogue = {
   ],
   products: ['prdone', 'prdtwo', 'prdhidden'],
 };
+// A published PDF (D-045) offered as a datasheet and as a checked certificate; a second, unchecked
+// certificate must never appear on the site.
+const FILE_ID = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n';
+await db.insert(siteFiles).values({
+  id: FILE_ID,
+  siteId: liveId,
+  name: 'datasheet.pdf',
+  bytes: PDF.length,
+  publishedAt: new Date(),
+});
 const product = (name: Bilingual, slug: string, extra: Partial<Product>): Product => ({
   ...newProduct(name, slug, 'catswitch'),
   visible: true,
@@ -290,6 +302,41 @@ const products: Record<string, Product> = {
     variants: [
       { id: 'varwhite', sku: 'TST-1W', finishId: 'fnwhite', name: T('', ''), images: [] },
       { id: 'varblack', sku: 'TST-1B', finishId: 'fnblack', name: T('', ''), images: [] },
+    ],
+    description: T(
+      'First test paragraph.\n\nSecond test paragraph.',
+      'الفقرة التجريبية الأولى.\n\nالفقرة التجريبية الثانية.',
+    ),
+    documents: [
+      {
+        id: 'docdata01',
+        fileId: FILE_ID,
+        type: 'datasheet',
+        title: T('Test datasheet', 'نشرة تجريبية'),
+        certificate: null,
+        verified: null,
+      },
+      {
+        id: 'doccert01',
+        fileId: FILE_ID,
+        type: 'certificate',
+        title: T('Checked certificate', 'شهادة مدققة'),
+        certificate: { name: 'Test mark', number: 'TM-001', issuer: 'Test lab', validUntil: null },
+        verified: { by: 'test-owner', at: '2026-11-01T00:00:00.000Z' },
+      },
+      {
+        id: 'doccert02',
+        fileId: FILE_ID,
+        type: 'certificate',
+        title: T('Unchecked certificate', 'شهادة غير مدققة'),
+        certificate: {
+          name: 'Unchecked mark',
+          number: 'UM-1',
+          issuer: 'Other lab',
+          validUntil: null,
+        },
+        verified: null,
+      },
     ],
   }),
   prdtwo: product(T('Test two-gang switch', 'مفتاح تجريبي مزدوج'), 'two-gang', {
@@ -321,7 +368,7 @@ const range: Page = {
 const RANGE_ID = 'pgrange01';
 content.pages[RANGE_ID] = range;
 content.index.order.push(RANGE_ID);
-// Catalogue pages aren't built yet, so this menu item is left out rather than lead nowhere.
+// A header menu item leading to a category page (D-048).
 content.menus.header.push({
   id: 'mncat001',
   label: T('Switch catalogue', 'كتالوج المفاتيح'),
@@ -439,6 +486,29 @@ for (const width of IMAGE_WIDTHS) {
 const cairo = join(
   dirname(createRequire(import.meta.url).resolve('@fontsource/cairo/package.json')),
   'files',
+);
+const pdf = join(dirname(webp), 'datasheet.pdf');
+await writeFile(pdf, PDF);
+execFileSync(
+  'pnpm',
+  [
+    'exec',
+    'wrangler',
+    'r2',
+    'object',
+    'put',
+    `hantex-media-public/sites/e2e-live/files/${FILE_ID}.pdf`,
+    '--file',
+    pdf,
+    '--content-type',
+    'application/pdf',
+    '--local',
+    '--persist-to',
+    '.e2e/live/state',
+    '--config',
+    '.e2e/live/server/wrangler.json',
+  ],
+  { stdio: 'inherit', env: { ...env, WRANGLER_SEND_METRICS: 'false' } },
 );
 for (const weight of FONT_WEIGHTS) {
   execFileSync(

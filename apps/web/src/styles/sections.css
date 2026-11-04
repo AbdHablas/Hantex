@@ -925,3 +925,190 @@
   color: var(--s-muted);
   font-style: italic;
 }
+
+/* Catalogue pages (D-048): product, category and series. */
+.cx-page {
+  padding-block: 1.5rem 4rem;
+}
+.cx-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  color: var(--s-muted);
+  font-size: 0.875rem;
+}
+.cx-crumbs li:not(:last-child)::after {
+  content: '/';
+  margin-inline-start: 0.5rem;
+  color: var(--s-border);
+}
+.cx-crumbs a {
+  color: inherit;
+}
+.cx-crumbs [aria-current] {
+  color: var(--s-fg);
+}
+.cx-page h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.cx-lead {
+  margin: 0 0 1rem;
+  color: var(--s-muted);
+  font-size: 1.125rem;
+}
+.cx-eyebrow {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+  color: var(--s-link);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cx-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+}
+.cx-block {
+  margin-top: 3rem;
+}
+.cx-text {
+  max-width: 46rem;
+  margin-top: 2.5rem;
+}
+.cx-text p {
+  margin: 0 0 1rem;
+  white-space: pre-line;
+}
+
+.cx-product {
+  display: grid;
+  gap: 2rem;
+}
+@media (min-width: 64rem) {
+  .cx-product {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.cx-photos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cx-photos li:first-child {
+  grid-column: 1 / -1;
+}
+.cx-photos .bx-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: color-mix(in srgb, var(--s-fg) 4%, transparent);
+}
+.cx-blank {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+}
+.cx-finishes ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cx-finishes li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.cx-finishes {
+  margin-top: 1.5rem;
+}
+
+.cx-intro {
+  display: grid;
+  gap: 1.5rem;
+}
+@media (min-width: 64rem) {
+  .cx-intro.has-picture {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+    align-items: center;
+  }
+}
+.cx-intro-img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--hx-radius-large);
+}
+
+.cx-downloads,
+.cx-certs {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 46rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cx-downloads a {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+  color: var(--s-fg);
+  text-decoration: none;
+}
+.cx-downloads a:hover {
+  border-color: var(--s-link);
+}
+.cx-downloads .icon {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--s-link);
+}
+.cx-download-title {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cx-download-meta {
+  display: block;
+  color: var(--s-muted);
+  font-size: 0.875rem;
+}
+.cx-certs li {
+  padding: 1rem;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: var(--s-card);
+}
+.cx-certs dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+}
+.cx-certs dt {
+  color: var(--s-muted);
+}
+.cx-certs dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

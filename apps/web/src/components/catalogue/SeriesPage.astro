@@ -1,0 +1,80 @@
+---
+import { cataloguePath, localizedPath, paragraphs, type Showcase } from '@hantex/sections';
+import type { Locale } from '@hantex/shared';
+import { pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import { SITE } from '../../site-data';
+import Picture from '../sections/Picture.astro';
+import ProductGrid from '../sections/ProductGrid.astro';
+import SiteLayout from '../SiteLayout.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Downloads from './Downloads.astro';
+
+/**
+ * A series' showcase page (D-048): its name, description and picture, the finishes it comes in,
+ * its visible products, and its downloads and checked certificates.
+ */
+interface Props {
+  ctx: RenderContext;
+  series: Showcase['series'][number];
+}
+const { ctx, series } = Astro.props;
+const t = TEXT[ctx.locale];
+const showcase = ctx.content.showcase!;
+const site = SITE.site;
+const siteName = site.name[ctx.locale] || site.name.ar || site.name.en;
+const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+const name = pick(ctx, series.name);
+const description = paragraphs(pick(ctx, series.description));
+const picture = pictureOf(ctx, series.image);
+const finishes = series.finishIds.flatMap((id) => showcase.finishes.find((f) => f.id === id) ?? []);
+const products = showcase.products.filter((p) => p.seriesId === series.id);
+const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('series', series.slug), l, ctx.defaultLocale));
+---
+
+<SiteLayout
+  ctx={ctx}
+  title={`${name} — ${siteName}`}
+  description={description[0] ?? ''}
+  noindex={ctx.preview}
+  share={shareOf(ctx, series.image, origin)}
+  hrefFor={hrefFor}
+>
+  <div class="bx container cx-page">
+    <Breadcrumbs ctx={ctx} trail={[]} current={name} />
+    <header class:list={['cx-intro', { 'has-picture': picture }]}>
+      <div>
+        <p class="cx-eyebrow">{t.series}</p>
+        <h1>{name}</h1>
+        {description.map((p, i) => <p class:list={{ 'cx-lead': i === 0 }}>{p}</p>)}
+        {
+          finishes.length > 0 && (
+            <div class="cx-finishes">
+              <h2 class="cx-label">{t.finishes}</h2>
+              <ul>
+                {finishes.map((f) => (
+                  <li>
+                    <svg class="bx-swatch" viewBox="0 0 16 16" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7.25" fill={f.swatch} />
+                    </svg>
+                    {pick(ctx, f.name)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+      {picture && <Picture picture={{ ...picture, alt: '' }} sizes="(min-width: 64rem) 30rem, 100vw" class="cx-intro-img" />}
+    </header>
+    {
+      products.length > 0 && (
+        <section class="cx-block" aria-labelledby="products">
+          <h2 class="bx-title" id="products">{t.products}</h2>
+          <ProductGrid products={products} ctx={ctx} columns={4} />
+        </section>
+      )
+    }
+    <Downloads ctx={ctx} documents={series.documents} headingId="downloads" />
+  </div>
+</SiteLayout>

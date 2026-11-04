@@ -1,0 +1,83 @@
+---
+import { categoryProducts, categoryTrail, cataloguePath, localizedPath, type Showcase } from '@hantex/sections';
+import type { Locale } from '@hantex/shared';
+import { catalogueHref, pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import { SITE } from '../../site-data';
+import Icon from '../Icon.astro';
+import Picture from '../sections/Picture.astro';
+import ProductGrid from '../sections/ProductGrid.astro';
+import SiteLayout from '../SiteLayout.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+
+/**
+ * A category's page (D-048): its name, description and picture, its sub-categories, and every
+ * visible product in it or in its sub-categories, in catalogue order.
+ */
+interface Props {
+  ctx: RenderContext;
+  category: Showcase['categories'][number];
+}
+const { ctx, category } = Astro.props;
+const t = TEXT[ctx.locale];
+const showcase = ctx.content.showcase!;
+const site = SITE.site;
+const siteName = site.name[ctx.locale] || site.name.ar || site.name.en;
+const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+const name = pick(ctx, category.name);
+const description = pick(ctx, category.description);
+const picture = pictureOf(ctx, category.image);
+const trail = categoryTrail(showcase, category.id)
+  .slice(0, -1)
+  .map((c) => ({ label: pick(ctx, c.name), href: catalogueHref(ctx, 'category', c.slug)?.href ?? null }));
+const children = showcase.categories
+  .filter((c) => c.parentId === category.id)
+  .map((c) => ({ id: c.id, name: pick(ctx, c.name), href: catalogueHref(ctx, 'category', c.slug), picture: pictureOf(ctx, c.image) }))
+  .filter((c) => c.name);
+const products = categoryProducts(showcase, category.id);
+const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('category', category.slug), l, ctx.defaultLocale));
+---
+
+<SiteLayout
+  ctx={ctx}
+  title={`${name} — ${siteName}`}
+  description={description}
+  noindex={ctx.preview}
+  share={shareOf(ctx, category.image, origin)}
+  hrefFor={hrefFor}
+>
+  <div class="bx container cx-page">
+    <Breadcrumbs ctx={ctx} trail={trail} current={name} />
+    <header class:list={['cx-intro', { 'has-picture': picture }]}>
+      <div>
+        <h1>{name}</h1>
+        {description && <p class="cx-lead">{description}</p>}
+      </div>
+      {picture && <Picture picture={{ ...picture, alt: '' }} sizes="(min-width: 64rem) 30rem, 100vw" class="cx-intro-img" />}
+    </header>
+    {
+      children.length > 0 && (
+        <section class="cx-block" aria-labelledby="subcategories">
+          <h2 class="bx-title" id="subcategories">{t.subcategories}</h2>
+          <ul class="bx-grid cols-4">
+            {children.map((c) => (
+              <li class:list={['bx-card', 'bx-collection', { 'is-link': c.href }]}>
+                {c.picture && <Picture picture={{ ...c.picture, alt: '' }} sizes="(min-width: 64rem) 18rem, 50vw" class="bx-collection-img" />}
+                <h3>{c.href ? <a href={c.href.href}>{c.name}</a> : c.name}</h3>
+                {c.href && <Icon name="chevron" class="bx-card-arrow" />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+    {
+      products.length > 0 && (
+        <section class="cx-block" aria-labelledby="products">
+          <h2 class="bx-title" id="products">{t.products}</h2>
+          <ProductGrid products={products} ctx={ctx} columns={4} />
+        </section>
+      )
+    }
+  </div>
+</SiteLayout>

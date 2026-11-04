@@ -57,6 +57,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-046 | Videos | Confirmed | YouTube or Vimeo links, click to play: a cover image until pressed, then the provider's privacy-friendlier player |
 | D-047 | Database host | Confirmed | Neon PostgreSQL 18, free plan, through Cloudflare Hyperdrive (as built); Cloudflare D1 not used |
 | D-048 | Product sections and catalogue links | Confirmed (owner: "go ahead", 2026-11-04) | Four catalogue sections and links to products, categories and series; facts only from the published catalogue — see `docs/website-builder.md` |
+| D-049 | Public product, category and series pages | Confirmed (owner: "go ahead", 2026-11-04) | One static page per visible product, category and series, from the published catalogue only — see `docs/product-catalogue.md` |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1121,12 +1122,10 @@ then the general product catalogue (Phase 3c, D-045).
   product, category or series, and a link to one. Pages are checked against the catalogue as it
   will be after publishing, so hiding a product that a page names is refused too, with the page
   named. The site build runs the same checks.
-- **Addresses.** Catalogue pages will live at `/product/<address>`, `/category/<address>` and
-  `/series/<address>` (in English under `/en/…`); `product`, `category` and `series` are now
-  reserved, so no page can take them. The pages themselves come with the public product pages
-  (Phase 4). **Until then, catalogue links lead nowhere:** product cards show without a link and
-  menu items and buttons to the catalogue are left out, instead of leading to a missing page
-  (`CATALOGUE_PAGES` in `apps/web/src/builder.ts`).
+- **Addresses.** Catalogue pages live at `/product/<address>`, `/category/<address>` and
+  `/series/<address>` (in English under `/en/…`); `product`, `category` and `series` are
+  reserved, so no page can take them. The pages themselves were added by D-049; until then,
+  catalogue links were left out rather than lead to a missing page.
 - **Data to the sites.** The site build adds a *showcase*: the published catalogue's structure
   and visible products only (no hidden products, drafts, documents or certificate details).
   Previews carry the drafts (for staff who can view the catalogue) cut down to the products the
@@ -1135,5 +1134,35 @@ then the general product catalogue (Phase 3c, D-045).
   region; swatches are small SVGs, as the sites' Content-Security-Policy allows no inline
   styles; numbers use Latin digits in both languages, as on packaging and datasheets. Checked at
   360, 768, 1024 and 1440 px in Arabic and English, and with axe in light and dark.
+- **Cost:** none.
+
+## D-049 — Public product, category and series pages
+
+- **Status:** Confirmed — 2026-11-04 (owner: "go ahead" to the proposed next step)
+- **What:** every live website now builds, in each of its languages:
+  - **a product page** for each visible product: its photos (the variants' photos after the
+    product's own, captioned with their finish), name, series, summary, finishes, description,
+    specification tables and product codes, downloads, checked certificates, and other products
+    of the same series;
+  - **a category page** for each category: name, description, picture, sub-categories, and the
+    visible products in it and its sub-categories;
+  - **a series page** for each series: name, description, picture, finishes, its visible
+    products, downloads and checked certificates.
+- **Only entered facts.** Everything comes from the published catalogue; a part that wasn't
+  entered isn't shown, and nothing is filled in. Hidden products have no page.
+- **Certificates.** A certificate is listed, downloadable and shown with what it says (mark,
+  number, issuer, validity) only when an Owner or Administrator has checked it and it is still
+  valid on the day the site is built (D-045). Unchecked or expired certificates are left off the
+  site entirely. Other documents are offered when their file is published.
+- **Frame.** Catalogue pages use the same header, menus, footer, language switch, sharing tags,
+  `hreflang` alternates and canonical addresses as the builder's pages (one shared layout,
+  `apps/web/src/components/SiteLayout.astro`). Breadcrumbs lead from the home page through the
+  categories. The pages are listed in the sitemap. A product's first photo is its sharing
+  picture.
+- **Static.** Pages are built once per publish; a visit runs no database query. No script.
+- **Still to come** (rest of Phase 4): filters and search (Pagefind), enquiry buttons,
+  structured data, Apple-style page blocks and 3D. A product, category or series whose address
+  changes doesn't yet leave a redirect from its old address, as builder pages do; this is to
+  follow.
 - **Cost:** none.
 

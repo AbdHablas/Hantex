@@ -1,13 +1,10 @@
 ---
-import { formatValue, specGroups, type SectionOf } from '@hantex/sections';
-import { pick, type RenderContext } from '../../builder';
-import { TEXT } from '../../i18n';
+import type { SectionOf } from '@hantex/sections';
+import type { RenderContext } from '../../builder';
 import Heading from './Heading.astro';
+import SpecTables from './SpecTables.astro';
 
-/**
- * A product's specification table (D-048), made only from the values entered in the catalogue:
- * an attribute without a value isn't shown, and nothing is ever filled in for it.
- */
+/** A product's specification table (D-048), from its catalogue values. */
 interface Props {
   section: SectionOf<'specs'>;
   ctx: RenderContext;
@@ -15,72 +12,8 @@ interface Props {
 }
 const { section, ctx, headingId } = Astro.props;
 const s = section.settings;
-const t = TEXT[ctx.locale];
-const showcase = ctx.content.showcase;
-const product = showcase?.products.find((p) => p.id === s.productId);
-const words = { yes: t.yes, no: t.no };
-const groups =
-  showcase && product
-    ? specGroups(showcase, product)
-        .map((g) => ({
-          name: g.name ? pick(ctx, g.name) : t.otherSpecs,
-          rows: g.attributes
-            .map((a) => ({ id: a.id, name: pick(ctx, a.name), value: formatValue(a, product.values[a.id], ctx.locale, words) }))
-            .filter((r) => r.name && r.value),
-        }))
-        .filter((g) => g.rows.length > 0)
-    : [];
-const finishName = (id: string | null) => {
-  const finish = id ? showcase?.finishes.find((f) => f.id === id) : undefined;
-  return finish ? pick(ctx, finish.name) : '';
-};
-const codes =
-  s.showCodes && product
-    ? product.variants
-        .filter((v) => v.sku)
-        .map((v) => ({ sku: v.sku, name: pick(ctx, v.name) || finishName(v.finishId) }))
-    : [];
-const productName = product ? pick(ctx, product.name) : '';
+const product = ctx.content.showcase?.products.find((p) => p.id === s.productId);
 ---
 
 <Heading ctx={ctx} title={s.title} id={headingId} />
-{
-  product && (groups.length > 0 || codes.length > 0) && (
-    <>
-      <div class="bx-specs">
-        {groups.map((g) => (
-          <table class="bx-table">
-            <caption>{g.name}</caption>
-            <tbody>
-              {g.rows.map((r) => (
-                <tr>
-                  <th scope="row">{r.name}</th>
-                  <td>{r.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ))}
-        {codes.length > 0 && (
-          <table class="bx-table">
-            <caption>{t.productCodes}{productName && <span class="sr-only"> — {productName}</span>}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t.code}</th>
-                <th scope="col">{t.variant}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {codes.map((c) => (
-                <tr>
-                  <td dir="ltr" class="bx-code">{c.sku}</td>
-                  <td>{c.name}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </>
-  )
-}
+{product && <SpecTables product={product} ctx={ctx} showCodes={s.showCodes} />}

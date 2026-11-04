@@ -127,8 +127,8 @@ Dashboard (React)                      API (Worker)                    Site engi
 Buttons and menu items can also lead to a product, a category or a series. Sections store only
 which items to show; everything visitors read comes from the published catalogue, and only
 visible products appear. Publish changes refuses incomplete product sections and anything that
-names a hidden or removed catalogue item. Catalogue pages (`/product/…`, `/category/…`,
-`/series/…`) come with Phase 4; until then catalogue links are left out rather than broken.
+names a hidden or removed catalogue item. Catalogue links lead to the product, category and
+series pages (`/product/…`, `/category/…`, `/series/…`, D-049).
 
 ## Acceptance criteria (automated tests)
 

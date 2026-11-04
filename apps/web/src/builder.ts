@@ -1,5 +1,6 @@
 import type { Locale, SiteSettings } from '@hantex/shared';
 import {
+  cataloguePath,
   localizedPath,
   pagePath,
   type Bilingual,
@@ -120,12 +121,11 @@ export function hrefOf(ctx: RenderContext, link: Link): Href | null {
 }
 
 /**
- * Whether the site builds its product, category and series pages. They come with the public
- * catalogue pages (Phase 4); until then catalogue links lead nowhere, so product cards show
- * without a link and menu items to the catalogue are left out, rather than leading to a
- * missing page.
+ * Whether the site builds its product, category and series pages (D-048). Catalogue links lead
+ * to them; with this off, product cards show without a link and catalogue menu items are left
+ * out rather than lead to a missing page.
  */
-export const CATALOGUE_PAGES = false;
+export const CATALOGUE_PAGES = true;
 
 /** A product, category or series address (D-048), e.g. "/product/one-gang/" or "/en/series/x/". */
 export function catalogueHref(
@@ -135,10 +135,13 @@ export function catalogueHref(
 ): Href | null {
   if (!CATALOGUE_PAGES) return null;
   return {
-    href: withSlash(localizedPath(`/${kind}/${slug}`, ctx.locale, ctx.defaultLocale)),
+    href: withSlash(localizedPath(cataloguePath(kind, slug), ctx.locale, ctx.defaultLocale)),
     external: false,
   };
 }
+
+/** A document's download address (D-045): published files are served at /files/<id>.pdf. */
+export const fileHref = (fileId: string) => `/files/${fileId}.pdf`;
 
 /** Every address of a live site: each visible page in each language. */
 export function livePaths(ctx: Omit<RenderContext, 'locale'>) {
@@ -161,4 +164,33 @@ export function resolveSections(ctx: RenderContext, page: Page): ContentSection[
     const target = saved.get(section.settings.savedId);
     return target ? [{ ...target, id: section.id }] : [];
   });
+}
+
+/** The picture shown when a link is shared (Open Graph), from a published library image. */
+export interface SharePicture {
+  url: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
+/**
+ * A sharing picture from a media library image (D-044): a published copy at least 1200 px wide
+ * where stored, which is what link previews look for. None in previews or without a domain.
+ */
+export function shareOf(
+  ctx: RenderContext,
+  image: ImageRef,
+  origin: string | null,
+): SharePicture | null {
+  const info = image ? ctx.content.media?.[image.mediaId] : undefined;
+  if (!origin || !image || !info || info.preview) return null;
+  const width =
+    [...info.widths].sort((a, b) => a - b).find((w) => w >= 1200) ?? Math.max(...info.widths);
+  return {
+    url: `${origin}${mediaSrc(image.mediaId, info, width)}`,
+    width,
+    height: Math.round((info.height * width) / info.width),
+    alt: pick(ctx, info.alt),
+  };
 }

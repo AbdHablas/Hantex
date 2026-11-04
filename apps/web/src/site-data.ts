@@ -27,6 +27,8 @@ export interface BuilderContent {
   saved?: SavedSections;
   /** The public part of the catalogue (D-048): structure and visible products. */
   showcase?: Showcase;
+  /** Published files (PDF) the catalogue pages offer, by id, with their size. */
+  files?: Record<string, { bytes: number }>;
   /** The published media library images the pages use (D-044), by id. */
   media?: MediaMap;
 }

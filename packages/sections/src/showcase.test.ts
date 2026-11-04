@@ -12,6 +12,7 @@ import {
   newProduct,
   newSection,
   productsFor,
+  publicDocuments,
   sectionSchema,
   showcaseForSections,
   showcaseOf,
@@ -157,7 +158,7 @@ describe('showcase', () => {
     expect(showcase.products.map((p) => p.id)).toEqual(['prdone', 'prdtwo', 'prdlamp']);
     expect(showcase.products[1]!.values).not.toHaveProperty('attcolour');
     expect(showcase.products[0]!.finishIds).toEqual(['fnwhite']);
-    expect(JSON.stringify(showcase)).not.toContain('documents');
+    expect(JSON.stringify(showcase)).not.toContain('verified');
   });
 
   it('passes the same schema previews re-validate it with', () => {
@@ -166,7 +167,7 @@ describe('showcase', () => {
     const tampered = structuredClone(showcase) as unknown as {
       products: Record<string, unknown>[];
     };
-    tampered.products[0]!['documents'] = [];
+    tampered.products[0]!['price'] = 10;
     expect(showcaseSchema.safeParse(tampered).success).toBe(false);
   });
 
@@ -346,5 +347,42 @@ describe('catalogue links and checks', () => {
       target: 'pghome',
       detail: 'product',
     });
+  });
+});
+
+describe('documents on the websites', () => {
+  const file = '6f1d2c3b-4a5e-4f60-8a71-9b2c3d4e5f60';
+  const certificate = {
+    id: 'doccert01',
+    fileId: file,
+    type: 'certificate' as const,
+    title: T('Certificate'),
+    certificate: { name: 'Mark', number: 'N-1', issuer: 'Lab', validUntil: '2027-01-01' },
+    verified: null as { by: string; at: string } | null,
+  };
+  const datasheet = {
+    id: 'docdata01',
+    fileId: file,
+    type: 'datasheet' as const,
+    title: T('Datasheet'),
+    certificate: null,
+    verified: null,
+  };
+
+  it('offers ordinary documents, and certificates only once checked and while valid', () => {
+    expect(publicDocuments([datasheet, certificate], '2026-11-04').map((d) => d.id)).toEqual([
+      'docdata01',
+    ]);
+    const verified = { ...certificate, verified: { by: 'owner', at: '2026-11-01T00:00:00.000Z' } };
+    expect(publicDocuments([verified], '2026-11-04')).toEqual([
+      {
+        id: 'doccert01',
+        fileId: file,
+        type: 'certificate',
+        title: T('Certificate'),
+        certificate: verified.certificate,
+      },
+    ]);
+    expect(publicDocuments([verified], '2027-01-02')).toEqual([]);
   });
 });

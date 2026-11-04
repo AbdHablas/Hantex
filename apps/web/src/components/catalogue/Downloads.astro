@@ -1,0 +1,72 @@
+---
+import type { PublicDocument } from '@hantex/sections';
+import { fileHref, pick, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import Icon from '../Icon.astro';
+
+/**
+ * A product's or series' PDFs (D-045): only files that are published, and certificates only
+ * once an Owner or Administrator has checked them (the showcase leaves the others out). A checked
+ * certificate also shows what it says, as typed in from the document.
+ */
+interface Props {
+  ctx: RenderContext;
+  documents: PublicDocument[];
+  headingId: string;
+}
+const { ctx, documents, headingId } = Astro.props;
+const t = TEXT[ctx.locale];
+const files = ctx.content.files ?? {};
+const size = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+const items = documents
+  .filter((d) => files[d.fileId])
+  .map((d) => ({
+    id: d.id,
+    title: pick(ctx, d.title) || t.documentType[d.type],
+    kind: t.documentType[d.type],
+    href: fileHref(d.fileId),
+    size: t.pdf.replace('{size}', size(files[d.fileId]!.bytes)),
+  }));
+const certificates = documents.filter((d) => d.certificate && files[d.fileId]).map((d) => d.certificate!);
+---
+
+{
+  certificates.length > 0 && (
+    <section class="cx-block" aria-labelledby={`${headingId}-certs`}>
+      <h2 class="bx-title" id={`${headingId}-certs`}>{t.certifications}</h2>
+      <ul class="cx-certs">
+        {certificates.map((c) => (
+          <li>
+            <strong>{c.name}</strong>
+            <dl>
+              {c.number && (<><dt>{t.certificateNumber}</dt><dd dir="ltr">{c.number}</dd></>)}
+              {c.issuer && (<><dt>{t.issuedBy}</dt><dd>{c.issuer}</dd></>)}
+              {c.validUntil && (<><dt>{t.validUntil}</dt><dd dir="ltr">{c.validUntil}</dd></>)}
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+{
+  items.length > 0 && (
+    <section class="cx-block" aria-labelledby={headingId}>
+      <h2 class="bx-title" id={headingId}>{t.downloads}</h2>
+      <ul class="cx-downloads">
+        {items.map((d) => (
+          <li>
+            <a href={d.href} download>
+              <Icon name="download" />
+              <span>
+                <span class="cx-download-title">{d.title}</span>
+                <span class="cx-download-meta">{d.kind} · {d.size}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

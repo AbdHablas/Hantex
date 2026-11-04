@@ -8,8 +8,9 @@ and the public pages in Phase 4. **Built so far (stages 1 to 3):** categories, a
 attributes with starter sets, finishes, series, products and variants in the dashboard, PDF files
 attached as documents with certificate verification, drafts, versions and checks before
 publishing, and CSV/Excel import and export. Pages made with the website builder can show the
-catalogue through product sections and link to products, categories and series (D-048). The
-public product, category and series pages are still to come.
+catalogue through product sections and link to products, categories and series (D-048), and
+every live website builds a page for each visible product, each category and each series
+(D-049). Filters, search, enquiries and 3D are still to come.
 
 ## Business context
 

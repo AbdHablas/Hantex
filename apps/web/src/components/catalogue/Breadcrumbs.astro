@@ -1,0 +1,23 @@
+---
+import type { RenderContext } from '../../builder';
+import { pageHref } from '../../builder';
+import { TEXT } from '../../i18n';
+
+/** Where a catalogue page sits: the home page, then the categories above it. */
+interface Props {
+  ctx: RenderContext;
+  trail: { label: string; href: string | null }[];
+  current: string;
+}
+const { ctx, trail, current } = Astro.props;
+const t = TEXT[ctx.locale];
+const home = ctx.content.index.home;
+---
+
+<nav class="cx-crumbs" aria-label={t.breadcrumb}>
+  <ol>
+    {home && <li><a href={pageHref(ctx, home)}>{t.home}</a></li>}
+    {trail.map((item) => <li>{item.href ? <a href={item.href}>{item.label}</a> : item.label}</li>)}
+    <li aria-current="page">{current}</li>
+  </ol>
+</nav>

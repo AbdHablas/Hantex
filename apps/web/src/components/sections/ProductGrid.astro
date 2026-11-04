@@ -1,0 +1,48 @@
+---
+import type { ShowcaseProduct } from '@hantex/sections';
+import type { RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import ProductCard from './ProductCard.astro';
+
+/**
+ * Product cards as a grid, or as a carousel that scrolls sideways (CSS scroll snapping; no
+ * script, works with touch, a trackpad, the keyboard and a screen reader as an ordinary list).
+ */
+interface Props {
+  products: ShowcaseProduct[];
+  ctx: RenderContext;
+  columns: 2 | 3 | 4;
+  layout?: 'grid' | 'carousel';
+  showSummary?: boolean;
+  showFinishes?: boolean;
+}
+const { products, ctx, columns, layout = 'grid', showSummary = true, showFinishes = true } = Astro.props;
+const t = TEXT[ctx.locale];
+const carousel = layout === 'carousel';
+const sizes = carousel
+  ? '(min-width: 64rem) 18rem, 70vw'
+  : `(min-width: 64rem) ${Math.ceil(72 / columns)}rem, (min-width: 40rem) 50vw, 100vw`;
+---
+
+{
+  products.length > 0 &&
+    (carousel ? (
+      <div class:list={['bx-carousel', `cols-${columns}`]} tabindex="0" role="region" aria-label={t.moreProducts}>
+        <ul>
+          {products.map((product) => (
+            <li>
+              <ProductCard product={product} ctx={ctx} sizes={sizes} showSummary={showSummary} showFinishes={showFinishes} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+      <ul class:list={['bx-grid', `cols-${columns}`]}>
+        {products.map((product) => (
+          <li>
+            <ProductCard product={product} ctx={ctx} sizes={sizes} showSummary={showSummary} showFinishes={showFinishes} />
+          </li>
+        ))}
+      </ul>
+    ))
+}

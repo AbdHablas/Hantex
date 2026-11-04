@@ -114,7 +114,18 @@ for (const width of [360, 768, 1024, 1440]) {
       if (/Content Security Policy/i.test(message.text())) cspErrors.push(message.text());
     });
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ['/', '/en/', '/who-we-are/', '/en/contact/', '/range/', '/en/range/']) {
+    for (const path of [
+      '/',
+      '/en/',
+      '/who-we-are/',
+      '/en/contact/',
+      '/range/',
+      '/en/range/',
+      '/product/one-gang/',
+      '/en/product/one-gang/',
+      '/en/category/switches/',
+      '/series/alpha/',
+    ]) {
       await page.goto(`${LIVE}${path}`);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -155,9 +166,64 @@ test('product sections show the published catalogue, and only its visible produc
   await expect(compare.getByRole('row', { name: 'Rated current 10 A Not given' })).toBeVisible();
   await expect(compare.getByRole('row', { name: 'USB outlet No Yes' })).toBeVisible();
 
-  // Catalogue pages come later: no product links, and the menu leaves the catalogue item out.
-  await expect(page.locator('a[href*="/product/"], a[href*="/category/"]')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Switch catalogue' })).toHaveCount(0);
+  // Cards lead to the product pages, and the menu to the category page.
+  await grid.getByRole('link', { name: 'Test one-gang switch' }).click();
+  await expect(page).toHaveURL(`${LIVE}/en/product/one-gang/`);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Test one-gang switch');
+  await page.getByRole('link', { name: 'Switch catalogue' }).first().click();
+  await expect(page).toHaveURL(`${LIVE}/en/category/switches/`);
+});
+
+test('a product page shows only what the catalogue holds (D-048)', async ({ page, request }) => {
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  await expect(page).toHaveTitle('Test one-gang switch — Test website');
+  const crumbs = page.getByRole('navigation', { name: 'Breadcrumb' });
+  await expect(crumbs.getByRole('listitem')).toHaveText([
+    'Home',
+    'Test switches',
+    'Test one-gang switch',
+  ]);
+  await expect(page.getByRole('link', { name: 'Test series' })).toHaveAttribute(
+    'href',
+    '/en/series/alpha/',
+  );
+  await expect(page.getByText('Second test paragraph.')).toBeVisible();
+  await expect(page.getByRole('row', { name: 'Rated current 10 A' })).toBeVisible();
+  await expect(page.getByRole('row', { name: 'TST-1W Test white' })).toBeVisible();
+  // Only the checked certificate is shown, with what it says.
+  const certifications = page.getByRole('region', { name: 'Certifications' });
+  await expect(certifications).toContainText('Test mark');
+  await expect(certifications).toContainText('TM-001');
+  await expect(page.locator('main')).not.toContainText('Unchecked');
+  const downloads = page.getByRole('region', { name: 'Downloads' });
+  await expect(downloads.getByRole('link')).toHaveText([/Test datasheet/, /Checked certificate/]);
+  const href = await downloads.getByRole('link').first().getAttribute('href');
+  const file = await request.get(`${LIVE}${href}`);
+  expect(file.status()).toBe(200);
+  expect(file.headers()['content-type']).toBe('application/pdf');
+  // It is the only product of its series, so no "same series" list.
+  await expect(page.getByRole('region', { name: 'From the same series' })).toHaveCount(0);
+  await expect(page.locator('link[rel="alternate"][hreflang="ar"]')).toHaveAttribute(
+    'href',
+    'https://live.example.test/product/one-gang/',
+  );
+});
+
+test('category and series pages list their visible products', async ({ page }) => {
+  await page.goto(`${LIVE}/en/category/switches/`);
+  const products = page.getByRole('region', { name: 'Products', exact: true });
+  await expect(products.getByRole('heading', { level: 3 })).toHaveText([
+    'Test one-gang switch',
+    'Test two-gang switch',
+  ]);
+  await expect(page.locator('main')).not.toContainText('Hidden test product');
+  await page.goto(`${LIVE}/series/alpha/`);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('سلسلة تجريبية');
+  await expect(
+    page.getByRole('region', { name: 'المنتجات' }).getByRole('heading', { level: 3 }),
+  ).toHaveText(['مفتاح تجريبي واحد']);
+  // A hidden product has no page.
+  expect((await page.goto(`${LIVE}/en/product/hidden/`))?.status()).toBe(404);
 });
 
 test('product sections read right to left in Arabic, with Latin digits', async ({ page }) => {
@@ -182,9 +248,14 @@ test('the sitemap lists every page in every language', async ({ request }) => {
     '/en/who-we-are/',
     '/contact/',
     '/en/contact/',
+    '/product/one-gang/',
+    '/en/product/two-gang/',
+    '/category/switches/',
+    '/en/series/alpha/',
   ]) {
     expect(sitemap).toContain(`<loc>https://live.example.test${path}</loc>`);
   }
+  expect(sitemap).not.toContain('/product/hidden/');
 });
 
 for (const [path, scheme] of [
@@ -193,6 +264,10 @@ for (const [path, scheme] of [
   ['/en/contact/', 'light'],
   ['/range/', 'dark'],
   ['/en/range/', 'light'],
+  ['/product/one-gang/', 'light'],
+  ['/en/product/one-gang/', 'dark'],
+  ['/en/category/switches/', 'light'],
+  ['/series/alpha/', 'dark'],
 ] as const) {
   test(`no serious accessibility problems (${path}, ${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });

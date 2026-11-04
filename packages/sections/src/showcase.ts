@@ -4,12 +4,15 @@ import {
   attributeGroupSchema,
   attributeSchema,
   attributeValueSchema,
+  certificateSchema,
   finishSchema,
+  isCertified,
   skuSchema,
   valueFits,
   type Attribute,
   type AttributeValue,
   type Catalogue,
+  type DocumentRef,
   type Product,
 } from './catalogue';
 import { bilingual, itemId, slugSchema, type Bilingual, type Link } from './primitives';
@@ -17,11 +20,27 @@ import type { ContentSection, SectionOf } from './registry';
 
 /**
  * The public part of a website's catalogue (D-048): what its pages may show. Only visible
- * products, in display order, and only what the product sections and catalogue links use; never
- * hidden products, drafts, documents or certificate details. Built from the published catalogue
- * for the site's build, and from the drafts for previews.
+ * products, in display order, and what the product sections and catalogue pages show; never
+ * hidden products or drafts (except in previews), and a certificate only once it has been checked
+ * and is still valid (D-045). Built from the published catalogue for the site's build, and from
+ * the drafts for previews.
  */
 const imageRef = z.strictObject({ mediaId: z.uuid() }).nullable();
+const image = z.strictObject({ mediaId: z.uuid() });
+
+/**
+ * A downloadable PDF. Certificates are listed only when verified and valid on the build day, and
+ * then carry what the certificate says; other documents never carry certificate details.
+ */
+const publicDocumentSchema = z.strictObject({
+  id: itemId,
+  fileId: z.uuid(),
+  type: z.enum(['datasheet', 'installation', 'manual', 'certificate', 'declaration', 'other']),
+  title: bilingual(120),
+  certificate: certificateSchema.nullable(),
+});
+export type PublicDocument = z.infer<typeof publicDocumentSchema>;
+const documentList = z.array(publicDocumentSchema).max(20);
 
 const showcaseProductSchema = z.strictObject({
   id: itemId,
@@ -31,13 +50,25 @@ const showcaseProductSchema = z.strictObject({
   categoryIds: z.array(itemId).min(1).max(6),
   seriesId: itemId.nullable(),
   summary: bilingual(300),
+  /** Plain paragraphs separated by blank lines. */
+  description: bilingual(5000),
   /** The product's first photo, or else its first variant's. */
   image: imageRef,
+  /** Every photo of the product. */
+  images: z.array(image).max(20),
   /** Finishes of its variants, each once, in variant order. */
   finishIds: z.array(itemId).max(60),
   variants: z
-    .array(z.strictObject({ sku: skuSchema, finishId: itemId.nullable(), name: bilingual(80) }))
+    .array(
+      z.strictObject({
+        sku: skuSchema,
+        finishId: itemId.nullable(),
+        name: bilingual(80),
+        images: z.array(image).max(12),
+      }),
+    )
     .max(60),
+  documents: documentList,
   /** Only values that fit their attribute. */
   values: z.record(itemId, attributeValueSchema),
 });
@@ -66,6 +97,8 @@ export const showcaseSchema = z.strictObject({
         slug: slugSchema,
         description: bilingual(1000),
         image: imageRef,
+        finishIds: z.array(itemId).max(60),
+        documents: documentList,
       }),
     )
     .max(200),
@@ -87,8 +120,37 @@ export const EMPTY_SHOWCASE: Showcase = {
   products: [],
 };
 
+/** Documents a website may offer: certificates only when checked and valid on `today`. */
+export function publicDocuments(documents: DocumentRef[], today: string): PublicDocument[] {
+  return documents.flatMap<PublicDocument>((doc) => {
+    if (doc.type === 'certificate') {
+      return isCertified(doc, today)
+        ? [
+            {
+              id: doc.id,
+              fileId: doc.fileId,
+              type: doc.type,
+              title: doc.title,
+              certificate: doc.certificate,
+            },
+          ]
+        : [];
+    }
+    return [
+      { id: doc.id, fileId: doc.fileId, type: doc.type, title: doc.title, certificate: null },
+    ];
+  });
+}
+
+/** Today's date (YYYY-MM-DD, UTC), which decides whether a certificate is still valid. */
+export const todayUtc = () => new Date().toISOString().slice(0, 10);
+
 /** The showcase of a catalogue: its structure and its visible products. */
-export function showcaseOf(catalogue: Catalogue, products: Map<string, Product>): Showcase {
+export function showcaseOf(
+  catalogue: Catalogue,
+  products: Map<string, Product>,
+  today: string = todayUtc(),
+): Showcase {
   const attributes = new Map(catalogue.attributes.map((a) => [a.id, a]));
   const finishes = new Set(catalogue.finishes.map((f) => f.id));
   const seen = new Set<string>();
@@ -116,9 +178,17 @@ export function showcaseOf(catalogue: Catalogue, products: Map<string, Product>)
       categoryIds: [product.categoryId, ...product.extraCategoryIds],
       seriesId: product.seriesId,
       summary: product.summary,
+      description: product.description,
       image: product.images[0] ?? product.variants.find((v) => v.images[0])?.images[0] ?? null,
+      images: product.images,
       finishIds,
-      variants: product.variants.map((v) => ({ sku: v.sku, finishId: v.finishId, name: v.name })),
+      variants: product.variants.map((v) => ({
+        sku: v.sku,
+        finishId: v.finishId && finishes.has(v.finishId) ? v.finishId : null,
+        name: v.name,
+        images: v.images,
+      })),
+      documents: publicDocuments(product.documents, today),
       values,
     });
   }
@@ -134,13 +204,17 @@ export function showcaseOf(catalogue: Catalogue, products: Map<string, Product>)
         image,
       }),
     ),
-    series: catalogue.series.map(({ id, name, slug, description, image }) => ({
-      id,
-      name,
-      slug,
-      description,
-      image,
-    })),
+    series: catalogue.series.map(
+      ({ id, name, slug, description, image, finishIds, documents }) => ({
+        id,
+        name,
+        slug,
+        finishIds: finishIds.filter((f) => finishes.has(f)),
+        documents: publicDocuments(documents, today),
+        description,
+        image,
+      }),
+    ),
     finishes: catalogue.finishes.map(({ id, name, swatch }) => ({ id, name, swatch })),
     groups: catalogue.groups,
     attributes: catalogue.attributes,
@@ -410,7 +484,17 @@ export function showcaseForSections(
       for (const id of sectionCatalogueRefs(section).products) keep.add(id);
     }
   }
-  const products = showcase.products.filter((p) => keep.has(p.id));
+  // Sections draw no descriptions, gallery photos or documents of products: left out to keep the
+  // signed form small.
+  const products = showcase.products
+    .filter((p) => keep.has(p.id))
+    .map((p) => ({
+      ...p,
+      description: { ar: '', en: '' },
+      images: [],
+      variants: p.variants.map((v) => ({ ...v, images: [] })),
+      documents: [],
+    }));
   const used = new Set(products.flatMap((p) => Object.keys(p.values)));
   const finishes = new Set(
     products.flatMap((p) => [...p.finishIds, ...p.variants.map((v) => v.finishId)]),
@@ -418,10 +502,57 @@ export function showcaseForSections(
   const blank = { ar: '', en: '' };
   return {
     categories: showcase.categories.map((c) => (descriptions ? c : { ...c, description: blank })),
-    series: showcase.series.map((x) => (descriptions ? x : { ...x, description: blank })),
+    series: showcase.series.map((x) => ({
+      ...x,
+      description: descriptions ? x.description : blank,
+      documents: [],
+    })),
     finishes: showcase.finishes.filter((f) => finishes.has(f.id)),
     groups: showcase.groups,
     attributes: showcase.attributes.filter((a) => used.has(a.id)),
     products,
   };
 }
+
+/* ---------------------------------------- Catalogue pages ---------------------------------------- */
+
+export type CataloguePageKind = 'product' | 'category' | 'series';
+
+/** A catalogue page's address without the language prefix (D-048), e.g. "/product/one-gang". */
+export const cataloguePath = (kind: CataloguePageKind, slug: string) => `/${kind}/${slug}`;
+
+/** Every catalogue page a site builds: each visible product, each category and each series. */
+export function cataloguePages(
+  showcase: Showcase,
+): { kind: CataloguePageKind; id: string; slug: string }[] {
+  return [
+    ...showcase.categories.map((c) => ({ kind: 'category' as const, id: c.id, slug: c.slug })),
+    ...showcase.series.map((x) => ({ kind: 'series' as const, id: x.id, slug: x.slug })),
+    ...showcase.products.map((p) => ({ kind: 'product' as const, id: p.id, slug: p.slug })),
+  ];
+}
+
+/** A category and the categories above it, top first (for breadcrumbs). */
+export function categoryTrail(showcase: Showcase, categoryId: string) {
+  const byId = new Map(showcase.categories.map((c) => [c.id, c]));
+  const trail: Showcase['categories'] = [];
+  let current = byId.get(categoryId);
+  while (current && trail.length < 3 && !trail.includes(current)) {
+    trail.unshift(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return trail;
+}
+
+/** A category's products: its own and its sub-categories', in catalogue order. */
+export const categoryProducts = (showcase: Showcase, categoryId: string) => {
+  const ids = categoryAndBelow(showcase, categoryId);
+  return showcase.products.filter((p) => p.categoryIds.some((c) => ids.has(c)));
+};
+
+/** Paragraphs of a plain description: separated by blank lines, single line breaks kept. */
+export const paragraphs = (text: string) =>
+  text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);

@@ -1,6 +1,10 @@
 ---
 import type { Locale } from '@hantex/shared';
-import { livePaths, renderContext } from '../builder';
+import { cataloguePages, cataloguePath, localizedPath } from '@hantex/sections';
+import { CATALOGUE_PAGES, livePaths, renderContext, withSlash } from '../builder';
+import CategoryPage from '../components/catalogue/CategoryPage.astro';
+import ProductPage from '../components/catalogue/ProductPage.astro';
+import SeriesPage from '../components/catalogue/SeriesPage.astro';
 import ComingSoonPage from '../components/ComingSoonPage.astro';
 import LivePage from '../components/LivePage.astro';
 import MaintenancePage from '../components/MaintenancePage.astro';
@@ -8,7 +12,8 @@ import { SITE } from '../site-data';
 
 /**
  * Every address of the site. A live site has one page per builder page and language (D-035):
- * the default language without a prefix ("/about"), the others with one ("/en/about"). Before
+ * the default language without a prefix ("/about"), the others with one ("/en/about"), and one
+ * per visible product, category and series (D-048): "/product/<address>" and so on. Before
  * launch there is one Coming Soon (or maintenance) page per language.
  */
 export function getStaticPaths() {
@@ -21,10 +26,29 @@ export function getStaticPaths() {
       settings: SITE.settings,
       preview: false,
     };
-    return livePaths(renderContext({ ...base, locale: SITE.site.defaultLocale })).map((p) => ({
-      params: { path: param(p.path) },
-      props: { locale: p.locale, pageId: p.id },
-    }));
+    const pages = livePaths(renderContext({ ...base, locale: SITE.site.defaultLocale })).map(
+      (p) => ({ params: { path: param(p.path) }, props: { locale: p.locale, pageId: p.id } }),
+    );
+    const catalogue =
+      CATALOGUE_PAGES && SITE.builder.showcase
+        ? cataloguePages(SITE.builder.showcase).flatMap((entry) =>
+            SITE.site.locales.map((locale) => ({
+              params: {
+                path: param(
+                  withSlash(
+                    localizedPath(
+                      cataloguePath(entry.kind, entry.slug),
+                      locale,
+                      SITE.site.defaultLocale,
+                    ),
+                  ),
+                ),
+              },
+              props: { locale, pageId: null, catalogue: { kind: entry.kind, id: entry.id } },
+            })),
+          )
+        : [];
+    return [...pages, ...catalogue];
   }
   return SITE.site.locales.map((locale) => ({
     params: { path: locale === SITE.site.defaultLocale ? undefined : locale },
@@ -32,9 +56,13 @@ export function getStaticPaths() {
   }));
 }
 
-const { locale, pageId } = Astro.props as { locale: Locale; pageId: string | null };
+const { locale, pageId, catalogue } = Astro.props as {
+  locale: Locale;
+  pageId: string | null;
+  catalogue?: { kind: 'product' | 'category' | 'series'; id: string };
+};
 const ctx =
-  pageId && SITE.builder
+  (pageId || catalogue) && SITE.builder
     ? renderContext({
         locale,
         locales: SITE.site.locales,
@@ -44,10 +72,17 @@ const ctx =
         preview: false,
       })
     : null;
+const showcase = SITE.builder?.showcase;
 ---
 
 {
-  ctx && pageId ? (
+  ctx && catalogue?.kind === 'product' ? (
+    <ProductPage ctx={ctx} product={showcase!.products.find((p) => p.id === catalogue.id)!} />
+  ) : ctx && catalogue?.kind === 'category' ? (
+    <CategoryPage ctx={ctx} category={showcase!.categories.find((c) => c.id === catalogue.id)!} />
+  ) : ctx && catalogue?.kind === 'series' ? (
+    <SeriesPage ctx={ctx} series={showcase!.series.find((x) => x.id === catalogue.id)!} />
+  ) : ctx && pageId ? (
     <LivePage ctx={ctx} pageId={pageId} />
   ) : SITE.site.mode === 'maintenance' ? (
     <MaintenancePage locale={locale} />

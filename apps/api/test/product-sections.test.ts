@@ -200,6 +200,6 @@ describe('product sections', () => {
     expect(showcase.products.map((p) => p.id).sort()).toEqual([one, two].sort());
     expect(showcase.products.map((p) => p.id)).not.toContain(three);
     expect(showcase.categories.map((c) => c.id)).toEqual(['switches01']);
-    expect(JSON.stringify(showcase)).not.toContain('documents');
+    expect(showcase.products.every((p) => p.documents.length === 0)).toBe(true);
   });
 });

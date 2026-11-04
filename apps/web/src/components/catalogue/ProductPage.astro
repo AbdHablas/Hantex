@@ -1,0 +1,126 @@
+---
+import type { ImageRef, ShowcaseProduct } from '@hantex/sections';
+import { categoryTrail, cataloguePath, localizedPath, paragraphs } from '@hantex/sections';
+import type { Locale } from '@hantex/shared';
+import { catalogueHref, pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
+import { TEXT } from '../../i18n';
+import { SITE } from '../../site-data';
+import ProductGrid from '../sections/ProductGrid.astro';
+import Picture from '../sections/Picture.astro';
+import SpecTables from '../sections/SpecTables.astro';
+import SiteLayout from '../SiteLayout.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import Downloads from './Downloads.astro';
+
+/**
+ * A product's page (D-048), made only from what the catalogue holds: photos, name, summary,
+ * finishes, description, specification tables, codes, downloads and checked certificates, and
+ * other products of its series. Anything not entered is simply not shown.
+ */
+interface Props {
+  ctx: RenderContext;
+  product: ShowcaseProduct;
+}
+const { ctx, product } = Astro.props;
+const t = TEXT[ctx.locale];
+const showcase = ctx.content.showcase!;
+const site = SITE.site;
+const siteName = site.name[ctx.locale] || site.name.ar || site.name.en;
+const origin = site.primaryDomain ? `https://${site.primaryDomain}` : null;
+const name = pick(ctx, product.name);
+const summary = pick(ctx, product.summary);
+const description = paragraphs(pick(ctx, product.description));
+
+// Photos: the product's own, then each variant's not already shown, captioned with its finish.
+const finishName = (id: string | null) => {
+  const finish = id ? showcase.finishes.find((f) => f.id === id) : undefined;
+  return finish ? pick(ctx, finish.name) : '';
+};
+const seen = new Set<string>();
+const photos = [
+  ...product.images.map((image) => ({ image, caption: '' })),
+  ...product.variants.flatMap((v) => v.images.map((image) => ({ image, caption: pick(ctx, v.name) || finishName(v.finishId) }))),
+].flatMap(({ image, caption }) => {
+  if (seen.has(image.mediaId)) return [];
+  seen.add(image.mediaId);
+  const picture = pictureOf(ctx, image as ImageRef);
+  return picture ? [{ picture: { ...picture, alt: picture.alt || name }, caption }] : [];
+});
+const finishes = product.finishIds.flatMap((id) => showcase.finishes.find((f) => f.id === id) ?? []);
+const series = product.seriesId ? showcase.series.find((x) => x.id === product.seriesId) : undefined;
+const seriesHref = series ? catalogueHref(ctx, 'series', series.slug) : null;
+const category = showcase.categories.find((c) => c.id === product.categoryIds[0]);
+const trail = category
+  ? categoryTrail(showcase, category.id).map((c) => ({ label: pick(ctx, c.name), href: catalogueHref(ctx, 'category', c.slug)?.href ?? null }))
+  : [];
+const related = series ? showcase.products.filter((p) => p.seriesId === series.id && p.id !== product.id).slice(0, 8) : [];
+const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('product', product.slug), l, ctx.defaultLocale));
+const share = shareOf(ctx, product.image, origin);
+const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some((v) => v.sku);
+---
+
+<SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor}>
+  <div class="bx container cx-page">
+    <Breadcrumbs ctx={ctx} trail={trail} current={name} />
+    <div class="cx-product">
+      <div class="cx-gallery">
+        {
+          photos.length > 0 ? (
+            <ul class="cx-photos" aria-label={t.photos}>
+              {photos.map((photo, i) => (
+                <li>
+                  <figure class="bx-figure">
+                    <Picture picture={photo.picture} sizes={i === 0 ? '(min-width: 64rem) 36rem, 100vw' : '(min-width: 64rem) 18rem, 50vw'} />
+                    {photo.caption && <figcaption>{photo.caption}</figcaption>}
+                  </figure>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <span class="bx-product-blank cx-blank" />
+          )
+        }
+      </div>
+      <div class="cx-summary">
+        {seriesHref && series && <a class="cx-eyebrow" href={seriesHref.href}>{pick(ctx, series.name)}</a>}
+        <h1>{name}</h1>
+        {summary && <p class="cx-lead">{summary}</p>}
+        {
+          finishes.length > 0 && (
+            <div class="cx-finishes">
+              <h2 class="cx-label">{t.finishes}</h2>
+              <ul>
+                {finishes.map((f) => (
+                  <li>
+                    <svg class="bx-swatch" viewBox="0 0 16 16" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7.25" fill={f.swatch} />
+                    </svg>
+                    {pick(ctx, f.name)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+      </div>
+    </div>
+    {description.length > 0 && <div class="cx-text">{description.map((p) => <p>{p}</p>)}</div>}
+    {
+      hasSpecs && (
+        <section class="cx-block" aria-labelledby="specs">
+          <h2 class="bx-title" id="specs">{t.specifications}</h2>
+          <SpecTables product={product} ctx={ctx} showCodes />
+        </section>
+      )
+    }
+    <Downloads ctx={ctx} documents={product.documents} headingId="downloads" />
+    {
+      related.length > 0 && (
+        <section class="cx-block" aria-labelledby="related">
+          <h2 class="bx-title" id="related">{t.sameSeries}</h2>
+          <ProductGrid products={related} ctx={ctx} columns={4} layout="carousel" />
+        </section>
+      )
+    }
+  </div>
+</SiteLayout>
