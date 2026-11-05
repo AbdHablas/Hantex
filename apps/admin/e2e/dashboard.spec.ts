@@ -289,8 +289,20 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByRole('status').getByText('Saved', { exact: true })).toBeVisible();
 
-  // Publish changes: everything changed on this website, together.
+  // Scheduled publishing (D-054): the changes are scheduled, then the schedule is cancelled.
   await expect(page.getByText(/unpublished changes on this website/)).toBeVisible();
+  await page.getByRole('button', { name: 'Schedule…' }).click();
+  const scheduleDialog = page.getByRole('dialog', { name: 'Schedule these changes' });
+  await expect(scheduleDialog.getByText(/Time in your device’s time zone/)).toBeVisible();
+  await expectAccessible(page, 'schedule dialog');
+  await scheduleDialog.getByRole('button', { name: 'Schedule', exact: true }).click();
+  await expect(page.getByText(/changes are scheduled to go live on/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Schedule…' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel schedule' }).click();
+  await confirm(page);
+  await expect(page.getByText('Schedule cancelled.')).toBeVisible();
+
+  // Publish changes: everything changed on this website, together.
   await page.getByRole('button', { name: 'Publish changes' }).click();
   await confirm(page);
   await expect(page.getByText('Changes published.')).toBeVisible();

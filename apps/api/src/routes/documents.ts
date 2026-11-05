@@ -46,7 +46,7 @@ async function publish(
 ) {
   const v = c.var;
   const version = await publishVersion(v.db, v.site.id, kind, data, v.access.userId, restoredFrom);
-  const { job, result } = await startRebuild(c);
+  const { job, result } = await startRebuild(c.var, c.env);
   await writeAudit(
     v.db,
     auditActor(v),

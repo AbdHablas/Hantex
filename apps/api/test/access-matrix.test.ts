@@ -97,6 +97,7 @@ const SITE_ENDPOINTS: Endpoint[] = [
   { method: 'GET', path: '/menus', needs: ['pages.view'] },
   { method: 'GET', path: '/layout', needs: ['pages.view'] },
   { method: 'GET', path: '/changes', needs: ['dashboard.view'] },
+  { method: 'GET', path: '/changes/schedule', needs: ['dashboard.view'] },
   {
     method: 'PUT',
     path: '/menus',

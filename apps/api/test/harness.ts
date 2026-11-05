@@ -4,6 +4,7 @@ import { testUtils } from 'better-auth/plugins';
 import { randomBytes } from 'node:crypto';
 import { inject } from 'vitest';
 import { createApp } from '../src/app';
+import type { AppDeps } from '../src/context';
 import { createAuth } from '../src/auth/auth';
 import type { Env } from '../src/env';
 import { memorySender } from '../src/lib/email';
@@ -39,6 +40,8 @@ export interface Harness {
   /** Owner connection, for fixtures and assertions. */
   db: Database;
   app: ReturnType<typeof createApp>;
+  /** The app's dependencies, for code that runs outside a request (the cron trigger). */
+  deps: AppDeps;
   mail: ReturnType<typeof memorySender>;
   media: ReturnType<typeof memoryStore>;
   publicMedia: ReturnType<typeof memoryStore>;
@@ -86,7 +89,7 @@ export async function createHarness(): Promise<Harness> {
     },
   };
 
-  const app = createApp({
+  const deps: AppDeps = {
     connectDb: () => Promise.resolve({ db: appDb.db, close: () => Promise.resolve() }),
     email: () => mail,
     media: () => media,
@@ -94,7 +97,8 @@ export async function createHarness(): Promise<Harness> {
     turnstile: () => ({ verify: () => Promise.resolve(turnstile.pass) }),
     publisher: () => publisher,
     rateLimits: false,
-  });
+  };
+  const app = createApp(deps);
 
   // A separate auth instance with Better Auth's test plugin, used only to create real, signed
   // sessions; the app itself runs without it.
@@ -125,6 +129,7 @@ export async function createHarness(): Promise<Harness> {
     errors,
     db: owner.db,
     app,
+    deps,
     mail,
     media,
     publicMedia,

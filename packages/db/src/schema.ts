@@ -495,6 +495,41 @@ export const subscribers = pgTable(
 );
 
 /* ------------------------------------------------------------------------------------------
+ * Scheduled publishing (D-054): one waiting schedule per site. It records exactly which changes
+ * were scheduled (a hash of each draft); at the time set, they go live only if the site's
+ * changes are still exactly those, and only if the person who scheduled may still publish.
+ * ---------------------------------------------------------------------------------------- */
+
+export const scheduledPublishes = pgTable(
+  'scheduled_publishes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    runAt: timestamp('run_at', { withTimezone: true }).notNull(),
+    /** [{ kind, key, hash }] of the changes scheduled. */
+    items: jsonb('items').notNull(),
+    /** The person scheduling confirmed a change of logo colours (D-027). */
+    confirmLogoChange: boolean('confirm_logo_change').notNull().default(false),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    /** scheduled → running → published, blocked (changed or not allowed) or failed; or cancelled. */
+    status: text('status').notNull().default('scheduled'),
+    detail: text('detail').notNull().default(''),
+    createdAt: createdAt(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('scheduled_publishes_one_waiting')
+      .on(t.siteId)
+      .where(sql`${t.status} in ('scheduled', 'running')`),
+    index('scheduled_publishes_due_idx').on(t.status, t.runAt),
+    check(
+      'scheduled_publishes_status_check',
+      sql`${t.status} in ('scheduled', 'running', 'published', 'cancelled', 'blocked', 'failed')`,
+    ),
+  ],
+);
+
+/* ------------------------------------------------------------------------------------------
  * Enquiries and quotation requests (D-051), per site. Like sign-ups, the public site's database
  * user may only INSERT them and never read them back; site_id and the product's name come from
  * the site's own build data, never from the request. Staff answer them from the dashboard.

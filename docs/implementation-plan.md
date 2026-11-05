@@ -212,7 +212,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - private processing runner;
   - optimisation, validation and poster images;
   - review, approval and budget controls.
-- [ ] Scheduled publishing
+- [x] Scheduled publishing — *done (D-054): schedule Publish changes for a date and time; goes
+      live only if the changes are exactly those scheduled and the person may still publish;
+      cron trigger every five minutes on the dashboard Worker*
 - [ ] Owner approval
 
 ## Phase 4: Complete public websites

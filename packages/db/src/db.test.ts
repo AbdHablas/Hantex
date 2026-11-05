@@ -90,6 +90,7 @@ describe('migrations', () => {
       'role_assignments',
       'role_permissions',
       'roles',
+      'scheduled_publishes',
       'sessions',
       'site_domains',
       'site_files',

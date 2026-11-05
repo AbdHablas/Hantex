@@ -62,6 +62,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-051 | Enquiries and quotation requests | Confirmed (owner: "go ahead", 2026-11-04) | Product-page and section forms, stored per site through the insert-only public user; answered from the dashboard |
 | D-052 | Category filters and site search | Confirmed (owner: "go ahead", 2026-11-04) | Filters in the browser on category pages; Pagefind 1.6.0 search per language; WebAssembly allowed on search only |
 | D-053 | Structured data for search engines | Confirmed (owner: "go ahead", 2026-11-05) | schema.org JSON-LD from entered facts only; no prices, offers, ratings or brand |
+| D-054 | Scheduled publishing | Confirmed (owner: "go ahead", 2026-11-05) | Schedule Publish changes; what was scheduled goes live unchanged or not at all; cron every five minutes |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1268,5 +1269,28 @@ then the general product catalogue (Phase 3c, D-045).
   without a main domain (search engines need full addresses).
 - **Not checked yet:** Google's Rich Results Test and Schema Markup Validator need the published
   website's address, so they are run after launch.
+- **Cost:** none.
+
+## D-054 — Scheduled publishing
+
+- **Status:** Confirmed — 2026-11-05 (owner: "go ahead")
+- **What:** next to *Publish changes*, *Schedule…* picks a date and time (in the device's time
+  zone, at least 10 minutes and at most 90 days ahead) for the website's changes to go live.
+  The bar then shows what is scheduled, when and by whom, with *Cancel schedule*. One schedule
+  can wait per website. Who may schedule or cancel: those who may publish (`site.publish`).
+- **What was scheduled is what goes live:** scheduling runs the same checks as Publish changes
+  and records each changed item with a fingerprint (SHA-256) of its draft. At the time set, the
+  website's changes must be exactly those, unchanged; otherwise nothing is published and the bar
+  says why (for example *edited after scheduling*). Publishing then runs Publish changes' own
+  code, with all its checks, and starts one rebuild.
+- **Permissions at the time it runs:** it runs as the person who scheduled it, with their
+  permissions as they are then. If they may no longer publish that website (role removed,
+  account disabled or deleted) or the website is archived, nothing is published.
+- **How it runs:** the dashboard Worker has a Cloudflare cron trigger every five minutes (free on
+  the Workers free plan), so a schedule goes live within five minutes of its time. A schedule is
+  claimed before it runs, so it can never run twice. Every schedule, cancellation and run is in
+  the audit log; past schedules are kept as a history (migration 0013).
+- **Not yet:** an email to the person who scheduled when a schedule is blocked (the bar shows
+  it); scheduling only part of a website's changes.
 - **Cost:** none.
 

@@ -1,12 +1,14 @@
 import { connectWorkerDb } from '@hantex/db/worker';
 import { createApp } from './app';
+import type { AppDeps } from './context';
+import { runDueSchedules } from './lib/scheduled-run';
 import type { Env } from './env';
 import { memorySender, resendSender } from './lib/email';
 import { r2Store } from './lib/media-store';
 import { disabledPublisher, githubPublisher } from './lib/publisher';
 import { cloudflareTurnstile } from './lib/turnstile';
 
-const app = createApp({
+const deps: AppDeps = {
   connectDb: (env) => connectWorkerDb(env.HYPERDRIVE.connectionString),
   email: (env) => {
     if (env.RESEND_API_KEY) return resendSender(env.RESEND_API_KEY, env.EMAIL_FROM);
@@ -31,8 +33,13 @@ const app = createApp({
           ref: env.PUBLISH_REF ?? 'main',
         })
       : disabledPublisher,
-});
+};
+const app = createApp(deps);
 
 export default {
   fetch: (request, env, ctx) => app.fetch(request, env, ctx),
+  // Scheduled publishing (D-054): the cron trigger in wrangler.jsonc, every five minutes.
+  scheduled: (_controller, env, ctx) => {
+    ctx.waitUntil(runDueSchedules(deps, env).then(() => undefined));
+  },
 } satisfies ExportedHandler<Env>;
