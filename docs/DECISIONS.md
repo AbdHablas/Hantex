@@ -61,6 +61,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-050 | Catalogue redirects and public files | Confirmed (owner: "go ahead", 2026-11-04) | Old product, category and series addresses redirect; only files the site offers are public |
 | D-051 | Enquiries and quotation requests | Confirmed (owner: "go ahead", 2026-11-04) | Product-page and section forms, stored per site through the insert-only public user; answered from the dashboard |
 | D-052 | Category filters and site search | Confirmed (owner: "go ahead", 2026-11-04) | Filters in the browser on category pages; Pagefind 1.6.0 search per language; WebAssembly allowed on search only |
+| D-053 | Structured data for search engines | Confirmed (owner: "go ahead", 2026-11-05) | schema.org JSON-LD from entered facts only; no prices, offers, ratings or brand |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1245,4 +1246,27 @@ then the general product catalogue (Phase 3c, D-045).
   the policies in step and checks the exception stays this narrow.
 - **Addresses:** `search` and `pagefind` are reserved, so no page can take them.
 - **Cost:** none. The index adds a few small files to each website's build.
+
+## D-053 — Structured data for search engines
+
+- **Status:** Confirmed — 2026-11-05 (owner: "go ahead")
+- **What:** every live website's pages describe themselves to search engines in schema.org
+  JSON-LD, in the page's language:
+  - **product pages:** a `Product` (a `ProductGroup` when it has two or more product codes, each
+    variant with its code and finish) with its name, address, summary or first paragraph,
+    published photos, category, entered specifications as `additionalProperty` (numbers with
+    their unit), and checked certificates as `hasCertification` (mark, number, issuer, expiry);
+    and a `BreadcrumbList` through its categories;
+  - **category and series pages:** a `BreadcrumbList` and an `ItemList` of their products;
+  - **the home page:** `WebSite` and an `Organization` with the website's name, logo, and the
+    email, phone, address and social profiles entered in Website settings → SEO & contact.
+- **Only entered facts:** a field without a value is left out. There are no prices or offers
+  (nothing is sold online), no reviews or ratings, no brand (none is entered as such), and no
+  certificate that isn't checked and valid. A test checks these stay absent.
+- **Safety:** the data is written so that no value can end its script element; browsers never run
+  JSON-LD, so the security policy is unchanged. It is left out of draft previews, and of sites
+  without a main domain (search engines need full addresses).
+- **Not checked yet:** Google's Rich Results Test and Schema Markup Validator need the published
+  website's address, so they are run after launch.
+- **Cost:** none.
 

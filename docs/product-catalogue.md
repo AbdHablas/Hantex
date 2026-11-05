@@ -104,7 +104,7 @@ team.
   time, so they cost nothing per visit. Search uses Pagefind (MIT licence);
   its Arabic support was checked with Arabic test pages (D-052).
 - Structured data for search engines (schema.org `Product`) is generated
-  only from facts that have been entered.
+  only from facts that have been entered (built: D-053).
 
 ## Rules
 

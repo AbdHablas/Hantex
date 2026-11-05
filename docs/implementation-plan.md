@@ -230,7 +230,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - automated photo reconstruction (photogrammetry);
   - optional AI providers, only if the owner approves them (D-030).
 - [ ] SEO:
-  - sitemaps, `hreflang`, and structured data from entered facts only;
+  - [x] sitemaps, `hreflang`, and structured data from entered facts only — *done: sitemaps and
+        `hreflang` with every page; schema.org data on product, category, series and home pages
+        (D-053)*;
   - performance budgets and accessibility checks.
 - [ ] Owner approval
 

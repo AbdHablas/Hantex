@@ -1,6 +1,7 @@
 ---
 import type { Theme } from '@hantex/theme';
 import { pageHref, pick, resolveSections, shareOf, type RenderContext } from '../builder';
+import { siteLd } from '../structured';
 import { SITE } from '../site-data';
 import Section from './sections/Section.astro';
 import SiteLayout from './SiteLayout.astro';
@@ -44,6 +45,7 @@ const firstHero = sections.find((s) => s.type === 'hero' && pick(ctx, s.settings
   hrefFor={(l) => pageHref(ctx, pageId, l)}
   themeCss={themeCss}
   theme={theme}
+  structured={isHome && origin ? siteLd(ctx, SITE, origin) : []}
 >
   {!firstHero && <h1 class="sr-only">{pageTitle || siteName}</h1>}
   {sections.map((section) => <Section section={section} ctx={ctx} main={section === firstHero} />)}

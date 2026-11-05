@@ -1,7 +1,7 @@
 ---
 import { cataloguePath, localizedPath, paragraphs, type Showcase } from '@hantex/sections';
 import type { Locale } from '@hantex/shared';
-import { pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
+import { pageHref, pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
 import { TEXT } from '../../i18n';
 import { SITE } from '../../site-data';
 import Picture from '../sections/Picture.astro';
@@ -9,6 +9,7 @@ import ProductGrid from '../sections/ProductGrid.astro';
 import SiteLayout from '../SiteLayout.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Downloads from './Downloads.astro';
+import { breadcrumbLd, catalogueUrl, itemListLd } from '../../structured';
 
 /**
  * A series' showcase page (D-048): its name, description and picture, the finishes it comes in,
@@ -29,6 +30,16 @@ const description = paragraphs(pick(ctx, series.description));
 const picture = pictureOf(ctx, series.image);
 const finishes = series.finishIds.flatMap((id) => showcase.finishes.find((f) => f.id === id) ?? []);
 const products = showcase.products.filter((p) => p.seriesId === series.id);
+const home = ctx.content.index.home;
+const structured = origin
+  ? [
+      breadcrumbLd([
+        ...(home ? [{ name: t.home, url: `${origin}${pageHref(ctx, home)}` }] : []),
+        { name, url: catalogueUrl(ctx, origin, 'series', series.slug) },
+      ]),
+      itemListLd(products.map((p) => catalogueUrl(ctx, origin, 'product', p.slug))),
+    ]
+  : [];
 const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('series', series.slug), l, ctx.defaultLocale));
 ---
 
@@ -39,6 +50,7 @@ const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('series', s
   noindex={ctx.preview}
   share={shareOf(ctx, series.image, origin)}
   hrefFor={hrefFor}
+  structured={structured}
 >
   <div class="bx container cx-page">
     <Breadcrumbs ctx={ctx} trail={[]} current={name} />

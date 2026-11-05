@@ -4,6 +4,7 @@ import type { MenuItem } from '@hantex/sections';
 import type { Theme } from '@hantex/theme';
 import { localizedPath } from '@hantex/sections';
 import { hrefOf, pageHref, pick, withSlash, type RenderContext } from '../builder';
+import { jsonLdText, type Json } from '../structured';
 import { TEXT, dirOf } from '../i18n';
 import { SITE } from '../site-data';
 import Analytics from './Analytics.astro';
@@ -37,9 +38,11 @@ interface Props {
   theme?: Theme;
   /** Whether site search indexes this page's content (D-052); never for previews. */
   indexed?: boolean;
+  /** schema.org data for search engines (D-053); left out of previews and without a domain. */
+  structured?: (Json | null)[];
 }
 
-const { ctx, title, description, noindex, share = null, hrefFor, themeCss, theme = SITE.theme, indexed = true } = Astro.props;
+const { ctx, title, description, noindex, share = null, hrefFor, themeCss, theme = SITE.theme, indexed = true, structured = [] } = Astro.props;
 const { locale, preview, settings } = ctx;
 const layout = ctx.content.layout;
 const t = TEXT[locale];
@@ -111,6 +114,13 @@ const otherLocales = ctx.locales.filter((l) => l !== locale);
     )}
     <meta name="twitter:card" content={share || (origin && SITE.logo?.share) ? 'summary_large_image' : 'summary'} />
     {SITE.logo && <link rel="icon" href={SITE.logo.mark} type="image/svg+xml" />}
+    {
+      !preview &&
+        origin &&
+        structured
+          .filter((data): data is Json => data !== null)
+          .map((data) => <script type="application/ld+json" is:inline set:html={jsonLdText(data)} />)
+    }
     {SITE.logo?.touchIcon && <link rel="apple-touch-icon" href={SITE.logo.touchIcon} />}
     <link rel="stylesheet" href="/theme.css" />
     {themeCss && <style is:inline nonce={themeCss.nonce} set:html={themeCss.css} />}

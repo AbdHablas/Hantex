@@ -10,6 +10,7 @@ import Picture from '../sections/Picture.astro';
 import SpecTables from '../sections/SpecTables.astro';
 import SiteLayout from '../SiteLayout.astro';
 import EnquiryForm from '../EnquiryForm.astro';
+import { breadcrumbLd, categoryCrumbs, catalogueUrl, productLd } from '../../structured';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Downloads from './Downloads.astro';
 
@@ -57,10 +58,19 @@ const trail = category
 const related = series ? showcase.products.filter((p) => p.seriesId === series.id && p.id !== product.id).slice(0, 8) : [];
 const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('product', product.slug), l, ctx.defaultLocale));
 const share = shareOf(ctx, product.image, origin);
+const structured = origin
+  ? [
+      productLd(ctx, product, origin),
+      breadcrumbLd([
+        ...(category ? categoryCrumbs(ctx, origin, category.id) : []),
+        { name, url: catalogueUrl(ctx, origin, 'product', product.slug) },
+      ]),
+    ]
+  : [];
 const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some((v) => v.sku);
 ---
 
-<SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor}>
+<SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor} structured={structured}>
   <div class="bx container cx-page">
     <Breadcrumbs ctx={ctx} trail={trail} current={name} />
     <div class="cx-product">

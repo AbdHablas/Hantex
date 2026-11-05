@@ -10,6 +10,7 @@ import ProductGrid from '../sections/ProductGrid.astro';
 import SiteLayout from '../SiteLayout.astro';
 import Breadcrumbs from './Breadcrumbs.astro';
 import Filters from './Filters.astro';
+import { breadcrumbLd, categoryCrumbs, catalogueUrl, itemListLd } from '../../structured';
 
 /**
  * A category's page (D-048): its name, description and picture, its sub-categories, and every
@@ -36,6 +37,12 @@ const children = showcase.categories
   .map((c) => ({ id: c.id, name: pick(ctx, c.name), href: catalogueHref(ctx, 'category', c.slug), picture: pictureOf(ctx, c.image) }))
   .filter((c) => c.name);
 const products = categoryProducts(showcase, category.id);
+const structured = origin
+  ? [
+      breadcrumbLd(categoryCrumbs(ctx, origin, category.id)),
+      itemListLd(products.map((p) => catalogueUrl(ctx, origin, 'product', p.slug))),
+    ]
+  : [];
 const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('category', category.slug), l, ctx.defaultLocale));
 ---
 
@@ -46,6 +53,7 @@ const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('category',
   noindex={ctx.preview}
   share={shareOf(ctx, category.image, origin)}
   hrefFor={hrefFor}
+  structured={structured}
 >
   <div class="bx container cx-page">
     <Breadcrumbs ctx={ctx} trail={trail} current={name} />

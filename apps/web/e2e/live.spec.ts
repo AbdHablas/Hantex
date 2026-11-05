@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { DEFAULT_COMING_SOON, DEFAULT_SITE_SETTINGS } from '@hantex/shared';
 import { newSection, starterContent } from '@hantex/sections';
 import { brandTheme } from '@hantex/theme';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { createHmac } from 'node:crypto';
 import pg from 'pg';
 
@@ -318,6 +318,94 @@ test('only search may compile WebAssembly (D-052)', async ({ request }) => {
     expect(policy, path).toContain("script-src 'self'");
     expect(policy, path).not.toContain('wasm-unsafe-eval');
   }
+});
+
+/** Every JSON-LD block of a page, parsed. */
+async function structuredData(page: Page) {
+  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+  return blocks.map((text) => JSON.parse(text) as Record<string, unknown>);
+}
+
+test('product pages tell search engines only the facts entered (D-053)', async ({ page }) => {
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  const data = await structuredData(page);
+  const product = data.find((d) => d['@type'] === 'ProductGroup')!;
+  expect(product).toMatchObject({
+    name: 'Test one-gang switch',
+    url: 'https://live.example.test/en/product/one-gang/',
+    description: 'A test summary.',
+    category: 'Test switches',
+    variesBy: 'https://schema.org/color',
+    hasVariant: [
+      {
+        '@type': 'Product',
+        name: 'Test one-gang switch — Test white',
+        sku: 'TST-1W',
+        color: 'Test white',
+      },
+      {
+        '@type': 'Product',
+        name: 'Test one-gang switch — Test black',
+        sku: 'TST-1B',
+        color: 'Test black',
+      },
+    ],
+    hasCertification: [
+      {
+        '@type': 'Certification',
+        name: 'Test mark',
+        certificationIdentification: 'TM-001',
+        issuedBy: { '@type': 'Organization', name: 'Test lab' },
+      },
+    ],
+  });
+  expect(product['additionalProperty']).toContainEqual({
+    '@type': 'PropertyValue',
+    name: 'Rated current',
+    value: 10,
+    unitText: 'A',
+  });
+  expect((product['image'] as string[])[0]).toMatch(/^https:\/\/live\.example\.test\/media\//);
+  // Nothing that wasn't entered: no prices, offers, ratings, brand or unchecked certificate.
+  const text = JSON.stringify(data);
+  for (const absent of ['offers', 'price', 'aggregateRating', 'review', 'brand', 'Unchecked']) {
+    expect(text, absent).not.toContain(absent);
+  }
+  const crumbs = data.find((d) => d['@type'] === 'BreadcrumbList')!;
+  expect((crumbs['itemListElement'] as { name: string }[]).map((i) => i.name)).toEqual([
+    'Home',
+    'Test switches',
+    'Test one-gang switch',
+  ]);
+  // Arabic pages describe themselves in Arabic.
+  await page.goto(`${LIVE}/product/one-gang/`);
+  const arabic = (await structuredData(page)).find((d) => d['@type'] === 'ProductGroup')!;
+  expect(arabic['name']).toBe('مفتاح تجريبي واحد');
+});
+
+test('the home page describes the website from its settings, and lists pages search engines know (D-053)', async ({
+  page,
+}) => {
+  await page.goto(`${LIVE}/en/`);
+  const data = await structuredData(page);
+  expect(data.find((d) => d['@type'] === 'WebSite')).toMatchObject({
+    name: 'Test website',
+    url: 'https://live.example.test/en/',
+    inLanguage: 'en',
+  });
+  expect(data.find((d) => d['@type'] === 'Organization')).toMatchObject({
+    name: 'Test website',
+    email: 'live@example.test',
+  });
+  await page.goto(`${LIVE}/en/category/switches/`);
+  const list = (await structuredData(page)).find((d) => d['@type'] === 'ItemList')!;
+  expect((list['itemListElement'] as { url: string }[]).map((i) => i.url)).toEqual([
+    'https://live.example.test/en/product/one-gang/',
+    'https://live.example.test/en/product/two-gang/',
+  ]);
+  // Other pages carry none.
+  await page.goto(`${LIVE}/en/contact/`);
+  expect(await structuredData(page)).toEqual([]);
 });
 
 test('category and series pages list their visible products', async ({ page }) => {
