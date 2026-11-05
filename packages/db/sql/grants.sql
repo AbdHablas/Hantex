@@ -27,6 +27,8 @@ GRANT SELECT, INSERT, UPDATE ON sites TO hantex_admin_app;
 GRANT SELECT, INSERT ON document_versions, audit_log TO hantex_admin_app;
 -- Sign-ups: view, export and delete only — sign-ups arrive through the public site.
 GRANT SELECT, DELETE ON subscribers TO hantex_admin_app;
+-- Clearing public forms' rate-limit counters older than a day (cron); nothing else.
+GRANT SELECT (window_started_at), DELETE ON form_rate_limits TO hantex_admin_app;
 -- Scheduled publishing (D-054): kept as a history; never deleted.
 GRANT SELECT, INSERT, UPDATE ON scheduled_publishes TO hantex_admin_app;
 -- Enquiries (D-051): read, delete, and only their status can change.

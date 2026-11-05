@@ -1,6 +1,7 @@
 import { connectWorkerDb } from '@hantex/db/worker';
 import { createApp } from './app';
 import type { AppDeps } from './context';
+import { pruneRateLimits } from './lib/maintenance';
 import { runDueSchedules } from './lib/scheduled-run';
 import type { Env } from './env';
 import { memorySender, resendSender } from './lib/email';
@@ -38,8 +39,18 @@ const app = createApp(deps);
 
 export default {
   fetch: (request, env, ctx) => app.fetch(request, env, ctx),
-  // Scheduled publishing (D-054): the cron trigger in wrangler.jsonc, every five minutes.
+  // The cron trigger in wrangler.jsonc, every five minutes: scheduled publishing (D-054) and
+  // clearing old rate-limit counters.
   scheduled: (_controller, env, ctx) => {
     ctx.waitUntil(runDueSchedules(deps, env).then(() => undefined));
+    ctx.waitUntil(
+      deps.connectDb(env).then(async ({ db, close }) => {
+        try {
+          await pruneRateLimits(db);
+        } finally {
+          await close();
+        }
+      }),
+    );
   },
 } satisfies ExportedHandler<Env>;

@@ -1,0 +1,70 @@
+# Strix security scan of the source (white-box AI pentest in a Docker sandbox on the runner).
+# Manual only: it calls a paid AI model, so it runs when the owner starts it, never on its own.
+# Needs two repository secrets the owner adds (never in this file or in chat):
+#   STRIX_LLM    the model id, e.g. a LiteLLM id such as anthropic/<model> or openai/<model>
+#   LLM_API_KEY  the provider's API key
+# Results are kept as a workflow artifact (strix_runs/), readable by people with repo access.
+name: Security scan (Strix)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Scan depth
+        type: choice
+        options: [quick, standard, deep]
+        default: standard
+      budget:
+        description: Most to spend on the AI model, in US dollars
+        type: string
+        default: '10'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-scan
+  cancel-in-progress: false
+
+jobs:
+  strix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the secrets are set
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -z "$STRIX_LLM" ] || [ -z "$LLM_API_KEY" ]; then
+            echo "Add the STRIX_LLM and LLM_API_KEY repository secrets first." >&2
+            exit 1
+          fi
+      - name: Install Strix (pinned)
+        run: pipx install strix-agent==1.7.0
+      - name: Scan the source
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          MODE: ${{ inputs.mode }}
+          BUDGET: ${{ inputs.budget }}
+        run: |
+          case "$BUDGET" in ''|*[!0-9.]*) echo "Budget must be a number." >&2; exit 1 ;; esac
+          strix -n -t ./ --scan-mode "$MODE" --max-budget "$BUDGET" \
+            --instruction "Hantex platform: Cloudflare Workers (apps/api dashboard API, apps/web public sites), PostgreSQL with least-privilege users (packages/db/sql/grants.sql). Focus on cross-website isolation (every site-scoped query), role permissions (packages/shared/src/permissions.ts), public endpoints (signup, enquiry, unsubscribe, preview, media, files), uploads (SVG, PDF, WebP, WOFF2), and Publish changes. Read-only review of the source; there is no deployed environment to attack."
+      - name: Fail unless the scan completed
+        if: always()
+        run: |
+          run=$(ls -td strix_runs/*/ 2>/dev/null | head -1)
+          [ -n "$run" ] || { echo "No Strix run was recorded." >&2; exit 1; }
+          status=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['status'])" "${run}run.json")
+          echo "Strix run status: $status"
+          [ "$status" = "completed" ] || { echo "The scan did not complete (budget or time). Raise the budget and run again." >&2; exit 1; }
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: strix-report
+          path: strix_runs/
+          retention-days: 30

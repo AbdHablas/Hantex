@@ -63,6 +63,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-052 | Category filters and site search | Confirmed (owner: "go ahead", 2026-11-04) | Filters in the browser on category pages; Pagefind 1.6.0 search per language; WebAssembly allowed on search only |
 | D-053 | Structured data for search engines | Confirmed (owner: "go ahead", 2026-11-05) | schema.org JSON-LD from entered facts only; no prices, offers, ratings or brand |
 | D-054 | Scheduled publishing | Confirmed (owner: "go ahead", 2026-11-05) | Schedule Publish changes; what was scheduled goes live unchanged or not at all; cron every five minutes |
+| D-055 | Security review and Strix scan | Proposed (Strix cost needs the owner's approval) | Review done and two issues fixed; Strix workflow ready, manual only, paid AI model — see `docs/security-review-2026-11.md` |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1293,4 +1294,22 @@ then the general product catalogue (Phase 3c, D-045).
 - **Not yet:** an email to the person who scheduled when a schedule is blocked (the bar shows
   it); scheduling only part of a website's changes.
 - **Cost:** none.
+
+## D-055 — Security review and Strix scan
+
+- **Status:** Review done 2026-11-05. **Running Strix: proposed, waiting for the owner**, because
+  it needs a paid AI model.
+- **What was done:** a dependency audit and a source review of the whole platform
+  (`docs/security-review-2026-11.md`). Two issues were fixed: rate-limit counters are now cleared
+  after a day (they grew for ever), and two development-only dependency advisories were patched.
+  Nothing was found that lets one website reach another's data or a role exceed its permissions.
+- **Strix:** could not run in the development environment (no Docker, no AI key, nothing
+  deployed). `.github/workflows/security-scan.yml` is ready: by hand only, Strix 1.7.0 installed
+  from PyPI at a pinned version, a spending cap chosen at each run (US$10 by default), failing
+  unless the scan completes, report kept for 30 days as a workflow artifact.
+- **Options for the owner:** (a) add `STRIX_LLM` and `LLM_API_KEY` as repository secrets and run
+  it; cost is the AI provider's per-use price, capped per run; (b) use the managed app.strix.ai
+  service instead (an account and its pricing); (c) skip the AI pentest and rely on the review and
+  the automated tests until a staging environment exists.
+- **Cost:** none until a scan is run.
 

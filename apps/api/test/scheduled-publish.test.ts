@@ -1,10 +1,4 @@
-import {
-  FIRST_SITE,
-  documentVersions,
-  roleAssignments,
-  scheduledPublishes,
-  sites,
-} from '@hantex/db/worker';
+import { documentVersions, roleAssignments, scheduledPublishes, sites } from '@hantex/db/worker';
 import { and, desc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runDueSchedules } from '../src/lib/scheduled-run';
@@ -18,7 +12,8 @@ import { createHarness, env, type Harness } from './harness';
 let h: Harness;
 let owner: string;
 let editor: string;
-const SITE = FIRST_SITE.key;
+// A website of its own: other test files edit the shared ones' drafts at the same time.
+const SITE = 'sp-one';
 const json = async <T>(response: Response) => (await response.json()) as T;
 const inMinutes = (n: number) => new Date(Date.now() + n * 60_000).toISOString();
 const base = `/api/sites/${SITE}`;
@@ -55,16 +50,31 @@ const latestHeadline = async () => {
   return (row?.data as { headline?: { en: string } } | undefined)?.headline?.en;
 };
 /** Makes the waiting schedule due now, as if its time had come. */
-const makeDue = () =>
-  h.db
+const makeDue = async () => {
+  const [site] = await h.db.select({ id: sites.id }).from(sites).where(eq(sites.key, SITE));
+  await h.db
     .update(scheduledPublishes)
     .set({ runAt: new Date(Date.now() - 1000) })
-    .where(eq(scheduledPublishes.status, 'scheduled'));
+    .where(
+      and(eq(scheduledPublishes.status, 'scheduled'), eq(scheduledPublishes.siteId, site!.id)),
+    );
+};
 
 beforeAll(async () => {
   h = await createHarness();
   owner = await h.staff('sp-owner', [{ roleId: 'owner', site: null }]);
-  editor = await h.staff('sp-editor', [{ roleId: 'editor', site: 'a' }]);
+  editor = await h.staff('sp-editor', [{ roleId: 'editor', site: null }]);
+  const created = await h.request('POST', '/api/sites', {
+    cookie: owner,
+    body: {
+      key: SITE,
+      name: { ar: 'موقع', en: 'Site' },
+      locales: ['ar', 'en'],
+      defaultLocale: 'ar',
+      template: 'product-showcase',
+    },
+  });
+  expect(created.status, await created.clone().text()).toBe(201);
 });
 afterAll(() => h.close());
 
@@ -107,7 +117,7 @@ describe('scheduled publishing (D-054)', () => {
   });
 
   it('publishes nothing if the person who scheduled may no longer publish', async () => {
-    const lead = await h.staff('sp-lead', [{ roleId: 'administrator', site: 'a' }]);
+    const lead = await h.staff('sp-lead', [{ roleId: 'administrator', site: null }]);
     expect((await schedule(inMinutes(30), lead)).status).toBe(201);
     await h.db.delete(roleAssignments).where(eq(roleAssignments.userId, 'sp-lead'));
     await makeDue();

@@ -268,3 +268,10 @@ an automated penetration test (Strix) against staging in Phase 5.
 - Third-party 3D and AI services receive the photos sent to them; their data
   policies can change. Mitigated by owner approval per provider, recorded
   policies and the option to use local or self-run processing only.
+
+## Reviews
+
+- November 2026: dependency audit and source review, two issues fixed
+  (`docs/security-review-2026-11.md`, D-055). Rate-limit counters are cleared after a day by the
+  dashboard Worker's cron.
+

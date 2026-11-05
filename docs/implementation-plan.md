@@ -241,10 +241,13 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
 ## Phase 5: Testing and hardening
 
 - [ ] Security and permission tests:
-  - cross-site isolation;
-  - every endpoint as every role;
-  - upload and SVG sanitiser tests;
+  - [x] cross-site isolation — *isolation and access-matrix tests*;
+  - [x] every endpoint as every role — *access-matrix test*;
+  - [x] upload and SVG sanitiser tests;
+  - [x] source review and dependency audit (D-055, `docs/security-review-2026-11.md`);
   - 3D Studio security review;
+  - Strix scan of the source — *workflow ready, needs the owner's approval of its AI cost
+    (D-055)*;
   - Strix penetration test against staging.
 - [ ] Quality and recovery:
   - Lighthouse and axe budgets;
