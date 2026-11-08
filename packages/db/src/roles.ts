@@ -6,6 +6,7 @@ export const APP_DB_ROLES = [
   'hantex_public_app',
   'hantex_build',
   'hantex_backup',
+  'hantex_studio_runner',
 ] as const;
 export type AppDbRole = (typeof APP_DB_ROLES)[number];
 

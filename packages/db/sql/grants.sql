@@ -3,7 +3,8 @@
 -- Every new table must be added here explicitly; nothing is granted by default.
 
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
-GRANT USAGE ON SCHEMA public TO hantex_admin_app, hantex_public_app, hantex_build, hantex_backup;
+GRANT USAGE ON SCHEMA public
+  TO hantex_admin_app, hantex_public_app, hantex_build, hantex_backup, hantex_studio_runner;
 
 -- Dashboard API (apps/api)
 GRANT SELECT, INSERT, UPDATE, DELETE ON
@@ -34,6 +35,17 @@ GRANT SELECT, INSERT, UPDATE ON scheduled_publishes TO hantex_admin_app;
 -- Enquiries (D-051): read, delete, and only their status can change.
 GRANT SELECT, DELETE ON enquiries TO hantex_admin_app;
 GRANT UPDATE (status, updated_at) ON enquiries TO hantex_admin_app;
+-- 3D Product Studio (D-029, D-030, D-056): the dashboard creates captures, files, jobs and
+-- provider settings, and records review decisions; only the processing runner (below) may set a
+-- job's status, cost or timings, or write a model's result, so the dashboard can never forge
+-- what a job actually produced. Cancelling an unstarted job is a delete, enforced at the API.
+GRANT SELECT, INSERT, UPDATE, DELETE ON studio_captures, studio_capture_files TO hantex_admin_app;
+GRANT SELECT, INSERT, DELETE ON studio_jobs TO hantex_admin_app;
+GRANT SELECT, INSERT ON studio_reviews TO hantex_admin_app;
+GRANT SELECT, INSERT, UPDATE ON studio_provider_settings TO hantex_admin_app;
+GRANT SELECT ON studio_spend TO hantex_admin_app;
+GRANT SELECT ON studio_models TO hantex_admin_app;
+GRANT UPDATE (review_status, approved_by, approved_at, updated_at) ON studio_models TO hantex_admin_app;
 
 -- Public site endpoints (apps/web): add sign-ups (cannot read them back), rate limits,
 -- and read published content. Each site's Worker supplies site_id from its own configuration.
@@ -57,3 +69,15 @@ GRANT SELECT (id, family, scripts, files) ON fonts TO hantex_build;
 
 -- Nightly backups (D-010): read-only.
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO hantex_backup;
+
+-- 3D Studio processing runner (D-029, D-030): a separate process on the Owner's own hardware
+-- (self-hosted, never Cloudflare), reached by a direct Postgres connection like the site build
+-- (apps/web/scripts/site-data.ts). It reads only what it needs to process a capture, writes only
+-- a job's own progress and its model's result, and touches nothing else in the database — never
+-- users, sessions, roles, catalogue content, media, files or any other site's content.
+GRANT SELECT (id, key) ON sites TO hantex_studio_runner;
+GRANT SELECT ON studio_captures, studio_capture_files TO hantex_studio_runner;
+GRANT SELECT ON studio_jobs TO hantex_studio_runner;
+GRANT UPDATE (status, detail, actual_cost_cents, started_at, finished_at) ON studio_jobs TO hantex_studio_runner;
+GRANT SELECT, INSERT ON studio_models TO hantex_studio_runner;
+GRANT INSERT ON studio_spend TO hantex_studio_runner;

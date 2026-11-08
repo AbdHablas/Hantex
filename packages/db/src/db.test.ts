@@ -16,6 +16,9 @@ import {
   sessions,
   siteDomains,
   sites,
+  studioCaptures,
+  studioJobs,
+  studioModels,
   subscribers,
   users,
 } from './schema';
@@ -95,6 +98,13 @@ describe('migrations', () => {
       'site_domains',
       'site_files',
       'sites',
+      'studio_capture_files',
+      'studio_captures',
+      'studio_jobs',
+      'studio_models',
+      'studio_provider_settings',
+      'studio_reviews',
+      'studio_spend',
       'subscribers',
       'theme_presets',
       'users',
@@ -579,5 +589,82 @@ describe('least-privilege database users', () => {
   it('records audit entries with the dashboard user', async () => {
     const before = await db.select().from(auditLog);
     expect(before.length).toBeGreaterThan(0);
+  });
+
+  it('keeps the 3D Studio processing runner to its own tables, and the dashboard off a job’s result (D-056)', async () => {
+    const [capture] = await db
+      .insert(studioCaptures)
+      .values({ siteId: siteA, productId: 'prd000001' })
+      .returning({ id: studioCaptures.id });
+    const [job] = await db
+      .insert(studioJobs)
+      .values({
+        siteId: siteA,
+        captureId: capture!.id,
+        providerId: 'model-import',
+        method: 'artist',
+      })
+      .returning({ id: studioJobs.id });
+
+    // The runner can read the capture and its own job, and move the job to 'running'.
+    const read = await asRole(
+      'hantex_studio_runner',
+      'select id from studio_captures where id = $1',
+      [capture!.id],
+    );
+    expect(read.rowCount).toBe(1);
+    const claim = await asRole(
+      'hantex_studio_runner',
+      `update studio_jobs set status = 'running', started_at = now() where id = $1`,
+      [job!.id],
+    );
+    expect(claim.rowCount).toBe(1);
+
+    // It can write a model's result, but it may never touch anything outside the Studio's own
+    // tables: no users, sessions, catalogue documents, media or other sites' content.
+    const model = await asRole(
+      'hantex_studio_runner',
+      `insert into studio_models (site_id, capture_id, job_id, label, files, measurements, validator_report)
+       values ($1, $2, $3, 'artist-modelled', '{}', '{}', '{}') returning id`,
+      [siteA, capture!.id, job!.id],
+    );
+    expect(model.rowCount).toBe(1);
+    for (const table of [
+      'users',
+      'sessions',
+      'role_assignments',
+      'document_versions',
+      'media_assets',
+      'sites',
+    ]) {
+      await expect(asRole('hantex_studio_runner', `select * from ${table}`)).rejects.toThrow(
+        permissionDenied,
+      );
+    }
+    await expect(
+      asRole('hantex_studio_runner', 'delete from studio_jobs where id = $1', [job!.id]),
+    ).rejects.toThrow(permissionDenied);
+
+    // Once the runner has written the result, the dashboard can read and approve it, but can
+    // never set the label, files or measurements a job actually produced.
+    const modelId = (model.rows[0] as { id: string }).id;
+    const approve = await asRole(
+      'hantex_admin_app',
+      `update studio_models set review_status = 'ready-for-approval' where id = $1`,
+      [modelId],
+    );
+    expect(approve.rowCount).toBe(1);
+    await expect(
+      asRole('hantex_admin_app', `update studio_models set label = 'exact-cad' where id = $1`, [
+        modelId,
+      ]),
+    ).rejects.toThrow(permissionDenied);
+    await expect(
+      asRole('hantex_admin_app', `update studio_jobs set status = 'done' where id = $1`, [job!.id]),
+    ).rejects.toThrow(permissionDenied);
+
+    await db.delete(studioModels).where(eq(studioModels.id, modelId));
+    await db.delete(studioJobs).where(eq(studioJobs.id, job!.id));
+    await db.delete(studioCaptures).where(eq(studioCaptures.id, capture!.id));
   });
 });

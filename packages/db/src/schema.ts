@@ -711,3 +711,189 @@ export const formRateLimits = pgTable(
   },
   (t) => [primaryKey({ columns: [t.siteId, t.key] })],
 );
+
+/* ------------------------------------------------------------------------------------------
+ * AI 3D Product Studio (D-029, D-030, D-056), per site. A capture holds the photos, CAD file
+ * or finished model uploaded for one product or variant; a job runs one provider against it; a
+ * model is a job's result, reviewed and (by the Owner, by default) approved before it can be
+ * assigned to a product. Nothing here is published automatically (`docs/3d-product-studio.md`).
+ * Catalogue products and variants are not relational rows (they live in `document_versions`,
+ * D-045), so they are referenced here by their item id (text), never by a foreign key.
+ * ---------------------------------------------------------------------------------------- */
+
+export const studioCaptures = pgTable(
+  'studio_captures',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    /** The catalogue product this capture is for; the item id, not a foreign key (D-045). */
+    productId: text('product_id').notNull(),
+    /** A specific variant of the product, if the capture is for one finish only. */
+    variantId: text('variant_id'),
+    /** Real width × height × depth in mm, from the datasheet, for the scale check. */
+    widthMm: integer('width_mm'),
+    heightMm: integer('height_mm'),
+    depthMm: integer('depth_mm'),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('studio_captures_site_idx').on(t.siteId, t.createdAt)],
+);
+
+/** One uploaded file of a capture: a photo, a CAD file, or a finished model. */
+export const studioCaptureFiles = pgTable(
+  'studio_capture_files',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    captureId: uuid('capture_id')
+      .notNull()
+      .references(() => studioCaptures.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    /** Photos only: which view this is meant to be (front, left, right, rear, top, detail). */
+    view: text('view'),
+    /** Key in the site's private storage (the media bucket, under a `studio/` prefix). */
+    storageKey: text('storage_key').notNull(),
+    bytes: integer('bytes').notNull(),
+    /** Photos only: measured from the file itself, never trusted from the upload form. */
+    widthPx: integer('width_px'),
+    heightPx: integer('height_px'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('studio_capture_files_capture_idx').on(t.captureId),
+    check('studio_capture_files_kind_check', sql`${t.kind} in ('photo', 'cad', 'model')`),
+    check(
+      'studio_capture_files_view_check',
+      sql`${t.view} is null or ${t.view} in ('front', 'left', 'right', 'rear', 'top', 'detail')`,
+    ),
+  ],
+);
+
+/** One run of one provider against a capture. */
+export const studioJobs = pgTable(
+  'studio_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    captureId: uuid('capture_id')
+      .notNull()
+      .references(() => studioCaptures.id, { onDelete: 'cascade' }),
+    providerId: text('provider_id').notNull(),
+    /** The method the person declared for this job (fixes the result's label). */
+    method: text('method').notNull(),
+    /** queued → running → done or failed. */
+    status: text('status').notNull().default('queued'),
+    estimatedCostCents: integer('estimated_cost_cents').notNull().default(0),
+    actualCostCents: integer('actual_cost_cents'),
+    detail: text('detail').notNull().default(''),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('studio_jobs_site_idx').on(t.siteId, t.createdAt),
+    index('studio_jobs_status_idx').on(t.status),
+    check('studio_jobs_status_check', sql`${t.status} in ('queued', 'running', 'done', 'failed')`),
+    check(
+      'studio_jobs_method_check',
+      sql`${t.method} in ('cad', 'photogrammetry', 'splat', 'artist', 'generative')`,
+    ),
+  ],
+);
+
+/** A job's result: the processed model, before and after review and approval. */
+export const studioModels = pgTable(
+  'studio_models',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    captureId: uuid('capture_id')
+      .notNull()
+      .references(() => studioCaptures.id, { onDelete: 'cascade' }),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => studioJobs.id, { onDelete: 'cascade' }),
+    /** Set by the method used, never by a provider's own claim (D-029 §6). */
+    label: text('label').notNull(),
+    /** Storage keys for desktop.glb, mobile.glb and the poster images. */
+    files: jsonb('files').notNull(),
+    /** Measured bytes, triangles, texture size and bounding box per version. */
+    measurements: jsonb('measurements').notNull(),
+    /** The Khronos glTF validator's report (error and warning counts, and messages). */
+    validatorReport: jsonb('validator_report').notNull(),
+    /** Whether the measured bounding box matches the entered dimensions within 2%. */
+    withinScale: boolean('within_scale'),
+    /** pending → ready-for-approval, needs-better-photos, or needs-manual-correction. */
+    reviewStatus: text('review_status').notNull().default('pending'),
+    approvedBy: text('approved_by').references(() => users.id, { onDelete: 'set null' }),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('studio_models_site_idx').on(t.siteId, t.createdAt),
+    check(
+      'studio_models_label_check',
+      sql`${t.label} in ('exact-cad', 'measured', 'artist-modelled', 'captured-view', 'ai-estimated')`,
+    ),
+    check(
+      'studio_models_review_status_check',
+      sql`${t.reviewStatus} in ('pending', 'ready-for-approval', 'needs-better-photos', 'needs-manual-correction')`,
+    ),
+  ],
+);
+
+/** One reviewer's pass over a model: the feature checklist and the decision it led to. */
+export const studioReviews = pgTable(
+  'studio_reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    modelId: uuid('model_id')
+      .notNull()
+      .references(() => studioModels.id, { onDelete: 'cascade' }),
+    reviewerId: text('reviewer_id').references(() => users.id, { onDelete: 'set null' }),
+    /** The feature checklist (shape, buttons, openings, markings, finish, nothing invented). */
+    checklist: jsonb('checklist').notNull(),
+    decision: text('decision').notNull(),
+    notes: text('notes').notNull().default(''),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('studio_reviews_model_idx').on(t.modelId),
+    check(
+      'studio_reviews_decision_check',
+      sql`${t.decision} in ('ready-for-approval', 'needs-better-photos', 'needs-manual-correction')`,
+    ),
+  ],
+);
+
+/** Whether a provider is switched on for a site, and its monthly budget (Owner only, D-029 §6). */
+export const studioProviderSettings = pgTable(
+  'studio_provider_settings',
+  {
+    siteId: siteRef(),
+    providerId: text('provider_id').notNull(),
+    enabled: boolean('enabled').notNull().default(false),
+    budgetCents: integer('budget_cents').notNull().default(0),
+    dataPolicyAcceptedBy: text('data_policy_accepted_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.siteId, t.providerId] })],
+);
+
+/** An append-only ledger of what each job actually cost, for the budget check and the Owner. */
+export const studioSpend = pgTable(
+  'studio_spend',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    siteId: siteRef(),
+    providerId: text('provider_id').notNull(),
+    jobId: uuid('job_id').references(() => studioJobs.id, { onDelete: 'set null' }),
+    cents: integer('cents').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('studio_spend_site_idx').on(t.siteId, t.providerId, t.createdAt)],
+);
