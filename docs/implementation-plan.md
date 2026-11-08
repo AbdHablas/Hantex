@@ -246,9 +246,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] upload and SVG sanitiser tests;
   - [x] source review and dependency audit (D-055, `docs/security-review-2026-11.md`);
   - 3D Studio security review;
-  - Strix scan of the source — *workflow ready, needs the owner's approval of its AI cost
-    (D-055)*;
-  - Strix penetration test against staging.
+  - Strix scan of the source — *skipped for now by the owner's choice (D-055); workflow is
+    ready in `.github/workflows/security-scan.yml` if wanted later*;
+  - penetration test against staging, before public launch (D-055).
 - [ ] Quality and recovery:
   - Lighthouse and axe budgets;
   - a backup restore test;

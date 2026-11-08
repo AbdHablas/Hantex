@@ -1297,19 +1297,21 @@ then the general product catalogue (Phase 3c, D-045).
 
 ## D-055 — Security review and Strix scan
 
-- **Status:** Review done 2026-11-05. **Running Strix: proposed, waiting for the owner**, because
-  it needs a paid AI model.
+- **Status:** Confirmed — 2026-11-08 (owner: "skip it for now, rely on review and automated
+  tests, live test on staging before launch"). Review done 2026-11-05.
 - **What was done:** a dependency audit and a source review of the whole platform
   (`docs/security-review-2026-11.md`). Two issues were fixed: rate-limit counters are now cleared
   after a day (they grew for ever), and two development-only dependency advisories were patched.
   Nothing was found that lets one website reach another's data or a role exceed its permissions.
 - **Strix:** could not run in the development environment (no Docker, no AI key, nothing
-  deployed). `.github/workflows/security-scan.yml` is ready: by hand only, Strix 1.7.0 installed
-  from PyPI at a pinned version, a spending cap chosen at each run (US$10 by default), failing
-  unless the scan completes, report kept for 30 days as a workflow artifact.
-- **Options for the owner:** (a) add `STRIX_LLM` and `LLM_API_KEY` as repository secrets and run
-  it; cost is the AI provider's per-use price, capped per run; (b) use the managed app.strix.ai
-  service instead (an account and its pricing); (c) skip the AI pentest and rely on the review and
-  the automated tests until a staging environment exists.
-- **Cost:** none until a scan is run.
+  deployed). `.github/workflows/security-scan.yml` is ready for later: by hand only, Strix 1.7.0
+  installed from PyPI at a pinned version, a spending cap chosen at each run (US$10 by default),
+  failing unless the scan completes, report kept for 30 days as a workflow artifact. It needs the
+  owner's `STRIX_LLM` and `LLM_API_KEY` repository secrets and a decision to spend on it.
+- **Owner's choice:** skip the AI pentest for now. The source review and the automated test
+  suite (unit, API, database-grant, and browser tests across all sites) are the security
+  coverage until launch. A live penetration test (Strix or otherwise) runs against a staging
+  deployment before the public launch, once one exists — not against this development
+  environment, and not against production.
+- **Cost:** none.
 
