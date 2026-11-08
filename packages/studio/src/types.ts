@@ -130,7 +130,13 @@ export interface DataPolicy {
  */
 export interface ProviderDescriptor {
   id: string;
-  method: Method;
+  /**
+   * The method(s) a job with this provider may declare. Most providers fix exactly one (CAD
+   * conversion is always `cad`); `model-import` accepts whichever of `photogrammetry`, `splat`
+   * or `artist` the uploader declares the finished file came from — the Studio labels the
+   * result by that declaration, never by guessing from the file itself.
+   */
+  methods: readonly Method[];
   runsOn: 'runner' | 'external-service' | 'person';
   /** False for a provider whose processing isn't built yet: listed, but can't be started. */
   implemented: boolean;

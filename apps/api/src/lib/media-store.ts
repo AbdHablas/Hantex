@@ -36,6 +36,16 @@ export const publicFileKey = (siteKey: string, fileId: string) =>
 /** An uploaded font's file in the public bucket (D-033), shared by every website. */
 export const fontKey = (fontId: string, weight: number) => `fonts/${fontId}/${weight}.woff2`;
 
+/**
+ * 3D Studio captures and processed models (D-029, D-030): private, under the same bucket as the
+ * media library. The processing runner (a separate process, never Cloudflare) reads and writes
+ * these through its own R2 credentials, not through this Worker.
+ */
+export const studioCaptureFileKey = (siteId: string, captureId: string, fileId: string) =>
+  `studio/${siteId}/${captureId}/${fileId}`;
+export const studioModelKey = (siteId: string, modelId: string, file: string) =>
+  `studio/${siteId}/models/${modelId}/${file}`;
+
 /** Copies one file between buckets (R2 bindings have no server-side copy). */
 export async function copyFile(from: MediaStore, fromKey: string, to: MediaStore, toKey: string) {
   const file = await from.get(fromKey);

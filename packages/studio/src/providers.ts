@@ -20,9 +20,7 @@ import type { ProviderDescriptor } from './types';
 export const PROVIDERS: readonly ProviderDescriptor[] = [
   {
     id: 'model-import',
-    // The method is the one declared for the import (see `src/routes/studio.ts`); this entry
-    // is the registry's description of the import path itself.
-    method: 'artist',
+    methods: ['photogrammetry', 'splat', 'artist'],
     runsOn: 'runner',
     implemented: true,
     dataPolicy: {
@@ -35,7 +33,7 @@ export const PROVIDERS: readonly ProviderDescriptor[] = [
   },
   {
     id: 'cad-step',
-    method: 'cad',
+    methods: ['cad'],
     runsOn: 'runner',
     implemented: false,
     dataPolicy: {

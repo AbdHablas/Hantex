@@ -24,6 +24,7 @@ import { enquiryRoutes } from './routes/enquiries';
 import { announcementRoutes } from './routes/announcements';
 import { fontRoutes } from './routes/fonts';
 import { mediaRoutes } from './routes/media';
+import { studioRoutes } from './routes/studio';
 
 /**
  * One site's API (`/api/sites/:siteKey/...`, D-024): every request is checked against the
@@ -43,6 +44,7 @@ function siteApi() {
     .route('/enquiries', enquiryRoutes)
     .route('/announcements', announcementRoutes)
     .route('/media', mediaRoutes)
+    .route('/studio', studioRoutes)
     .route('/publish', publishJobRoutes)
     .route('/staff', siteStaffRoutes)
     .route('/audit', siteAuditRoutes);

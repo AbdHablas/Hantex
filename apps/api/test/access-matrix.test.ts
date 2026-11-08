@@ -111,6 +111,16 @@ const SITE_ENDPOINTS: Endpoint[] = [
   // Enquiries (D-051).
   { method: 'GET', path: '/enquiries', needs: ['enquiries.view'] },
   { method: 'GET', path: '/enquiries/export', needs: ['enquiries.export'] },
+  // 3D Product Studio (D-029, D-030, D-056).
+  { method: 'GET', path: '/studio/providers', needs: ['studio.view'] },
+  { method: 'GET', path: '/studio/spend', needs: ['studio.manage'] },
+  { method: 'GET', path: '/studio/captures', needs: ['studio.view'] },
+  {
+    method: 'POST',
+    path: '/studio/captures',
+    needs: ['studio.capture'],
+    body: () => ({ productId: 'prd000001' }),
+  },
   {
     method: 'GET',
     path: '/publish/jobs',

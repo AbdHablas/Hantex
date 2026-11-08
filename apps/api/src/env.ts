@@ -23,6 +23,12 @@ export interface Env {
   MEDIA_PUBLIC?: R2Bucket;
   /** Most media each site may store, in megabytes (default 1024; R2's free plan has 10 GB). */
   MEDIA_SITE_QUOTA_MB?: string;
+  /**
+   * Most 3D Studio captures (photos, CAD and model uploads) each site may store, in megabytes
+   * (default 5120; a full photogrammetry capture is 500–750 MB, docs/3d-product-studio.md §7).
+   * Shares the same private bucket as the media library, under a `studio/` prefix.
+   */
+  STUDIO_SITE_QUOTA_MB?: string;
   EMAIL_FROM: string;
   RESEND_API_KEY?: string;
   TURNSTILE_SITE_KEY: string;
