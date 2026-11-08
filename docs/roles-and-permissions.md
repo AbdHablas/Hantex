@@ -32,8 +32,11 @@ or extended later without rebuilding anything.
 | Products and catalogue: view, edit drafts, publish *(D-045; `catalogue.view`, `.edit`, `.publish`)* | ✓ | ✓ | ✓ | View | Draft | View |
 | Products and files: delete *(`catalogue.delete`)* | ✓ | ✓ | — | — | — | — |
 | Certificates: mark verified against the attached document *(`catalogue.verify`)* | ✓ | ✓ | — | — | — | — |
-| 3D Studio: create and review models *(Phase 3, D-029)* | ✓ | ✓ | ✓ | — | Create only | View |
-| 3D Studio: approve models for publishing *(owner's requirement)* | ✓ | — | — | — | — | — |
+| 3D Studio: view captures and models *(D-029, D-056; `studio.view`)* | ✓ | ✓ | ✓ | — | ✓ | View |
+| 3D Studio: upload captures, start processing within budget *(`studio.capture`)* | ✓ | ✓ | ✓ | — | ✓ | — |
+| 3D Studio: review models, request changes *(`studio.review`)* | ✓ | ✓ | ✓ | — | — | — |
+| 3D Studio: approve models for publishing *(owner's requirement; `studio.approve`)* | ✓ | — | — | — | — | — |
+| 3D Studio: manage providers, budgets and data sharing *(Owner only; `studio.manage`)* | ✓ | — | — | — | — | — |
 | Media library: view and upload | ✓ | ✓ | ✓ | View | ✓ | View |
 | Media library: delete | ✓ | ✓ | — | — | — | — |
 | Permanently delete content | ✓ | ✓ | — | — | — | — |
