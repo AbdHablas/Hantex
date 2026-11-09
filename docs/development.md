@@ -73,7 +73,9 @@ glTF-Transform, meshoptimizer and sharp, the Khronos glTF validator, poster imag
 headless Chromium, and a real database reached as the runner's own least-privilege user. So
 `pnpm test` needs Chromium here too: run
 `pnpm --filter @hantex/studio-runner exec playwright install chromium` once, or set
-`PLAYWRIGHT_CHROMIUM_PATH`. CI installs it before the tests.
+`PLAYWRIGHT_CHROMIUM_PATH`. Chromium runs with its sandbox, so on Ubuntu 23.10 or later allow
+it the user namespaces AppArmor blocks by default (CI runs
+`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` on its throwaway machine).
 
 ### The public site engine
 

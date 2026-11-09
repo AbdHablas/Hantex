@@ -45,8 +45,11 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
-      # The 3D Studio runner's tests render real poster images in Chromium.
+      # The 3D Studio runner's tests render real poster images in Chromium, with its sandbox on
+      # as in use. Ubuntu 24.04's AppArmor blocks the user namespaces the sandbox needs; lift
+      # that on this throwaway machine rather than test without the sandbox.
       - run: pnpm --filter @hantex/studio-runner exec playwright install --with-deps chromium
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm test
       - run: pnpm build
       - run: node scripts/check-worker-size.mjs apps/api/dist apps/web/dist/server

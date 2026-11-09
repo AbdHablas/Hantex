@@ -191,7 +191,10 @@ on Cloudflare, and only ever reaches what it needs:
 seconds (`STUDIO_RUNNER_POLL_MS`), and on Ctrl+C finishes the current job before stopping.
 A job it was in the middle of when the computer shut down is marked failed after an hour, with
 a note to start it again. Never run it with `sudo` or as root: the browser it renders posters
-with can only keep its sandbox under an ordinary user account.
+with can only keep its sandbox under an ordinary user account. On a Mac that's all; on Ubuntu
+23.10 or later, AppArmor blocks the user namespaces the sandbox needs and posters fail with
+"No usable sandbox": give Chromium an AppArmor profile as its error message explains, rather
+than turning the sandbox off.
 
 ## Rollback
 
