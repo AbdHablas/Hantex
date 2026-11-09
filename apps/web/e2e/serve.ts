@@ -44,6 +44,7 @@ import { newLogoFile } from '@hantex/shared/logo';
 import { sanitizeSvg } from '@hantex/shared/svg';
 import { brandTheme, uploadedFontId } from '@hantex/theme';
 import pg from 'pg';
+import { makeBoxGlb } from '@hantex/studio-runner/test/fixture';
 
 const env = process.env;
 const base = env['HANTEX_TEST_DATABASE_URL'] ?? 'postgres://postgres@127.0.0.1:54329/postgres';
@@ -395,6 +396,8 @@ lockup.colours = lockup.colours.map((c) =>
 // An uploaded font (D-033) for the headings' Latin text: Cairo's Latin files from the built-in
 // library, stored as the dashboard would store them.
 const FONT_ID = '3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a';
+// An approved 3D model (D-057) on the one-gang switch's page, checked true to scale.
+const MODEL_ID = '5e4d3c2b-1a09-4f8e-9d7c-6b5a4f3e2d1c';
 const FONT_WEIGHTS = [400, 700];
 await db.insert(fonts).values({
   id: FONT_ID,
@@ -414,6 +417,12 @@ await db.insert(documentVersions).values([
   { siteId: liveId, kind: 'layout', version: 1, data: content.layout },
   { siteId: liveId, kind: 'saved-sections', version: 1, data: saved },
   { siteId: liveId, kind: 'catalogue', version: 1, data: catalogue },
+  {
+    siteId: liveId,
+    kind: 'models',
+    version: 1,
+    data: { products: { prdone: { id: MODEL_ID, label: 'artist-modelled', trueScale: true } } },
+  },
   ...Object.entries(products).map(([id, data]) => ({
     siteId: liveId,
     kind: 'product' as const,
@@ -529,6 +538,37 @@ for (const weight of FONT_WEIGHTS) {
       join(cairo, `cairo-latin-${weight}-normal.woff2`),
       '--content-type',
       'font/woff2',
+      '--local',
+      '--persist-to',
+      '.e2e/live/state',
+      '--config',
+      '.e2e/live/server/wrangler.json',
+    ],
+    { stdio: 'inherit', env: { ...env, WRANGLER_SEND_METRICS: 'false' } },
+  );
+}
+// The model's published files: a real GLB (an 86 × 86 × 12 mm plate) and its posters.
+const glb = join(dirname(webp), 'model.glb');
+await writeFile(glb, await makeBoxGlb({ sizeMm: { width: 86, height: 86, depth: 12 } }));
+for (const [name, source, type] of [
+  ['desktop.glb', glb, 'model/gltf-binary'],
+  ['mobile.glb', glb, 'model/gltf-binary'],
+  ['poster-front.webp', webp, 'image/webp'],
+  ['poster-three-quarter.webp', webp, 'image/webp'],
+] as const) {
+  execFileSync(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'r2',
+      'object',
+      'put',
+      `hantex-media-public/sites/e2e-live/models/${MODEL_ID}/${name}`,
+      '--file',
+      source,
+      '--content-type',
+      type,
       '--local',
       '--persist-to',
       '.e2e/live/state',

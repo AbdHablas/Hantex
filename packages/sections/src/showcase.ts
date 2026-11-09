@@ -18,6 +18,7 @@ import {
   type DocumentRef,
   type Product,
 } from './catalogue';
+import { DEFAULT_PRODUCT_MODELS, productModelSchema, type ProductModels } from './models';
 import { bilingual, itemId, slugSchema, type Bilingual, type Link } from './primitives';
 import type { ContentSection, SectionOf } from './registry';
 
@@ -74,6 +75,8 @@ const showcaseProductSchema = z.strictObject({
   documents: documentList,
   /** Only values that fit their attribute. */
   values: z.record(itemId, attributeValueSchema),
+  /** Its published 3D model (D-057), if it has one. */
+  model: productModelSchema.nullable(),
 });
 export type ShowcaseProduct = z.infer<typeof showcaseProductSchema>;
 
@@ -155,6 +158,7 @@ export const todayUtc = () => new Date().toISOString().slice(0, 10);
 export function showcaseOf(
   catalogue: Catalogue,
   products: Map<string, Product>,
+  models: ProductModels = DEFAULT_PRODUCT_MODELS,
   today: string = todayUtc(),
 ): Showcase {
   const attributes = new Map(catalogue.attributes.map((a) => [a.id, a]));
@@ -196,6 +200,7 @@ export function showcaseOf(
       })),
       documents: publicDocuments(product.documents, today),
       values,
+      model: models.products[id] ?? null,
     });
   }
   return {

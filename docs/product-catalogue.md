@@ -10,7 +10,7 @@ attached as documents with certificate verification, drafts, versions and checks
 publishing, and CSV/Excel import and export. Pages made with the website builder can show the
 catalogue through product sections and link to products, categories and series (D-048), and
 every live website builds a page for each visible product, each category and each series
-(D-049). Filters, search, enquiries and 3D are still to come.
+(D-049), with filters and search (D-052), enquiries (D-051) and approved 3D models (D-057).
 
 ## Business context
 

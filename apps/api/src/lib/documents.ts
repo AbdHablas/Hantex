@@ -16,6 +16,7 @@ import {
   DEFAULT_MENUS,
   DEFAULT_PAGES_INDEX,
   DEFAULT_CATALOGUE,
+  DEFAULT_PRODUCT_MODELS,
   DEFAULT_SAVED_SECTIONS,
   catalogueSchema,
   layoutSchema,
@@ -23,6 +24,7 @@ import {
   newPage,
   newProduct,
   pageSchema,
+  productModelsSchema,
   productSchema,
   pagesIndexSchema,
   savedSectionsSchema,
@@ -130,6 +132,15 @@ export const DOCUMENTS: Record<
     defaults: newProduct({ ar: '', en: '' }, 'product', ''),
     view: ['catalogue.view'],
     edit: ['catalogue.edit'],
+    publish: ['catalogue.publish', 'site.publish'],
+  },
+  // 3D models on product pages (D-057): written only by the Owner's approval in the 3D Studio,
+  // live through Publish changes with the products they belong to.
+  models: {
+    schema: productModelsSchema,
+    defaults: DEFAULT_PRODUCT_MODELS,
+    view: ['studio.view'],
+    edit: ['studio.approve'],
     publish: ['catalogue.publish', 'site.publish'],
   },
 };

@@ -17,6 +17,7 @@ import {
   REVIEW_CHECKS,
   studioCaptureFileKey,
   technicalGate,
+  TRUE_SCALE_LABELS,
   type ResultLabel,
 } from '@hantex/studio';
 import { itemId } from '@hantex/sections';
@@ -44,6 +45,13 @@ import {
   studioStoredBytes,
 } from '../lib/studio-content';
 import { validate } from '../lib/validate';
+import {
+  assignModel,
+  draftModels,
+  liveModels,
+  unassignModel,
+  websiteStatus,
+} from '../lib/website-models';
 import { requirePermission } from '../middleware/session';
 
 /**
@@ -145,7 +153,10 @@ const technicalIssuesOf = (row: typeof studioModels.$inferSelect) =>
     withinScale: row.withinScale,
   });
 
-const asModel = (row: typeof studioModels.$inferSelect) => ({
+const asModel = (
+  row: typeof studioModels.$inferSelect,
+  website: 'none' | 'assigned' | 'live' = 'none',
+) => ({
   id: row.id,
   captureId: row.captureId,
   jobId: row.jobId,
@@ -157,9 +168,40 @@ const asModel = (row: typeof studioModels.$inferSelect) => ({
   technicalIssues: technicalIssuesOf(row),
   reviewStatus: row.reviewStatus,
   approvedAt: row.approvedAt,
+  /** On the product's page: not at all, once Publish changes runs, or now (D-057). */
+  website,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
+
+/** The catalogue product a model was made for (its capture's). */
+async function productOf(db: Database, captureId: string) {
+  const [capture] = await db
+    .select({ productId: studioCaptures.productId })
+    .from(studioCaptures)
+    .where(eq(studioCaptures.id, captureId));
+  if (!capture) throw notFound();
+  return capture.productId;
+}
+
+async function websiteOf(db: Database, siteId: string, model: typeof studioModels.$inferSelect) {
+  const [draft, live, productId] = await Promise.all([
+    draftModels(db, siteId),
+    liveModels(db, siteId),
+    productOf(db, model.captureId),
+  ]);
+  return websiteStatus(draft, live, productId, model.id);
+}
+
+/** What a product's page shows of a model: its label, and whether it is true to size (D-057). */
+function placementOf(row: typeof studioModels.$inferSelect) {
+  const label = row.label as ResultLabel;
+  return {
+    id: row.id,
+    label,
+    trueScale: TRUE_SCALE_LABELS.includes(label) && row.withinScale === true,
+  };
+}
 
 /** The one capture of this site, or a 404 — every route below is scoped by this. */
 async function requireCapture(db: Database, siteId: string, id: string) {
@@ -333,11 +375,15 @@ export const studioRoutes = new Hono<AppEnv>()
         .orderBy(desc(studioModels.createdAt)),
       captureSummary(v.db, capture.id),
     ]);
+    const [draft, live] = await Promise.all([
+      draftModels(v.db, v.site.id),
+      liveModels(v.db, v.site.id),
+    ]);
     return c.json({
       capture: asCapture(capture),
       files: files.map(asFile),
       jobs: jobs.map(asJob),
-      models: models.map(asModel),
+      models: models.map((m) => asModel(m, websiteStatus(draft, live, capture.productId, m.id))),
       eligibility: data ? eligibility(data.summary) : [],
       canCheckTrueScale: data ? canCheckTrueScale(data.summary) : false,
     });
@@ -644,13 +690,14 @@ export const studioRoutes = new Hono<AppEnv>()
       .from(studioModels)
       .where(and(eq(studioModels.id, c.req.valid('param').id), eq(studioModels.siteId, v.site.id)));
     if (!row) throw notFound();
+    const website = await websiteOf(v.db, v.site.id, row);
     const reviews = await v.db
       .select()
       .from(studioReviews)
       .where(eq(studioReviews.modelId, row.id))
       .orderBy(desc(studioReviews.createdAt));
     return c.json({
-      model: asModel(row),
+      model: asModel(row, website),
       reviews: reviews.map((r) => ({
         id: r.id,
         checklist: r.checklist,
@@ -764,6 +811,9 @@ export const studioRoutes = new Hono<AppEnv>()
       .set({ approvedBy: v.access.userId, approvedAt: new Date(), updatedAt: new Date() })
       .where(eq(studioModels.id, model.id))
       .returning();
+    // Approval assigns the model to its product's page; it goes live with Publish changes (D-057).
+    const productId = await productOf(v.db, model.captureId);
+    await assignModel(v.db, v.site.id, productId, placementOf(model), v.access.userId);
     await writeAudit(
       v.db,
       auditActor(v),
@@ -772,9 +822,63 @@ export const studioRoutes = new Hono<AppEnv>()
         siteId: v.site.id,
         targetType: 'studio-model',
         targetId: model.id,
-        details: { label: model.label },
+        details: { label: model.label, productId },
       },
       v.requestId,
     );
-    return c.json(asModel(row!));
+    return c.json(asModel(row!, await websiteOf(v.db, v.site.id, row!)));
+  })
+
+  /** Takes an approved model off its product's page, once Publish changes runs. */
+  // Puts an approved model back on its product's page (after "take off", or in place of a newer
+  // one), on the same terms as approving it; it goes live with Publish changes (D-057).
+  .put('/models/:id/website', requirePermission('studio.approve'), idParam, async (c) => {
+    const v = c.var;
+    const [model] = await v.db
+      .select()
+      .from(studioModels)
+      .where(and(eq(studioModels.id, c.req.valid('param').id), eq(studioModels.siteId, v.site.id)));
+    if (!model) throw notFound();
+    if (!model.approvedAt) throw conflict('model-not-approved');
+    if (model.reviewStatus !== 'ready-for-approval') throw conflict('not-reviewed');
+    const issues = technicalIssuesOf(model);
+    if (issues.length > 0) throw conflict('technical-gate', { issues });
+    const productId = await productOf(v.db, model.captureId);
+    await assignModel(v.db, v.site.id, productId, placementOf(model), v.access.userId);
+    await writeAudit(
+      v.db,
+      auditActor(v),
+      {
+        action: 'studio.model-assigned',
+        siteId: v.site.id,
+        targetType: 'studio-model',
+        targetId: model.id,
+        details: { productId },
+      },
+      v.requestId,
+    );
+    return c.json(asModel(model, await websiteOf(v.db, v.site.id, model)));
+  })
+  .delete('/models/:id/website', requirePermission('studio.approve'), idParam, async (c) => {
+    const v = c.var;
+    const [model] = await v.db
+      .select()
+      .from(studioModels)
+      .where(and(eq(studioModels.id, c.req.valid('param').id), eq(studioModels.siteId, v.site.id)));
+    if (!model) throw notFound();
+    const productId = await productOf(v.db, model.captureId);
+    await unassignModel(v.db, v.site.id, productId, model.id, v.access.userId);
+    await writeAudit(
+      v.db,
+      auditActor(v),
+      {
+        action: 'studio.model-unassigned',
+        siteId: v.site.id,
+        targetType: 'studio-model',
+        targetId: model.id,
+        details: { productId },
+      },
+      v.requestId,
+    );
+    return c.json(asModel(model, await websiteOf(v.db, v.site.id, model)));
   });

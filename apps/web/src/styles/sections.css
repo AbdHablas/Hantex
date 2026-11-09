@@ -1306,3 +1306,37 @@
   background: color-mix(in srgb, var(--s-link) 22%, transparent);
   color: inherit;
 }
+
+/* A product's 3D model (D-057): the poster until the viewer loads, in the gallery's frame. */
+.cx-model {
+  margin-bottom: 0.75rem;
+}
+.cx-model-stage {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--s-border);
+  border-radius: var(--hx-radius-large);
+  background: color-mix(in srgb, var(--s-fg) 4%, transparent);
+}
+.cx-model-poster,
+.cx-model-stage model-viewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cx-model-open {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.cx-model-open[hidden] {
+  display: none;
+}
+.cx-model-ar {
+  position: absolute;
+  bottom: 1rem;
+  inset-inline-end: 1rem;
+}

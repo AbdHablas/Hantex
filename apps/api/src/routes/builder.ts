@@ -24,6 +24,7 @@ import {
   slugSchema,
   type Page,
   type PagesIndex,
+  type ProductModels,
 } from '@hantex/sections';
 import type { Permission } from '@hantex/shared';
 import { brandTheme, publishable, validateTheme, type Theme } from '@hantex/theme';
@@ -57,6 +58,7 @@ import {
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { libraryIds, publishMedia } from '../lib/media-library';
 import { fileLibraryIds, publishFiles, withdrawFiles } from '../lib/site-files';
+import { requireApprovedModels, syncModelFiles } from '../lib/website-models';
 import { startRebuild } from '../lib/rebuild';
 import { draftContent, newRedirects, publishedContent, sameData } from '../lib/site-content';
 import { requireThemeFonts } from '../lib/fonts';
@@ -531,6 +533,9 @@ export const builderRoutes = new Hono<AppEnv>()
         ['page', 'pages', 'menus', 'layout', 'saved-sections'].includes(i.kind),
       );
       const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
+      // 3D models on product pages (D-057): only ever approved models of this website.
+      const models = items.find((i) => i.kind === 'models');
+      if (models) await requireApprovedModels(v.db, v.site.id, models.data as ProductModels);
       const nextPages = touchesBuilder
         ? await draftContent(v.db, v.site.id)
         : await publishedContent(v.db, v.site.id);
@@ -659,6 +664,9 @@ export async function publishSiteChanges(
     ['page', 'pages', 'menus', 'layout', 'saved-sections'].includes(i.kind),
   );
   const touchesCatalogue = items.some((i) => isCatalogue(i.kind));
+  // 3D models on product pages (D-057): only ever approved models of this website.
+  const models = items.find((i) => i.kind === 'models');
+  if (models) await requireApprovedModels(v.db, v.site.id, models.data as ProductModels);
   let redirects: PagesIndex['redirects'] = [];
   // The pages that will be live: the drafts when they change, otherwise the published ones.
   const nextPages = touchesBuilder
@@ -782,6 +790,14 @@ export async function publishSiteChanges(
     const offered = fileIds(showcaseOf(live.catalogue, live.products));
     await publishFiles(v.db, stores, v.site, offered);
     await withdrawFiles(v.db, stores, v.site, offered);
+  }
+  // A visible product's 3D model goes public with it; a hidden or replaced one is taken back.
+  if (touchesCatalogue || models) {
+    await syncModelFiles(
+      v.db,
+      { studio: v.deps.studio(env), public: v.deps.publicMedia(env) },
+      v.site,
+    );
   }
   const { job, result } = await startRebuild(v, env);
   await writeAudit(

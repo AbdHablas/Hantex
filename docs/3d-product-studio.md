@@ -507,6 +507,30 @@ approved models to the website with the 3D viewer on product pages (Phase 4).
   Cache Rule
   ([Cloudflare](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/)).
 
+**As built (D-057).** What a product page does today, and where it differs from the design
+above:
+
+- **Poster first:** a product with a live model shows the model's front poster first in its
+  photos, with a *View in 3D* button and a caption naming its label ("true to size" for a
+  true-scale model). On a computer with a mouse the viewer loads as the model nears the screen;
+  on a touch screen, or with data saver on, it waits for a tap, and phone-sized screens get the
+  phone version. After a tap, keyboard focus moves to the model, where the arrow keys turn it.
+  Without JavaScript the poster shows with no button.
+- **No finish switching yet:** stage 1 models carry one variant per finish, but every variant
+  uses the model's one material (D-056), so there is nothing to switch between yet.
+- **AR through Scene Viewer and Quick Look only, not WebXR,** offered for true-scale models,
+  on a wall at fixed size. Not yet tried on a real phone.
+- **Hosting:** each site's own Worker serves the files at `/models/<model id>/<file>` from the
+  public media bucket, and browsers cache them for a year (a model's files never change). No
+  media domain or Cache Rule is needed. Files are copied there only while the model is live on
+  a visible product, and removed once it isn't.
+- **Getting there:** the Owner's approval puts a model on its product's page in each site's
+  *3D models* document, and *Publish changes* takes it live; the Owner can take it off and put
+  it back. Draft previews don't show models (they show builder pages, not product pages).
+- **Size:** the viewer is a separate 286 KB download (gzip, measured from the build), fetched
+  only when a model is about to show; a product page's own loader is under 1 KB.
+- **Not built yet:** Apple-style scroll sections.
+
 ### Data model (Phase 3)
 
 All tables below include the site:
@@ -520,7 +544,8 @@ All tables below include the site:
 - `studio_provider_settings` (enabled, budget, data-policy record);
 - `studio_spend` (cost ledger).
 
-Approved models link to products and variants in the catalogue.
+Approved models link to products through each site's published *3D models* document
+(D-057); links to variants come once models carry a material per finish.
 
 ### Permissions (per site, added to the roles matrix when built)
 
@@ -666,7 +691,8 @@ Unreleased product photos must never pass through it.
   - budget controls;
   - publishing to a site.
 - **Stage 2 (Phase 4):**
-  - the website viewer with posters, finish variants and AR;
+  - the website viewer with posters and AR — *done (D-057)*; finish variants once models
+    carry a material per finish;
   - Apple-style scroll sections;
   - automated photogrammetry on suitable hardware;
   - AI providers, only if approved;

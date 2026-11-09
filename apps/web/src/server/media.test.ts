@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hmacHex } from './crypto';
-import { serveFile, serveFont, serveMedia, type MediaBucket } from './media';
+import { serveFile, serveFont, serveMedia, serveModel, type MediaBucket } from './media';
 
 const SECRET = 'test-preview-secret-0123456789abcdef';
 const ID = '0b6f5d0e-3c1a-4c2e-9a51-2f4d8e7b6a10';
@@ -140,5 +140,47 @@ describe('published files', () => {
     }
     expect(store.asked).toEqual([`sites/hantex-ultra/files/${ID}.pdf`]);
     expect((await file(`/files/${ID}.pdf`, store, 'POST')).status).toBe(405);
+  });
+});
+
+describe('published 3D models', () => {
+  const model = (path: string, store: MediaBucket, method = 'GET') =>
+    serveModel(new Request(`https://example.test${path}`, { method }), {
+      bucket: store,
+      siteKey: 'hantex-ultra',
+    });
+
+  it('serves a model and its posters, cached for a year, never run as a page', async () => {
+    const store = bucket([
+      `sites/hantex-ultra/models/${ID}/desktop.glb`,
+      `sites/hantex-ultra/models/${ID}/poster-front.webp`,
+    ]);
+    const glb = await model(`/models/${ID}/desktop.glb`, store);
+    expect(glb.status).toBe(200);
+    expect(glb.headers.get('Content-Type')).toBe('model/gltf-binary');
+    expect(glb.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
+    expect(glb.headers.get('Content-Security-Policy')).toBe("default-src 'none'; sandbox");
+    expect(glb.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    const poster = await model(`/models/${ID}/poster-front.webp`, store);
+    expect(poster.headers.get('Content-Type')).toBe('image/webp');
+    expect(await (await model(`/models/${ID}/desktop.glb`, store, 'HEAD')).text()).toBe('');
+    expect((await model(`/models/${ID}/desktop.glb`, store, 'POST')).status).toBe(405);
+  });
+
+  it('reaches nothing but the four files of this site’s published models', async () => {
+    const store = bucket([
+      `sites/other/models/${ID}/desktop.glb`,
+      `${ID}/models/${ID}/desktop.glb`,
+    ]);
+    for (const path of [
+      `/models/${ID}/desktop.glb`,
+      `/models/${ID}/source.glb`,
+      `/models/${ID}/../../other/models/${ID}/desktop.glb`,
+      `/models/not-an-id/desktop.glb`,
+      `/models/${ID}/desktop.GLB`,
+    ]) {
+      expect((await model(path, store)).status, path).toBe(404);
+    }
+    expect(store.asked).toEqual([`sites/hantex-ultra/models/${ID}/desktop.glb`]);
   });
 });

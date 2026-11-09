@@ -97,6 +97,20 @@ export const TEXT = {
     validUntil: 'صالحة حتى',
     sameSeries: 'من السلسلة نفسها',
     photos: 'صور المنتج',
+    model: {
+      open: 'عرض بالأبعاد الثلاثة',
+      alt: 'نموذج ثلاثي الأبعاد لـ {name}',
+      poster: 'صورة النموذج ثلاثي الأبعاد لـ {name}',
+      ar: 'اعرضه على جدارك',
+      trueScale: 'بمقاسه الحقيقي',
+      label: {
+        'exact-cad': 'نموذج ثلاثي الأبعاد من ملفات تصميم الشركة المصنّعة',
+        measured: 'نموذج ثلاثي الأبعاد مُقاس من الصور',
+        'artist-modelled': 'نموذج ثلاثي الأبعاد من صنع فنان',
+        'captured-view': 'عرض ثلاثي الأبعاد ملتقط من الصور',
+        'ai-estimated': 'نموذج ثلاثي الأبعاد مقدَّر بالذكاء الاصطناعي',
+      } as Record<string, string>,
+    },
     pdf: 'PDF، {size}',
     documentType: {
       datasheet: 'نشرة بيانات',
@@ -254,6 +268,20 @@ export const TEXT = {
     validUntil: 'Valid until',
     sameSeries: 'From the same series',
     photos: 'Product photos',
+    model: {
+      open: 'View in 3D',
+      alt: '3D model of {name}',
+      poster: 'Picture of the 3D model of {name}',
+      ar: 'View on your wall',
+      trueScale: 'true to size',
+      label: {
+        'exact-cad': '3D model from the manufacturer’s design files',
+        measured: '3D model measured from photos',
+        'artist-modelled': '3D model made by a 3D artist',
+        'captured-view': '3D view captured from photos',
+        'ai-estimated': '3D model estimated by AI',
+      } as Record<string, string>,
+    },
     pdf: 'PDF, {size}',
     documentType: {
       datasheet: 'Datasheet',

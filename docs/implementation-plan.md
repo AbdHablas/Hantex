@@ -232,7 +232,11 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - [x] category filters — *done (D-052): filterable attributes and finishes, in the browser*;
   - [x] search (Pagefind) — *done (D-052): a search page per language, Arabic checked*;
   - enquiry forms.
-- [ ] 3D on product pages: viewer with poster fallback, finish variants, and "view on your wall" for true-scale models (D-029)
+- [x] 3D on product pages (D-029, D-057) — *done: the Owner's approval puts a model on its
+      product's page and Publish changes takes it live; poster first, the viewer on demand,
+      "view on your wall" for true-scale models; model files public only while shown. Still to
+      come: switching finishes, once models carry a material per finish; trying "view on your
+      wall" on real phones*
 - [ ] 3D Product Studio, stage 2:
   - automated photo reconstruction (photogrammetry);
   - optional AI providers, only if the owner approves them (D-030).
@@ -272,7 +276,7 @@ Full evaluation and sources: [`3d-product-studio.md`](3d-product-studio.md).
 | Need | Service | Cost, checked 2026-10-21 |
 |------|---------|--------------------------|
 | Storage of originals, models and previews | Cloudflare R2: private `hantex-studio` bucket and the public media bucket | Free up to 10 GB a month, shared with backups and other media; then US$0.015 per GB-month. Estimated US$0.60–2.50 a month per 100 fully captured products; quick captures fit in the free allowance. No egress charge. |
-| Delivery of models and poster images | R2 through each site's media domain, cached by Cloudflare | US$0. Needs a Cache Rule for `.glb` files. |
+| Delivery of models and poster images | R2 (the public media bucket), served by each site's own Worker and cached by browsers for a year (D-057) | US$0. No media domain or Cache Rule needed. |
 | Uploads, job tracking, review screens | Dashboard Worker (Workers Free) | US$0. No heavy processing: the Free plan allows 10 ms of CPU per request. |
 | Conversion, optimisation, validation, posters | GitHub Actions in a **private** runner repository | US$0 within 2,000 minutes a month. Estimated 2–5 minutes per model, to be measured. |
 | Photo reconstruction (photogrammetry) | Apple Object Capture (Mac or LiDAR iPhone), RealityScan or COLMAP on a suitable PC, all free; or the KIRI Engine app. The owner has a Mac, a LiDAR iPhone or iPad and a GPU PC (D-030), so the free tools are used. | US$0 on suitable hardware (RealityScan is free below US$1M company revenue). Otherwise KIRI Engine is US$17.99 a month, or its API US$1 per model after a US$500 minimum top-up. |

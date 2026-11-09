@@ -22,11 +22,10 @@ production data is never used in development or tests.
 | Worker per site, `site-<key>` (D-028, confirmed) | One public site each: static pages from the site engine (`apps/web`) and its form endpoints. The first is `site-hantex-ultra` for www.hantexultra.com. |
 | Worker `hantex-admin` | Dashboard (React app) and its API (Hono) on `admin.hantexultra.com`, managing every site; its cron trigger (every five minutes) runs scheduled publishes (D-054) |
 | Hyperdrive | Database connections: the public-site user (insert-only sign-ups) for site Workers, uncached for the dashboard |
-| R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |
-| R2 bucket `hantex-studio` (private) | The 3D Studio (D-056): capture uploads under `<site id>/captures/…` and processed models and posters under `<site id>/models/…`, none of it public until approved and published. Bound to the dashboard Worker only (`STUDIO`); the processing runner reaches it with an R2 API token limited to this bucket ([3D Studio processing runner](#3d-studio-processing-runner)) |
+| R2 bucket `hantex-studio` (private) | The 3D Studio (D-056): capture uploads under `<site id>/captures/…` and processed models and posters under `<site id>/models/…`, none of it public until approved and published (publishing copies a live model's files to `hantex-media-public`, D-057). Bound to the dashboard Worker only (`STUDIO`); the processing runner reaches it with an R2 API token limited to this bucket ([3D Studio processing runner](#3d-studio-processing-runner)) |
 | R2 bucket `backups` (private) | Encrypted nightly database exports (D-010) |
 | R2 bucket `hantex-media` (private) | The media library (D-044): every upload, under `private/<site id>/<image>/<width>.webp`, and the website's PDF files (D-045) under `private/<site id>/files/<file>.pdf`. Bound to the dashboard Worker only (`MEDIA`) |
-| R2 bucket `hantex-media-public` | Copies of published images under `sites/<site key>/…`, which each site's Worker serves as `/media/<image>/<width>.webp`, short-lived preview copies under `preview/<site key>/…`, served only through signed links, published PDF files under `sites/<site key>/files/…`, which each site serves as downloads at `/files/<file>.pdf`, and uploaded fonts under `fonts/<font>/…`, which every site serves as `/fonts/library/<font>/<weight>.woff2`. The dashboard Worker writes it (`MEDIA_PUBLIC`); site Workers read it (`MEDIA`). No public bucket address or custom domain is needed. **Lifecycle rule (added once by the owner):** delete objects under `preview/` after 1 day |
+| R2 bucket `hantex-media-public` | Copies of published images under `sites/<site key>/…`, which each site's Worker serves as `/media/<image>/<width>.webp`, short-lived preview copies under `preview/<site key>/…`, served only through signed links, published PDF files under `sites/<site key>/files/…`, which each site serves as downloads at `/files/<file>.pdf`, the files of 3D models live on product pages under `sites/<site key>/models/<model id>/…`, which each site serves at `/models/<model id>/<file>` (D-057), and uploaded fonts under `fonts/<font>/…`, which every site serves as `/fonts/library/<font>/<weight>.woff2`. The dashboard Worker writes it (`MEDIA_PUBLIC`); site Workers read it (`MEDIA`). No public bucket address or custom domain is needed. **Lifecycle rule (added once by the owner):** delete objects under `preview/` after 1 day |
 | Turnstile | Spam protection on sign-up and sign-in |
 | Cloudflare Access (Zero Trust free) | Second lock in front of the dashboard and previews |
 | Workers Logs, Cron Triggers | Monitoring, health checks, scheduled publishing. The Free plan allows 5 Cron Triggers per account, so one shared schedule serves all sites. |
@@ -36,9 +35,8 @@ production data is never used in development or tests.
 - `www.hantexultra.com` → `site-hantex-ultra` (custom domain).
 - `hantexultra.com` → redirect to `https://www.hantexultra.com`.
 - `admin.hantexultra.com` → `hantex-admin`, behind Cloudflare Access.
-- `media.hantexultra.com` → R2 `media` bucket (custom domain, cached).
 - Email sending records for Resend (SPF, DKIM, DMARC).
-- **Each new site:** its domains and media domain are entered in the
+- **Each new site:** its domains are entered in the
   dashboard as *pending*. They are applied only by a production deployment
   the owner approves. The dashboard has no Cloudflare credentials and cannot
   change DNS itself.

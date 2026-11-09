@@ -14,11 +14,13 @@
 import { FIRST_SITE } from '@hantex/db/worker';
 import {
   DEFAULT_CATALOGUE,
+  DEFAULT_PRODUCT_MODELS,
   catalogueIdsOf,
   cataloguePages,
   cataloguePath,
   catalogueSchema,
   fileIds,
+  productModelsSchema,
   productSchema,
   redirectPaths,
   showcaseOf,
@@ -198,7 +200,7 @@ function builderContent(rows: { kind: string; key: string; data: unknown }[]): B
 async function publishedShowcase(client: pg.Client, siteId: string) {
   const rows = (
     await client.query<{ kind: string; key: string; data: unknown }>(
-      "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('catalogue', 'product') order by kind, key, version desc",
+      "select distinct on (kind, key) kind, key, data from document_versions where site_id = $1 and kind in ('catalogue', 'product', 'models') order by kind, key, version desc",
       [siteId],
     )
   ).rows;
@@ -210,7 +212,13 @@ async function publishedShowcase(client: pg.Client, siteId: string) {
       products.set(row.key, productSchema.parse(row.data));
     }
   }
-  return showcaseOf(catalogue, products);
+  // Each product's published 3D model (D-057); Publish changes made its files public.
+  const models = rows.find((r) => r.kind === 'models');
+  return showcaseOf(
+    catalogue,
+    products,
+    models ? productModelsSchema.parse(models.data) : DEFAULT_PRODUCT_MODELS,
+  );
 }
 
 /**

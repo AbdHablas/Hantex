@@ -764,6 +764,31 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByRole('button', { name: 'Approve' }).click();
   await confirm(page);
   await expect(page.getByText('Approved', { exact: true }).first()).toBeVisible();
+  // Approval puts the model on its product's page once the website is published (D-057); the
+  // Owner can take it off again, and put it back.
+  const onPage = page.getByText('On the product page once published', { exact: true });
+  await expect(onPage.first()).toBeVisible();
+  await page.getByRole('button', { name: 'Take off the product page' }).click();
+  await confirm(page);
+  await expect(onPage).toHaveCount(0);
+  await page.getByRole('button', { name: 'Put back on the product page' }).click();
+  await confirm(page);
+  await expect(onPage.first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Put back on the product page' })).toHaveCount(0);
+  // Publish changes takes it live, copying its four files to the public bucket (all or none):
+  // only then is it marked published.
+  await page.getByRole('button', { name: 'Publish changes' }).click();
+  await confirm(page);
+  await expect(page.getByText('Changes published.')).toBeVisible();
+  await expect(page.getByText('On the product page', { exact: true }).first()).toBeVisible();
+  const studioDb = new pg.Client({ connectionString: database.toString() });
+  await studioDb.connect();
+  const published = await studioDb.query<{ published_at: Date | null }>(
+    'select published_at from studio_models',
+  );
+  await studioDb.end();
+  expect(published.rows).toHaveLength(1);
+  expect(published.rows[0]?.published_at).toBeInstanceOf(Date);
   // The 3D viewer's textures (blob: addresses) and its own stylesheet (allowed by hash) pass
   // the security policy: nothing on these pages was refused.
   expect(cspErrors).toEqual([]);

@@ -45,7 +45,7 @@ GRANT SELECT, INSERT ON studio_reviews TO hantex_admin_app;
 GRANT SELECT, INSERT, UPDATE ON studio_provider_settings TO hantex_admin_app;
 GRANT SELECT ON studio_spend TO hantex_admin_app;
 GRANT SELECT ON studio_models TO hantex_admin_app;
-GRANT UPDATE (review_status, approved_by, approved_at, updated_at) ON studio_models TO hantex_admin_app;
+GRANT UPDATE (review_status, approved_by, approved_at, published_at, updated_at) ON studio_models TO hantex_admin_app;
 
 -- Public site endpoints (apps/web): add sign-ups (cannot read them back), rate limits,
 -- and read published content. Each site's Worker supplies site_id from its own configuration.

@@ -215,6 +215,84 @@ test('a product page shows only what the catalogue holds (D-048)', async ({ page
   );
 });
 
+test('a product page shows its 3D model: poster first, then the viewer, with "view on your wall" for a true-scale model (D-057)', async ({
+  page,
+  request,
+}) => {
+  const refused: string[] = [];
+  page.on('console', (message) => {
+    if (/Content Security Policy/i.test(message.text())) refused.push(message.text());
+  });
+  const model = page.waitForResponse((response) => response.url().endsWith('/desktop.glb'));
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  const figure = page.locator('figure.cx-model');
+  await expect(figure.locator('figcaption')).toHaveText(
+    '3D model made by a 3D artist · true to size',
+  );
+  // On a computer the viewer loads by itself once the model is on screen; a phone would wait for a tap.
+  const viewer = figure.locator('model-viewer');
+  await expect(viewer).toHaveAttribute('src', /\/models\/[0-9a-f-]{36}\/desktop\.glb$/);
+  expect((await model).status()).toBe(200);
+  await expect(viewer).toHaveAttribute('alt', '3D model of Test one-gang switch');
+  await expect(viewer).toHaveAttribute('ar-placement', 'wall');
+  await expect(viewer).toHaveAttribute('ar-scale', 'fixed');
+  await expect(viewer.locator('[slot="ar-button"]')).toHaveText('View on your wall');
+  // Every model file is this site's own, typed and cached for a year.
+  const src = (await viewer.getAttribute('src')) ?? '';
+  const glb = await request.get(`${LIVE}${src}`);
+  expect(glb.headers()['content-type']).toBe('model/gltf-binary');
+  expect(glb.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
+  // The viewer's textures and stylesheet are allowed; nothing else was refused.
+  expect(refused).toEqual([]);
+
+  // A product without a model shows its photos only, and loads no viewer.
+  await page.goto(`${LIVE}/en/product/two-gang/`);
+  await expect(page.locator('figure.cx-model')).toHaveCount(0);
+
+  // A phone waits for a tap, then loads the lighter phone version.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  await expect(
+    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch' }),
+  ).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.locator('model-viewer')).toHaveCount(0);
+  await page.getByRole('button', { name: 'View in 3D' }).click();
+  const tapped = page.locator('model-viewer');
+  await expect(tapped).toHaveAttribute('src', /\/mobile\.glb$/);
+  // Keyboard focus moves into the viewer, and on to the model itself once it shows.
+  await expect(tapped).toBeFocused();
+  await expect
+    .poll(() =>
+      tapped.evaluate((element) =>
+        element.shadowRoot?.activeElement?.classList.contains('userInput'),
+      ),
+    )
+    .toBe(true);
+  // There the arrow keys turn it.
+  const turn = () =>
+    tapped.evaluate(
+      (element) =>
+        (element as unknown as { getCameraOrbit(): { theta: number } }).getCameraOrbit().theta,
+    );
+  const before = await turn();
+  await page.keyboard.press('ArrowLeft');
+  await expect.poll(turn).not.toBe(before);
+});
+
+test('a product page without JavaScript shows the model’s picture, and no button that does nothing (D-057)', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  await expect(
+    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View in 3D' })).toHaveCount(0);
+  await context.close();
+});
+
 test('a product enquiry reaches the server and is refused without a passed security check (D-051)', async ({
   page,
 }) => {

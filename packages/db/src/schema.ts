@@ -385,10 +385,11 @@ export const DOCUMENT_KINDS = [
   'logo',
   'catalogue',
   'product',
+  'models',
 ] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 const kindCheck = (column: unknown) =>
-  sql`${column} in ('coming-soon', 'site-settings', 'theme', 'page', 'pages', 'menus', 'layout', 'saved-sections', 'logo', 'catalogue', 'product')`;
+  sql`${column} in ('coming-soon', 'site-settings', 'theme', 'page', 'pages', 'menus', 'layout', 'saved-sections', 'logo', 'catalogue', 'product', 'models')`;
 const keyColumn = () => text('key').notNull().default('');
 
 const siteRef = () =>
@@ -839,6 +840,8 @@ export const studioModels = pgTable(
     reviewStatus: text('review_status').notNull().default('pending'),
     approvedBy: text('approved_by').references(() => users.id, { onDelete: 'set null' }),
     approvedAt: timestamp('approved_at', { withTimezone: true }),
+    /** Set while its files are copied to the public bucket for the website (D-057). */
+    publishedAt: timestamp('published_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

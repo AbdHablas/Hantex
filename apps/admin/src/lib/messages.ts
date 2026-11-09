@@ -424,6 +424,16 @@ const en = {
     approve: 'Approve',
     approveConfirm:
       'Approve this model for the product? It still goes live only when the website is published.',
+    website: {
+      assigned: 'On the product page once published',
+      live: 'On the product page',
+    } as Record<string, string>,
+    takeOff: 'Take off the product page',
+    takeOffConfirm:
+      'Take this model off its product page? It goes once the website is published, and you can put it back later.',
+    putBack: 'Put back on the product page',
+    putBackConfirm:
+      'Put this model back on its product page? It replaces the model shown there once the website is published.',
   },
 
   announce: {
@@ -1443,6 +1453,7 @@ const en = {
       'This model fails a technical check, so it can only go back for correction, not be approved.',
     'not-reviewed': 'A reviewer has to mark this model ready before it can be approved.',
     'checklist-incomplete': 'Check every feature on the list before marking the model ready.',
+    'model-not-approved': 'A 3D model on a product page has to be approved first.',
     'over-budget': 'This would go over this month’s budget for that way of making a model.',
     'provider-disabled': 'The Owner hasn’t switched this way of making a model on.',
     'category-in-use': 'A product is still in a category you removed. Move the product first.',
@@ -1966,6 +1977,16 @@ const ar: Messages = {
     reviews: 'المراجعات',
     approve: 'اعتماد',
     approveConfirm: 'اعتماد هذا النموذج للمنتج؟ لن يظهر على الموقع إلا عند نشره.',
+    website: {
+      assigned: 'في صفحة المنتج بعد النشر',
+      live: 'في صفحة المنتج',
+    },
+    takeOff: 'إزالته من صفحة المنتج',
+    takeOffConfirm:
+      'إزالة هذا النموذج من صفحة منتجه؟ يُزال عند نشر الموقع، ويمكنك إعادته إليها لاحقًا.',
+    putBack: 'إعادته إلى صفحة المنتج',
+    putBackConfirm:
+      'إعادة هذا النموذج إلى صفحة منتجه؟ يحلّ محلّ النموذج المعروض فيها عند نشر الموقع.',
   },
 
   announce: {
@@ -2955,6 +2976,7 @@ const ar: Messages = {
     'technical-gate': 'لا يجتاز هذا النموذج فحصًا تقنيًا، فلا يمكن إلا إعادته للتصحيح، لا اعتماده.',
     'not-reviewed': 'يجب أن يحدد مراجع أن النموذج جاهز قبل اعتماده.',
     'checklist-incomplete': 'تحقّق من كل بند في القائمة قبل تحديد النموذج جاهزًا.',
+    'model-not-approved': 'يجب اعتماد النموذج ثلاثي الأبعاد قبل عرضه في صفحة منتج.',
     'over-budget': 'سيتجاوز هذا ميزانية هذا الشهر لهذه الطريقة في إنشاء النموذج.',
     'provider-disabled': 'لم يفعّل المالك هذه الطريقة في إنشاء النموذج.',
     'category-in-use': 'ما زال منتج في فئة أزلتها. انقل المنتج أولًا.',

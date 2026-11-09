@@ -68,6 +68,10 @@ const structured = origin
     ]
   : [];
 const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some((v) => v.sku);
+// Its approved 3D model (D-057): the poster first, the viewer only when wanted (scripts/model.ts).
+const model = product.model;
+const modelBase = model ? `/models/${model.id}` : '';
+const fill = (text: string) => text.replace('{name}', name);
 ---
 
 <SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor} structured={structured}>
@@ -75,6 +79,34 @@ const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some
     <Breadcrumbs ctx={ctx} trail={trail} current={name} />
     <div class="cx-product">
       <div class="cx-gallery">
+        {
+          model && (
+            <figure
+              class="bx-figure cx-model"
+              data-model={modelBase}
+              data-alt={fill(t.model.alt)}
+              data-ar={model.trueScale ? t.model.ar : undefined}
+            >
+              <div class="cx-model-stage">
+                <img
+                  class="cx-model-poster"
+                  src={`${modelBase}/poster-front.webp`}
+                  alt={fill(t.model.poster)}
+                  width="1024"
+                  height="1024"
+                  decoding="async"
+                />
+                <button type="button" class="btn btn-secondary cx-model-open" data-model-open hidden>
+                  {t.model.open}
+                </button>
+              </div>
+              <figcaption>
+                {t.model.label[model.label]}
+                {model.trueScale && ` · ${t.model.trueScale}`}
+              </figcaption>
+            </figure>
+          )
+        }
         {
           photos.length > 0 ? (
             <ul class="cx-photos" aria-label={t.photos}>
@@ -88,7 +120,7 @@ const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some
               ))}
             </ul>
           ) : (
-            <span class="bx-product-blank cx-blank" />
+            !model && <span class="bx-product-blank cx-blank" />
           )
         }
       </div>
@@ -140,3 +172,5 @@ const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some
     }
   </div>
 </SiteLayout>
+
+<script src="../../scripts/model.ts"></script>

@@ -27,6 +27,7 @@ import {
   later,
   toast,
 } from '../components/ui';
+import { PublishBar } from '../components/builder/PublishBar';
 import { api, sitePath } from '../lib/api';
 import { useCatalogue, useProduct } from '../lib/catalogue';
 import { useBilingual, useI18n } from '../lib/i18n';
@@ -297,6 +298,8 @@ export function StudioCapturePage() {
       />
       <ErrorText error={remove.error} />
       <div className="grid gap-6">
+        {/* Kept while a model is on its product page, so publishing's own message stays. */}
+        {models.some((model) => model.website !== 'none') && <PublishBar />}
         <Uploads detail={detail.data} />
         {can('studio.capture') && <StartJob detail={detail.data} />}
         <Jobs detail={detail.data} />
@@ -745,7 +748,21 @@ function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapt
       api(studioPath(keys.siteKey, `/models/${model.id}/approve`), { method: 'POST' }),
     onSuccess: async () => {
       toast(t.approved);
-      await queryClient.invalidateQueries({ queryKey: keys.capture(capture.id) });
+      // The site's pending changes (the publish bar) include the model now.
+      await queryClient.invalidateQueries({ queryKey: ['site', keys.siteKey] });
+    },
+  });
+  const takeOff = useMutation({
+    mutationFn: () =>
+      api(studioPath(keys.siteKey, `/models/${model.id}/website`), { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['site', keys.siteKey] }),
+  });
+  const putBack = useMutation({
+    mutationFn: () =>
+      api(studioPath(keys.siteKey, `/models/${model.id}/website`), { method: 'PUT' }),
+    onSuccess: async () => {
+      toast(t.website['assigned'] ?? '');
+      await queryClient.invalidateQueries({ queryKey: ['site', keys.siteKey] });
     },
   });
   const issues = model.technicalIssues;
@@ -775,6 +792,11 @@ function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapt
             {t.reviewStatus[model.reviewStatus]}
           </Badge>
           {model.approvedAt && <Badge tone="success">{t.approved}</Badge>}
+          {model.website !== 'none' && (
+            <Badge tone={model.website === 'live' ? 'success' : 'accent'}>
+              {t.website[model.website]}
+            </Badge>
+          )}
         </div>
       }
     >
@@ -932,6 +954,44 @@ function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapt
               </div>
             </div>
           )}
+
+        {can('studio.approve') &&
+          model.approvedAt &&
+          model.reviewStatus === 'ready-for-approval' &&
+          issues.length === 0 &&
+          model.website === 'none' && (
+            <div className="grid gap-2">
+              <ErrorText error={putBack.error} />
+              <div>
+                <Button
+                  variant="secondary"
+                  busy={putBack.isPending}
+                  onClick={later(async () => {
+                    if (await confirmAction(t.putBackConfirm)) putBack.mutate();
+                  })}
+                >
+                  {t.putBack}
+                </Button>
+              </div>
+            </div>
+          )}
+
+        {can('studio.approve') && model.website !== 'none' && (
+          <div className="grid gap-2">
+            <ErrorText error={takeOff.error} />
+            <div>
+              <Button
+                variant="secondary"
+                busy={takeOff.isPending}
+                onClick={later(async () => {
+                  if (await confirmAction(t.takeOffConfirm)) takeOff.mutate();
+                })}
+              >
+                {t.takeOff}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

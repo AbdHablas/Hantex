@@ -27,4 +27,14 @@ describe('security headers (D-052)', () => {
     }
     expect([...all.keys()].sort()).toEqual(['/*', '/:lang/search/', '/pagefind/*', '/search/']);
   });
+
+  it('allows the 3D viewer its blob: textures and its own stylesheet, and no other inline style (D-057)', async () => {
+    const base = (await policies()).get('/*')!;
+    expect(base).toContain("img-src 'self' data: blob:;");
+    expect(base).toContain("connect-src 'self' blob: ");
+    expect(base).toContain(
+      "style-src 'self' 'sha256-PXtZZkJMMyc18o/DN1ZEFOJ2qEGq95IQbVaJFMOXOb0=';",
+    );
+    expect(base).not.toContain("'unsafe-inline'");
+  });
 });

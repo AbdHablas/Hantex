@@ -8,3 +8,4 @@ export * from './catalogue';
 export * from './catalogue-sheet';
 export * from './catalogue-templates';
 export * from './showcase';
+export * from './models';

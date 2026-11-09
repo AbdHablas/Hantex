@@ -71,6 +71,8 @@ export interface StudioModel {
   technicalIssues: TechnicalIssue[];
   reviewStatus: ReviewStatus;
   approvedAt: string | null;
+  /** On its product's page: not at all, once Publish changes runs, or now (D-057). */
+  website: 'none' | 'assigned' | 'live';
   createdAt: string;
 }
 

@@ -36,6 +36,10 @@ export const publicFileKey = (siteKey: string, fileId: string) =>
 /** An uploaded font's file in the public bucket (D-033), shared by every website. */
 export const fontKey = (fontId: string, weight: number) => `fonts/${fontId}/${weight}.woff2`;
 
+/** A published 3D model's file (D-057), which the site Worker serves as /models/<id>/<file>. */
+export const publicModelKey = (siteKey: string, modelId: string, file: string) =>
+  `sites/${siteKey}/models/${modelId}/${file}`;
+
 /** Copies one file between buckets (R2 bindings have no server-side copy). */
 export async function copyFile(from: MediaStore, fromKey: string, to: MediaStore, toKey: string) {
   const file = await from.get(fromKey);

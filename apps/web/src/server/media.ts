@@ -110,3 +110,34 @@ export async function serveFile(
     },
   });
 }
+
+const MODEL_PATH =
+  /^\/models\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/(desktop\.glb|mobile\.glb|poster-front\.webp|poster-three-quarter\.webp)$/;
+
+/**
+ * Serves this site's published 3D models (D-057) at /models/<id>/<file>: the computer and phone
+ * versions, read by the product page's viewer, and two poster images. A new model has a new
+ * id, so a file never changes and is cached for a year.
+ */
+export async function serveModel(
+  request: Request,
+  options: { bucket: MediaBucket; siteKey: string },
+): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
+  }
+  const match = MODEL_PATH.exec(new URL(request.url).pathname);
+  if (!match) return notFound();
+  const [, id, name] = match as unknown as [string, string, string];
+  const file = await options.bucket.get(`sites/${options.siteKey}/models/${id}/${name}`);
+  if (!file) return notFound();
+  return new Response(request.method === 'HEAD' ? null : file.body, {
+    headers: {
+      'Content-Type': name.endsWith('.glb') ? 'model/gltf-binary' : 'image/webp',
+      'Content-Length': String(file.size),
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; sandbox",
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
+}

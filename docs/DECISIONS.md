@@ -64,6 +64,8 @@ marked **Confirmed** once the project owner has approved it.
 | D-053 | Structured data for search engines | Confirmed (owner: "go ahead", 2026-11-05) | schema.org JSON-LD from entered facts only; no prices, offers, ratings or brand |
 | D-054 | Scheduled publishing | Confirmed (owner: "go ahead", 2026-11-05) | Schedule Publish changes; what was scheduled goes live unchanged or not at all; cron every five minutes |
 | D-055 | Security review and Strix scan | Proposed (Strix cost needs the owner's approval) | Review done and two issues fixed; Strix workflow ready, manual only, paid AI model — see `docs/security-review-2026-11.md` |
+| D-056 | 3D Product Studio, stage 1 | Confirmed (owner: "go ahead", 2026-11-09) | Finished GLB and glTF models through a private runner on the owner's computer (optimise, validate, posters); review and the Owner's approval in the dashboard — see `docs/3d-product-studio.md` |
+| D-057 | 3D models on product pages | Confirmed (owner: "go ahead", 2026-11-09) | Approved models go live with Publish changes, poster first; "View on your wall" only for true-scale models; model files public only while shown |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1374,3 +1376,88 @@ then the general product catalogue (Phase 3c, D-045).
   `--studio-runner` if the other secrets already exist), run the database deployment, create
   the runner's R2 token, and set up the runner on your computer (`docs/deployment.md`).
 - **Cost:** none. Every tool is free and open source; storage stays within R2's free 10 GB.
+
+## D-057 — 3D models on product pages
+
+- **Status:** Confirmed — 2026-11-09 (owner: "go ahead" with Phase 4's 3D on product pages),
+  and built: the published *3D models* list, approval and publishing, the site's model files and
+  the product page viewer. Not yet: switching finishes in the viewer (see *Finishes*).
+- **What a visitor sees:** a product with a live model shows it first in its photos: the
+  model's front poster, a *View in 3D* button and a caption with its label (for example "3D
+  model made by a 3D artist"), adding "true to size" when it is. On a computer with a mouse the
+  viewer loads by itself as the model comes near the screen. On a touch screen, or with data
+  saver on, it waits for a tap; phone-sized screens get the lighter phone version. Visitors turn
+  and zoom the model; after the tap, keyboard focus moves to the model, where the arrow keys turn
+  it. A product without a model shows its photos and loads no viewer. Without JavaScript the
+  poster and photos still show, with no button, and product information never depends on 3D.
+- **"View on your wall":** offered only for a true-scale model, one whose label promises true
+  scale (Exact, Measured or Artist-modelled) and whose measurements matched the entered size
+  (D-056). It opens Android's Scene Viewer or the iPhone's Quick Look, placed on a wall at fixed
+  size, so it can't be scaled away from the real size. WebXR (AR inside the browser), which the
+  design listed, is left out: the two apps cover Android and iPhone with their own controls, so
+  the page needs no exit button of its own. (The viewer's built-in one is hidden from screen
+  readers yet still focusable, which the accessibility check rejects; an empty slot replaces it.)
+  The browser test checks these settings only: trying it on a real Android phone and iPhone is
+  still to do, before launch.
+- **How a model gets onto its page:**
+  - Each website has one more published document, *3D models*: for each product, the model
+    shown, its label and whether it is true to size. Only the 3D Studio changes it, never the
+    product editor, so neither can overwrite the other's work. It goes live with *Publish
+    changes* like everything else; publishing it needs `catalogue.publish` and `site.publish`,
+    as the catalogue does.
+  - The Owner's approval (`studio.approve`) puts the model on its product's page, in place of
+    the one there. The 3D Studio page then shows "On the product page once published", with
+    *Publish changes* at hand, and "On the product page" once it's live. The Owner can take a
+    model off its page and put an approved one back, on the same checks as approval.
+  - Publishing refuses a *3D models* document that names a model nobody approved, however it got
+    there (tested).
+- **Files:** a model's four files (computer and phone versions, two posters) stay in the private
+  Studio bucket until the model is live on a visible product. Publishing then copies them to the
+  public bucket under the model's id, and each site's own Worker serves them at
+  `/models/<model id>/<file>`. They're removed again once the model is no longer shown: its
+  product hidden or removed, or the model replaced or taken off. All four go public or none: a
+  copy that fails partway, or a file missing from the Studio, is taken back at once, and the
+  next publish of catalogue or 3D model changes tries again (`studio_models.published_at`
+  records which models are public). A model's files never
+  change (a new result is a new model), so they're cached for a year. Only those four names are
+  served, each with its exact type, `nosniff` and a policy that lets them run nothing.
+- **Site build:** reads the published *3D models* document with the rest of the published
+  catalogue. Its database user still can't read the Studio's tables.
+- **Previews:** draft previews show builder pages, not product pages, so they don't show models.
+  The 3D Studio page is where a model is checked before it goes live.
+- **Finishes:** not switchable yet. Stage 1 models carry one variant per finish, but every
+  variant still uses the model's one material (the runner receives finish ids, not colours or
+  gloss; D-056), so a switcher would change nothing. It comes once models carry a material per
+  finish.
+- **Viewer:** `@google/model-viewer` 4.4.0, as in the dashboard and the runner: a separate
+  286 KB download (gzip, measured from the build; 1 MB uncompressed), fetched only when a model
+  is about to show. Each product page itself gets a loader under 1 KB.
+- **Security policy:** the site's policy (all three variants) now allows `blob:` images and
+  connections and exactly one inline stylesheet, the viewer's own, by its hash, as the
+  dashboard's does (D-056). A unit test checks this and that `'unsafe-inline'` stays out; the
+  site's browser test fails on any refused resource.
+- **Replaces part of D-028 and the 3D design:** models were to be served from a media domain
+  with a Cache Rule for `.glb` files. Like images and files, they are served by each site's own
+  Worker instead, which sets their caching itself, so no media domain or Cache Rule is needed.
+  The deployment guide's old `media` bucket and `media.hantexultra.com` lines are removed.
+- **Tested:**
+  - API: approval puts the model on its page; it's live, with its four files public, only after
+    *Publish changes*; hiding the product takes the files back and showing it copies them again;
+    a newer model replaces the older one; taking off and putting back are the Owner's alone; a
+    copy that fails partway, or a missing file, leaves nothing public and a later publish copies
+    it; an unapproved model is refused both when publishing and when put on a page.
+  - Site: the `/models/` route (only the four names, their types and caching), the security
+    policy, and a browser test with a real model: it loads by itself on a computer, waits for a
+    tap on a phone and then loads the phone version, takes keyboard focus and turns with the
+    arrow keys, has the wall settings, and nothing is refused; a product without a model shows
+    none, and without JavaScript there's the picture and no button. Accessibility checks pass.
+  - Dashboard: the browser journey approves a model, takes it off its page, puts it back and
+    publishes it, and the model is marked published only once all four files are copied
+    (Cloudflare's local storage, as `wrangler dev` runs it).
+- **Database change:** migration 0018 (the *3D models* document kind, and `published_at` on
+  models, which the dashboard's database user may update).
+- **Owner actions:** none beyond the database deployment (migration 0018). No new bucket,
+  binding or secret: site Workers already read the public bucket and the dashboard writes it.
+- **Cost:** none. A live model takes at most 4.5 MB in R2's free 10 GB (3 MB for computers,
+  1.5 MB for phones, D-056), plus its posters; serving it uses the free Workers and R2
+  allowances.
