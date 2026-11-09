@@ -38,6 +38,8 @@
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "hantex-media" },
     { "binding": "MEDIA_PUBLIC", "bucket_name": "hantex-media-public" },
+    // The 3D Studio's own private bucket (D-056); the processing runner has a token for it alone.
+    { "binding": "STUDIO", "bucket_name": "hantex-studio" },
   ],
   // Scheduled publishing (D-054): due schedules are published every five minutes. Free on the
   // Workers free plan (five cron triggers per account).

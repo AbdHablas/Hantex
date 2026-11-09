@@ -441,8 +441,36 @@ These steps run on the processing runner, never in the dashboard Worker:
 6. **Render poster images** in headless Chromium with the same viewer as the
    website: front and three-quarter views, transparent background, AVIF and
    WebP in three sizes.
-7. **Save** the results to the private `studio` bucket and report back to the
+7. **Save** the results to the private `hantex-studio` bucket and report back to the
    API through a signed callback.
+
+**Stage 1 as built (D-056).** What `apps/studio-runner` does today, step by step, and what
+it doesn't do yet:
+
+1. **Convert:** reads GLB and glTF only. OBJ, USDZ, FBX and STEP uploads are accepted but
+   not converted: such a job fails with that reason. CAD conversion (`cad-step`) isn't built.
+2. **Normalise:** measures the model's world-space size (node transforms included) and checks
+   it against the entered dimensions, ±2 %. It doesn't turn or move the model: orientation
+   and origin are on the reviewer's checklist.
+3. **Optimise:** weld, then simplify to each budget (at most 0.1 % of the model's radius of
+   movement, about 0.05 mm on a switch plate; a model that can't reach its budget within that
+   stays over it and is reported). Textures over budget are resized, keeping PNG or JPEG. Not
+   yet: KTX2 or WebP texture compression and Meshopt geometry compression.
+4. **Finishes:** each finish becomes a named material variant. Only the names come from the
+   dashboard, so every variant uses the model's own material until per-finish values are set.
+5. **Validate:** the Khronos validator checks both versions; triangles, sizes, texture sizes,
+   bounding box and primitives without a material are recorded.
+6. **Posters:** front and three-quarter renders in `<model-viewer>`, transparent, as WebP at
+   1024 × 1024 (one size; not yet AVIF or three sizes). The page has no network; Chromium
+   keeps its sandbox unless the runner runs as root.
+7. **Save:** to the private `hantex-studio` bucket. Instead of a signed callback, the runner
+   writes the result straight to the database as its own least-privilege user, which can
+   change nothing but a job's progress and its result.
+
+The **technical gate** (`packages/studio/src/technical-gate.ts`) is enforced by the dashboard
+API: a model with validator errors, over a budget, without a material, or (for Exact,
+Measured and Artist-modelled) without a passing dimension check can't be marked ready for
+approval or approved. The **visual gate** and the dashboard screens are still to come.
 
 ### Viewer and delivery on the website
 

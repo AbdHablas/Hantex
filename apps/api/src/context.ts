@@ -15,6 +15,8 @@ export interface AppDeps {
   email(env: Env): EmailSender;
   media(env: Env): MediaStore;
   publicMedia(env: Env): MediaStore;
+  /** The 3D Studio's own private bucket (D-056): captures and processed models. */
+  studio(env: Env): MediaStore;
   turnstile(env: Env): TurnstileVerifier;
   publisher(env: Env): Publisher;
   authPlugins?: BetterAuthPlugin[];

@@ -751,6 +751,8 @@ export const studioCaptureFiles = pgTable(
     kind: text('kind').notNull(),
     /** Photos only: which view this is meant to be (front, left, right, rear, top, detail). */
     view: text('view'),
+    /** The file's declared format, checked against the bytes at upload; the runner trusts it. */
+    format: text('format').notNull(),
     /** Key in the site's private storage (the media bucket, under a `studio/` prefix). */
     storageKey: text('storage_key').notNull(),
     bytes: integer('bytes').notNull(),
@@ -765,6 +767,10 @@ export const studioCaptureFiles = pgTable(
     check(
       'studio_capture_files_view_check',
       sql`${t.view} is null or ${t.view} in ('front', 'left', 'right', 'rear', 'top', 'detail')`,
+    ),
+    check(
+      'studio_capture_files_format_check',
+      sql`${t.format} in ('webp', 'glb', 'gltf', 'obj', 'usdz', 'fbx', 'step', 'iges')`,
     ),
   ],
 );
@@ -781,6 +787,8 @@ export const studioJobs = pgTable(
     providerId: text('provider_id').notNull(),
     /** The method the person declared for this job (fixes the result's label). */
     method: text('method').notNull(),
+    /** The finishes to add as material variants; the runner never reads the catalogue itself. */
+    finishNames: jsonb('finish_names').notNull().default([]),
     /** queued → running → done or failed. */
     status: text('status').notNull().default('queued'),
     estimatedCostCents: integer('estimated_cost_cents').notNull().default(0),

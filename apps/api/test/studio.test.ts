@@ -1,4 +1,10 @@
-import { FIRST_SITE, studioJobs, studioModels, studioProviderSettings } from '@hantex/db/worker';
+import {
+  FIRST_SITE,
+  studioCaptureFiles,
+  studioJobs,
+  studioModels,
+  studioProviderSettings,
+} from '@hantex/db/worker';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fakeWebp } from './fixtures';
@@ -189,6 +195,27 @@ describe('captures and capture checks', () => {
 });
 
 describe('jobs', () => {
+  it('keeps what the processing runner needs: the upload’s format and the job’s finishes', async () => {
+    const { id: captureId } = await json<Capture>(await createCapture());
+    const uploaded = await json<{ id: string; format: string }>(await uploadModel(captureId));
+    expect(uploaded.format).toBe('glb');
+    const [file] = await h.db
+      .select()
+      .from(studioCaptureFiles)
+      .where(eq(studioCaptureFiles.id, uploaded.id));
+    expect(file?.format).toBe('glb');
+
+    const job = await json<{ id: string; finishNames: string[] }>(
+      await h.request('POST', `${base}/captures/${captureId}/jobs`, {
+        cookie: owner,
+        body: { providerId: 'model-import', method: 'artist', finishNames: ['Matte Black'] },
+      }),
+    );
+    expect(job.finishNames).toEqual(['Matte Black']);
+    const [row] = await h.db.select().from(studioJobs).where(eq(studioJobs.id, job.id));
+    expect(row?.finishNames).toEqual(['Matte Black']);
+  });
+
   it('refuses a job that is not eligible yet, and says why', async () => {
     const { id } = await json<Capture>(await createCapture());
     const response = await h.request('POST', `${base}/captures/${id}/jobs`, {
@@ -241,7 +268,21 @@ describe('review and approval', () => {
    * layer in packages/db/src/db.test.ts, D-056); this stands in for that write so the API's own
    * review and approval steps can be tested on their own.
    */
-  async function readyModel() {
+  const passingResult = {
+    measurements: {
+      desktop: { bytes: 1_500_000, triangles: 90_000, maxTextureSize: 2048 },
+      mobile: { bytes: 800_000, triangles: 45_000, maxTextureSize: 1024 },
+      boundingBoxMm: { width: 86, height: 86, depth: 12 },
+      primitivesWithoutMaterial: 0,
+    },
+    validatorReport: {
+      desktop: { numErrors: 0, numWarnings: 0, messages: [] },
+      mobile: { numErrors: 0, numWarnings: 0, messages: [] },
+    },
+    withinScale: true,
+  };
+
+  async function readyModel(result: Partial<typeof passingResult> = {}) {
     const { id: captureId } = await json<Capture>(await createCapture());
     await uploadModel(captureId);
     const job = await json<Job>(
@@ -258,8 +299,8 @@ describe('review and approval', () => {
         jobId: job.id,
         label: 'artist-modelled',
         files: {},
-        measurements: {},
-        validatorReport: {},
+        ...passingResult,
+        ...result,
       })
       .returning();
     return { captureId, jobId: job.id, modelId: model!.id };
@@ -314,6 +355,84 @@ describe('review and approval', () => {
     expect(approved.status, await approved.clone().text()).toBe(200);
     const [row] = await h.db.select().from(studioModels).where(eq(studioModels.id, modelId));
     expect(row?.approvedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('the technical gate', () => {
+  const failing = {
+    measurements: {
+      desktop: { bytes: 5_000_000, triangles: 90_000, maxTextureSize: 2048 },
+      mobile: { bytes: 800_000, triangles: 45_000, maxTextureSize: 1024 },
+      boundingBoxMm: { width: 86, height: 86, depth: 12 },
+      primitivesWithoutMaterial: 0,
+    },
+    validatorReport: {
+      desktop: { numErrors: 0, numWarnings: 0, messages: [] },
+      mobile: { numErrors: 3, numWarnings: 0, messages: [] },
+    },
+    withinScale: false,
+  };
+
+  async function failingModel() {
+    const { id: captureId } = await json<Capture>(await createCapture());
+    await uploadModel(captureId);
+    const job = await json<Job>(
+      await h.request('POST', `${base}/captures/${captureId}/jobs`, {
+        cookie: owner,
+        body: { providerId: 'model-import', method: 'artist' },
+      }),
+    );
+    const [model] = await h.db
+      .insert(studioModels)
+      .values({
+        siteId: h.sites.a,
+        captureId,
+        jobId: job.id,
+        label: 'artist-modelled',
+        files: {},
+        ...failing,
+      })
+      .returning();
+    return model!.id;
+  }
+
+  it('shows what a model fails, and never lets it be marked ready for approval', async () => {
+    const modelId = await failingModel();
+    const shown = await json<{ model: { technicalIssues: { check: string }[] } }>(
+      await h.request('GET', `${base}/models/${modelId}`, { cookie: viewer }),
+    );
+    expect(shown.model.technicalIssues.map((i) => i.check).sort()).toEqual([
+      'budget',
+      'scale',
+      'validator',
+    ]);
+
+    const ready = await h.request('POST', `${base}/models/${modelId}/review`, {
+      cookie: reviewer,
+      body: { checklist: { shape: true }, decision: 'ready-for-approval', notes: '' },
+    });
+    expect(ready.status).toBe(409);
+    expect(await json<{ error: string }>(ready)).toMatchObject({ error: 'technical-gate' });
+
+    const correction = await h.request('POST', `${base}/models/${modelId}/review`, {
+      cookie: reviewer,
+      body: { checklist: { shape: true }, decision: 'needs-manual-correction', notes: '' },
+    });
+    expect(correction.status).toBe(201);
+  });
+
+  it('refuses approval of a failing model even if its review status says ready', async () => {
+    const modelId = await failingModel();
+    await h.db
+      .update(studioModels)
+      .set({ reviewStatus: 'ready-for-approval' })
+      .where(eq(studioModels.id, modelId));
+    const approved = await h.request('POST', `${base}/models/${modelId}/approve`, {
+      cookie: owner,
+    });
+    expect(approved.status).toBe(409);
+    const [row] = await h.db.select().from(studioModels).where(eq(studioModels.id, modelId));
+    expect(row?.approvedAt).toBeNull();
   });
 });
 

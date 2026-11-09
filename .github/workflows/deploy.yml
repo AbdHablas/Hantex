@@ -54,6 +54,7 @@ jobs:
           HANTEX_PUBLIC_APP_PASSWORD: ${{ secrets.HANTEX_PUBLIC_APP_PASSWORD }}
           HANTEX_BUILD_PASSWORD: ${{ secrets.HANTEX_BUILD_PASSWORD }}
           HANTEX_BACKUP_PASSWORD: ${{ secrets.HANTEX_BACKUP_PASSWORD }}
+          HANTEX_STUDIO_RUNNER_PASSWORD: ${{ secrets.HANTEX_STUDIO_RUNNER_PASSWORD }}
         run: |
           pnpm --filter @hantex/db migrate
           pnpm --filter @hantex/db roles

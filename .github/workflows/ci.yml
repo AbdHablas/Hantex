@@ -45,6 +45,8 @@ jobs:
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
+      # The 3D Studio runner's tests render real poster images in Chromium.
+      - run: pnpm --filter @hantex/studio-runner exec playwright install --with-deps chromium
       - run: pnpm test
       - run: pnpm build
       - run: node scripts/check-worker-size.mjs apps/api/dist apps/web/dist/server

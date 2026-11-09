@@ -24,9 +24,13 @@ export interface Env {
   /** Most media each site may store, in megabytes (default 1024; R2's free plan has 10 GB). */
   MEDIA_SITE_QUOTA_MB?: string;
   /**
+   * The 3D Studio's private R2 bucket (D-056): capture uploads and processed models, each site
+   * under its own prefix. Only this API and the processing runner (its own token) reach it.
+   */
+  STUDIO?: R2Bucket;
+  /**
    * Most 3D Studio captures (photos, CAD and model uploads) each site may store, in megabytes
    * (default 5120; a full photogrammetry capture is 500–750 MB, docs/3d-product-studio.md §7).
-   * Shares the same private bucket as the media library, under a `studio/` prefix.
    */
   STUDIO_SITE_QUOTA_MB?: string;
   EMAIL_FROM: string;

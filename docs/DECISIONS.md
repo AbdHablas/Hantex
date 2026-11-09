@@ -1315,3 +1315,48 @@ then the general product catalogue (Phase 3c, D-045).
   environment, and not against production.
 - **Cost:** none.
 
+
+## D-056 — 3D Product Studio, stage 1: how it is built
+
+- **Status:** Implemented in parts — 2026-11-09 (owner: "go ahead" with the 3D Studio, the next
+  planned item). Built so far: the shared rules (`packages/studio`), the database tables and
+  grants, the dashboard API and the processing runner (`apps/studio-runner`). Still to come in
+  stage 1: the dashboard screens and their browser tests.
+- **What a job does:** stage 1 runs one provider, `model-import`: a finished GLB or glTF file,
+  from a capture app or a 3D artist, carried through the processing pipeline
+  (`docs/3d-product-studio.md`, "Stage 1 as built"). The person declares the method
+  (photogrammetry, splat or artist), which fixes the label; the file never does. `cad-step` is
+  registered but not built (no CAD conversion exists), so the dashboard can't start it. OBJ,
+  USDZ and FBX uploads are accepted but not converted yet: such a job fails with that reason.
+- **Processing runner:** a separate Node.js process on the owner's computer, never Cloudflare
+  (D-030). It reaches the database as its own user, `hantex_studio_runner`, which can read
+  captures and jobs and write only a job's progress and its result (no users, sessions, roles,
+  catalogue, media or other tables; tested). It claims a job with a single UPDATE, so two
+  runners never process the same job (tested on two connections), and fails jobs left running
+  for over an hour by a stopped runner. Instead of the signed callback in the original design,
+  it writes its result directly, as that limited user.
+- **Storage:** the Studio's own private R2 bucket, `hantex-studio`, as `docs/deployment.md`
+  planned. The dashboard Worker reaches it through a `STUDIO` binding; the runner through an R2
+  API token for that bucket alone. (Stage 1c briefly reused the media library's bucket under a
+  `studio/` prefix. That was changed before anything was deployed: R2 tokens apply to whole
+  buckets, so the runner would have been able to read every website's private media.)
+- **Optimisation:** each website version is simplified to its triangle budget, with the surface
+  moving at most 0.1 % of the model's radius, and textures over budget are resized with sharp,
+  keeping PNG or JPEG. Whatever still misses a budget is reported, never hidden. Tested on a
+  204,800-triangle model with a 4096 × 4096 texture: 94,999 and 47,500 triangles, 2048 and 1024
+  textures, no validator errors.
+- **Technical gate, enforced:** one shared check (`packages/studio/src/technical-gate.ts`):
+  no validator errors on either version, within budgets, a material on every primitive, and,
+  for the labels that promise true scale (Exact, Measured, Artist-modelled), dimensions entered
+  and matched within 2 %. The dashboard API refuses "ready for approval" and approval while it
+  reports anything. Orientation and origin stay on the reviewer's checklist: software can't
+  tell reliably which way a product should face.
+- **Posters:** rendered in headless Chromium with `<model-viewer>` (the website's viewer), as
+  WebP. The page has no network, and Chromium's sandbox stays on unless the runner runs as root.
+- **Database changes:** migrations 0014 (the Studio's tables), 0015 (a job's finish names) and
+  0016 (each upload's declared format, which the runner needs to read the file).
+- **Owner actions, when the Studio is deployed:** create the `hantex-studio` bucket, add the
+  `HANTEX_STUDIO_RUNNER_PASSWORD` secret (`bash scripts/first-deploy-secrets.sh`, or
+  `--studio-runner` if the other secrets already exist), run the database deployment, create
+  the runner's R2 token, and set up the runner on your computer (`docs/deployment.md`).
+- **Cost:** none. Every tool is free and open source; storage stays within R2's free 10 GB.

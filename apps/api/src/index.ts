@@ -24,6 +24,10 @@ const deps: AppDeps = {
     if (!env.MEDIA_PUBLIC) throw new Error('The MEDIA_PUBLIC bucket binding is not configured');
     return r2Store(env.MEDIA_PUBLIC);
   },
+  studio: (env) => {
+    if (!env.STUDIO) throw new Error('The STUDIO bucket binding is not configured');
+    return r2Store(env.STUDIO);
+  },
   turnstile: (env) => cloudflareTurnstile(env.TURNSTILE_SECRET_KEY),
   publisher: (env) =>
     env.PUBLISH_TRIGGER_TOKEN && env.PUBLISH_REPOSITORY

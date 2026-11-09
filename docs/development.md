@@ -66,6 +66,15 @@ passkey, dashboard, edit and publish the Coming Soon page, sign out, sign in
 again. They need a PostgreSQL server at `HANTEX_TEST_DATABASE_URL`. If
 Playwright's own Chromium isn't installed, set `PLAYWRIGHT_CHROMIUM_PATH`.
 
+### The 3D Studio processing runner
+
+`apps/studio-runner` (D-056) is tested with nothing mocked but storage: real GLB files through
+glTF-Transform, meshoptimizer and sharp, the Khronos glTF validator, poster images rendered in
+headless Chromium, and a real database reached as the runner's own least-privilege user. So
+`pnpm test` needs Chromium here too: run
+`pnpm --filter @hantex/studio-runner exec playwright install chromium` once, or set
+`PLAYWRIGHT_CHROMIUM_PATH`. CI installs it before the tests.
+
 ### The public site engine
 
 `apps/web` builds one site at a time. `pnpm --filter @hantex/web data` writes the

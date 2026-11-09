@@ -8,7 +8,16 @@ import {
   studioSpend,
   type Database,
 } from '@hantex/db/worker';
-import { METHODS, canCheckTrueScale, eligibility, providerById, PROVIDERS } from '@hantex/studio';
+import {
+  METHODS,
+  canCheckTrueScale,
+  eligibility,
+  providerById,
+  PROVIDERS,
+  studioCaptureFileKey,
+  technicalGate,
+  type ResultLabel,
+} from '@hantex/studio';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -17,7 +26,6 @@ import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { readWebp } from '../lib/webp';
-import { studioCaptureFileKey } from '../lib/media-store';
 import {
   checkCadFile,
   checkModelFile,
@@ -75,6 +83,7 @@ const asFile = (row: typeof studioCaptureFiles.$inferSelect) => ({
   id: row.id,
   kind: row.kind,
   view: row.view,
+  format: row.format,
   bytes: row.bytes,
   widthPx: row.widthPx,
   heightPx: row.heightPx,
@@ -86,6 +95,7 @@ const asJob = (row: typeof studioJobs.$inferSelect) => ({
   captureId: row.captureId,
   providerId: row.providerId,
   method: row.method,
+  finishNames: row.finishNames,
   status: row.status,
   detail: row.detail,
   estimatedCostCents: row.estimatedCostCents,
@@ -94,6 +104,15 @@ const asJob = (row: typeof studioJobs.$inferSelect) => ({
   startedAt: row.startedAt,
   finishedAt: row.finishedAt,
 });
+
+/** What the technical gate (D-029 §6) finds in a processed model; empty when it passes. */
+const technicalIssuesOf = (row: typeof studioModels.$inferSelect) =>
+  technicalGate({
+    label: row.label as ResultLabel,
+    measurements: row.measurements,
+    validatorReport: row.validatorReport,
+    withinScale: row.withinScale,
+  });
 
 const asModel = (row: typeof studioModels.$inferSelect) => ({
   id: row.id,
@@ -104,6 +123,7 @@ const asModel = (row: typeof studioModels.$inferSelect) => ({
   measurements: row.measurements,
   validatorReport: row.validatorReport,
   withinScale: row.withinScale,
+  technicalIssues: technicalIssuesOf(row),
   reviewStatus: row.reviewStatus,
   approvedAt: row.approvedAt,
   createdAt: row.createdAt,
@@ -309,7 +329,7 @@ export const studioRoutes = new Hono<AppEnv>()
       .from(studioCaptureFiles)
       .where(eq(studioCaptureFiles.captureId, capture.id));
     await v.deps
-      .media(c.env)
+      .studio(c.env)
       .delete(files.map((f) => studioCaptureFileKey(v.site.id, capture.id, f.id)));
     await v.db.delete(studioCaptures).where(eq(studioCaptures.id, capture.id));
     await writeAudit(
@@ -374,6 +394,7 @@ export const studioRoutes = new Hono<AppEnv>()
       const data = new Uint8Array(await file.arrayBuffer());
       let widthPx: number | null = null;
       let heightPx: number | null = null;
+      let format: string;
 
       if (meta.data.kind === 'photo') {
         if (data.byteLength > MAX_PHOTO_BYTES) throw badRequest('file-too-large');
@@ -381,18 +402,21 @@ export const studioRoutes = new Hono<AppEnv>()
         if (!info) throw badRequest('invalid-file', { reason: 'not-webp' });
         widthPx = info.width;
         heightPx = info.height;
+        format = 'webp';
       } else if (meta.data.kind === 'model') {
-        const format = meta.data.format as ModelFormat | undefined;
-        if (!format || !['glb', 'gltf', 'obj', 'usdz', 'fbx'].includes(format)) {
+        const modelFormat = meta.data.format as ModelFormat | undefined;
+        if (!modelFormat || !['glb', 'gltf', 'obj', 'usdz', 'fbx'].includes(modelFormat)) {
           throw badRequest('invalid-input');
         }
-        const result = checkModelFile(data, format);
+        const result = checkModelFile(data, modelFormat);
         if (!result.ok) throw badRequest('invalid-file', { reason: result.reason });
+        format = modelFormat;
       } else {
-        const format = meta.data.format as CadFormat | undefined;
-        if (!format || !['step', 'iges'].includes(format)) throw badRequest('invalid-input');
-        const result = checkCadFile(data, format);
+        const cadFormat = meta.data.format as CadFormat | undefined;
+        if (!cadFormat || !['step', 'iges'].includes(cadFormat)) throw badRequest('invalid-input');
+        const result = checkCadFile(data, cadFormat);
         if (!result.ok) throw badRequest('invalid-file', { reason: result.reason });
+        format = cadFormat;
       }
 
       const quotaMb = Number(c.env.STUDIO_SITE_QUOTA_MB ?? 5120);
@@ -407,6 +431,7 @@ export const studioRoutes = new Hono<AppEnv>()
           captureId: capture.id,
           kind: meta.data.kind,
           view: meta.data.view ?? null,
+          format,
           storageKey: '',
           bytes: data.byteLength,
           widthPx,
@@ -418,7 +443,7 @@ export const studioRoutes = new Hono<AppEnv>()
         .update(studioCaptureFiles)
         .set({ storageKey: key })
         .where(eq(studioCaptureFiles.id, row!.id));
-      await v.deps.media(c.env).put(key, data.buffer, 'application/octet-stream');
+      await v.deps.studio(c.env).put(key, data.buffer, 'application/octet-stream');
       await writeAudit(
         v.db,
         auditActor(v),
@@ -448,7 +473,7 @@ export const studioRoutes = new Hono<AppEnv>()
         .where(and(eq(studioCaptureFiles.id, fileId), eq(studioCaptureFiles.captureId, capture.id)))
         .returning();
       if (!row) throw notFound();
-      await v.deps.media(c.env).delete([row.storageKey]);
+      await v.deps.studio(c.env).delete([row.storageKey]);
       return c.json({ ok: true });
     },
   )
@@ -497,6 +522,7 @@ export const studioRoutes = new Hono<AppEnv>()
           captureId: capture.id,
           providerId: provider.id,
           method: body.method,
+          finishNames: body.finishNames,
           estimatedCostCents,
           createdBy: v.access.userId,
         })
@@ -595,13 +621,18 @@ export const studioRoutes = new Hono<AppEnv>()
     async (c) => {
       const v = c.var;
       const [model] = await v.db
-        .select({ id: studioModels.id })
+        .select()
         .from(studioModels)
         .where(
           and(eq(studioModels.id, c.req.valid('param').id), eq(studioModels.siteId, v.site.id)),
         );
       if (!model) throw notFound();
       const body = c.req.valid('json');
+      // A model failing the technical gate needs manual correction, whatever the reviewer saw.
+      const issues = technicalIssuesOf(model);
+      if (body.decision === 'ready-for-approval' && issues.length > 0) {
+        throw conflict('technical-gate', { issues });
+      }
       const [review] = await v.db
         .insert(studioReviews)
         .values({
@@ -640,6 +671,8 @@ export const studioRoutes = new Hono<AppEnv>()
       .where(and(eq(studioModels.id, c.req.valid('param').id), eq(studioModels.siteId, v.site.id)));
     if (!model) throw notFound();
     if (model.reviewStatus !== 'ready-for-approval') throw conflict('not-reviewed');
+    const issues = technicalIssuesOf(model);
+    if (issues.length > 0) throw conflict('technical-gate', { issues });
     const [row] = await v.db
       .update(studioModels)
       .set({ approvedBy: v.access.userId, approvedAt: new Date(), updatedAt: new Date() })

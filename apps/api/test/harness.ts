@@ -45,6 +45,7 @@ export interface Harness {
   mail: ReturnType<typeof memorySender>;
   media: ReturnType<typeof memoryStore>;
   publicMedia: ReturnType<typeof memoryStore>;
+  studio: ReturnType<typeof memoryStore>;
   dispatched: { jobId: string; siteKey: string }[];
   turnstile: { pass: boolean };
   sites: { a: string; b: string };
@@ -80,6 +81,7 @@ export async function createHarness(): Promise<Harness> {
   const mail = memorySender();
   const media = memoryStore();
   const publicMedia = memoryStore();
+  const studio = memoryStore();
   const dispatched: { jobId: string; siteKey: string }[] = [];
   const turnstile = { pass: true };
   const publisher: Publisher = {
@@ -94,6 +96,7 @@ export async function createHarness(): Promise<Harness> {
     email: () => mail,
     media: () => media,
     publicMedia: () => publicMedia,
+    studio: () => studio,
     turnstile: () => ({ verify: () => Promise.resolve(turnstile.pass) }),
     publisher: () => publisher,
     rateLimits: false,
@@ -133,6 +136,7 @@ export async function createHarness(): Promise<Harness> {
     mail,
     media,
     publicMedia,
+    studio,
     dispatched,
     turnstile,
     sites,

@@ -205,13 +205,17 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       — *done: per-site token in SEO & contact, cookieless beacon on published pages only,
       security policy; to do: figures on the overview, which need a read-only Cloudflare
       API token from the owner*
-- [ ] 3D Product Studio, stage 1 (D-029):
-  - captures and capture checks;
-  - provider interface;
-  - CAD and finished-model import;
-  - private processing runner;
-  - optimisation, validation and poster images;
-  - review, approval and budget controls.
+- [ ] 3D Product Studio, stage 1 (D-029, D-056):
+  - [x] captures and capture checks — *done: API, quotas, eligibility per method*;
+  - [x] provider interface — *done: `model-import` runs; `cad-step` registered, not built*;
+  - [ ] CAD and finished-model import — *finished GLB and glTF done; OBJ, USDZ, FBX and STEP
+        accepted but not converted yet*;
+  - [x] private processing runner — *done: `apps/studio-runner`, own database user and own
+        bucket token*;
+  - [x] optimisation, validation and poster images — *done: simplify and resize to budget,
+        Khronos validator, WebP posters; not yet KTX2/Meshopt compression*;
+  - [ ] review, approval and budget controls — *API done, technical gate enforced; the
+        dashboard screens are next*.
 - [x] Scheduled publishing — *done (D-054): schedule Publish changes for a date and time; goes
       live only if the changes are exactly those scheduled and the person may still publish;
       cron trigger every five minutes on the dashboard Worker*
@@ -266,7 +270,7 @@ Full evaluation and sources: [`3d-product-studio.md`](3d-product-studio.md).
 
 | Need | Service | Cost, checked 2026-10-21 |
 |------|---------|--------------------------|
-| Storage of originals, models and previews | Cloudflare R2: private `studio` bucket and public `media` bucket | Free up to 10 GB a month, shared with backups and other media; then US$0.015 per GB-month. Estimated US$0.60–2.50 a month per 100 fully captured products; quick captures fit in the free allowance. No egress charge. |
+| Storage of originals, models and previews | Cloudflare R2: private `hantex-studio` bucket and the public media bucket | Free up to 10 GB a month, shared with backups and other media; then US$0.015 per GB-month. Estimated US$0.60–2.50 a month per 100 fully captured products; quick captures fit in the free allowance. No egress charge. |
 | Delivery of models and poster images | R2 through each site's media domain, cached by Cloudflare | US$0. Needs a Cache Rule for `.glb` files. |
 | Uploads, job tracking, review screens | Dashboard Worker (Workers Free) | US$0. No heavy processing: the Free plan allows 10 ms of CPU per request. |
 | Conversion, optimisation, validation, posters | GitHub Actions in a **private** runner repository | US$0 within 2,000 minutes a month. Estimated 2–5 minutes per model, to be measured. |

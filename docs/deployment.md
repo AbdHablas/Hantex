@@ -23,7 +23,7 @@ production data is never used in development or tests.
 | Worker `hantex-admin` | Dashboard (React app) and its API (Hono) on `admin.hantexultra.com`, managing every site; its cron trigger (every five minutes) runs scheduled publishes (D-054) |
 | Hyperdrive | Database connections: the public-site user (insert-only sign-ups) for site Workers, uncached for the dashboard |
 | R2 bucket `media` | Approved photos, 3D models and documents for all sites, served through a media domain per site (for example `media.hantexultra.com`) |
-| R2 bucket `studio` (private) | 3D Studio originals, CAD files, intermediate files and unapproved models ([`3d-product-studio.md`](3d-product-studio.md)) |
+| R2 bucket `hantex-studio` (private) | The 3D Studio (D-056): capture uploads under `<site id>/captures/…` and processed models and posters under `<site id>/models/…`, none of it public until approved and published. Bound to the dashboard Worker only (`STUDIO`); the processing runner reaches it with an R2 API token limited to this bucket ([3D Studio processing runner](#3d-studio-processing-runner)) |
 | R2 bucket `backups` (private) | Encrypted nightly database exports (D-010) |
 | R2 bucket `hantex-media` (private) | The media library (D-044): every upload, under `private/<site id>/<image>/<width>.webp`, and the website's PDF files (D-045) under `private/<site id>/files/<file>.pdf`. Bound to the dashboard Worker only (`MEDIA`) |
 | R2 bucket `hantex-media-public` | Copies of published images under `sites/<site key>/…`, which each site's Worker serves as `/media/<image>/<width>.webp`, short-lived preview copies under `preview/<site key>/…`, served only through signed links, published PDF files under `sites/<site key>/files/…`, which each site serves as downloads at `/files/<file>.pdf`, and uploaded fonts under `fonts/<font>/…`, which every site serves as `/fonts/library/<font>/<weight>.woff2`. The dashboard Worker writes it (`MEDIA_PUBLIC`); site Workers read it (`MEDIA`). No public bucket address or custom domain is needed. **Lifecycle rule (added once by the owner):** delete objects under `preview/` after 1 day |
@@ -67,11 +67,12 @@ branch they are about to change. The production branch is in AWS
 
 Branches: production, preview, development. Database users with least
 privilege: migrations (schema changes), dashboard (read/write), public site
-(insert sign-ups, read published content only), backups (read-only).
+(insert sign-ups, read published content only), backups (read-only), and
+the 3D Studio processing runner (its own jobs and their results only).
 Migrations run from CI, never from a running Worker. Database users are
-`hantex_admin_app`, `hantex_public_app`, `hantex_build` and `hantex_backup`,
-created and granted by `pnpm --filter @hantex/db roles` (passwords from
-environment variables, never stored in the repository).
+`hantex_admin_app`, `hantex_public_app`, `hantex_build`, `hantex_backup` and
+`hantex_studio_runner`, created and granted by `pnpm --filter @hantex/db roles`
+(passwords from environment variables, never stored in the repository).
 
 ## CI/CD (GitHub Actions)
 
@@ -118,7 +119,7 @@ environment variables, never stored in the repository).
 |------|---------|------------|
 | `CLOUDFLARE_API_TOKEN` | deploy, publish | Cloudflare token limited to editing Workers on this account |
 | `DATABASE_URL` | deploy (database) | Neon owner connection, for migrations only |
-| `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD` | deploy (database) | Passwords for the four least-privilege database users |
+| `HANTEX_ADMIN_APP_PASSWORD`, `HANTEX_PUBLIC_APP_PASSWORD`, `HANTEX_BUILD_PASSWORD`, `HANTEX_BACKUP_PASSWORD`, `HANTEX_STUDIO_RUNNER_PASSWORD` | deploy (database) | Passwords for the five least-privilege database users |
 | `HANTEX_BUILD_DATABASE_URL` | deploy (site), publish | Connection as the read-only build user |
 | `BETTER_AUTH_SECRET`, `TOKEN_HASH_SECRET`, `PREVIEW_SIGNING_SECRET`, `UNSUBSCRIBE_SECRET` | deploy | Random secrets (32 bytes or more); the preview and unsubscribe secrets go to the dashboard and every site Worker |
 | `TURNSTILE_SECRET_KEY` | deploy | Turnstile secret key |
@@ -149,8 +150,48 @@ dashboard's address. It is the only page allowed to show a site's draft
 previews in a frame (the page editor's device preview); keep it equal to
 `APP_ORIGIN`.
 
-**Later phases:** R2 and processing-runner credentials for the 3D Studio; one API key
-per 3D provider only after the owner approves it (D-005, D-030).
+**Optional dashboard variable** (`apps/api`, not secret): `STUDIO_SITE_QUOTA_MB`, the most
+3D Studio uploads each website may store (default 5120; a full photo capture is 500–750 MB).
+
+**Later phases:** one API key per paid 3D provider, only after the owner approves it (D-005,
+D-030).
+
+## 3D Studio processing runner
+
+The runner (`apps/studio-runner`, D-056) turns uploaded models into website models: it
+simplifies each to the desktop and mobile budgets, resizes textures, adds the finishes as
+material variants, checks the result with the Khronos glTF validator and renders two poster
+images. It runs on your own computer (a Mac suits Apple's free Object Capture, D-030), never
+on Cloudflare, and only ever reaches what it needs:
+
+- **database:** the `hantex_studio_runner` user, which can read captures and jobs and write
+  only a job's progress and its result — no users, sessions, catalogue, media or any other
+  table (tested in `packages/db/src/db.test.ts`);
+- **storage:** an R2 API token for the `hantex-studio` bucket alone, never the media library,
+  published files or backups.
+
+**Set it up once:**
+
+1. **Bucket:** in Cloudflare → R2, create the private bucket `hantex-studio` (no public
+   access, no custom domain). The dashboard Worker's `STUDIO` binding uses it.
+2. **Database user:** the runner's password is created by `bash scripts/first-deploy-secrets.sh`
+   (step 2 below); if you ran that before the runner existed, run it again with
+   `--studio-runner`, which adds only this password. Then run **Deploy (production) →
+   `database`**, which creates the user. The script writes `.local/studio-runner.env` with the
+   runner's connection string; keep that file only on the computer that runs the runner.
+3. **R2 token:** Cloudflare → R2 → Manage API tokens → create a token with **Object Read &
+   Write**, applied to the `hantex-studio` bucket only. Put your account ID, the token's access
+   key ID and secret access key into `.local/studio-runner.env`.
+4. **The computer:** install Node.js 26 and pnpm, clone this repository, then run
+   `pnpm install` and `pnpm --filter @hantex/studio-runner exec playwright install chromium`
+   (for the poster images).
+
+**Run it:** `pnpm --filter @hantex/studio-runner start`. It reads `.local/studio-runner.env`
+(environment variables of the same names take precedence), checks for queued jobs every 10
+seconds (`STUDIO_RUNNER_POLL_MS`), and on Ctrl+C finishes the current job before stopping.
+A job it was in the middle of when the computer shut down is marked failed after an hour, with
+a note to start it again. Never run it with `sudo` or as root: the browser it renders posters
+with can only keep its sandbox under an ordinary user account.
 
 ## Rollback
 
@@ -168,7 +209,7 @@ deployed before the owner says so.
 2. **Passwords and secrets:** on your own computer, in this repository's
    folder, run `bash scripts/first-deploy-secrets.sh` (needs the GitHub CLI,
    signed in as the owner). It asks for the Neon connection string (hidden),
-   generates the four database passwords and the random secrets, and stores
+   generates the five database passwords and the random secrets, and stores
    them directly as GitHub secrets, with the build and backup connection
    strings. Nothing passes through chat. It also writes the two Hyperdrive
    connection strings to `.local/hyperdrive-connections.txt` for step 5;
@@ -210,6 +251,6 @@ pnpm --filter @hantex/db setup-owner <your email>`. It works once, expires
 after 24 hours, stops working as soon as an Owner exists, and is never
 stored.
 
-**For the 3D Studio (Phase 3, D-030):** create a private repository for the
-processing runner, or set up the runner on your own computer. Approve any
-paid provider before its key is added.
+**For the 3D Studio (D-030, D-056):** set up the processing runner on your own computer
+([3D Studio processing runner](#3d-studio-processing-runner)). Approve any paid provider
+before its key is added.
