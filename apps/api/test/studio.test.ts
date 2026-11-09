@@ -205,15 +205,15 @@ describe('jobs', () => {
       .where(eq(studioCaptureFiles.id, uploaded.id));
     expect(file?.format).toBe('glb');
 
-    const job = await json<{ id: string; finishNames: string[] }>(
+    const job = await json<{ id: string; finishIds: string[] }>(
       await h.request('POST', `${base}/captures/${captureId}/jobs`, {
         cookie: owner,
-        body: { providerId: 'model-import', method: 'artist', finishNames: ['Matte Black'] },
+        body: { providerId: 'model-import', method: 'artist', finishIds: ['black00001'] },
       }),
     );
-    expect(job.finishNames).toEqual(['Matte Black']);
+    expect(job.finishIds).toEqual(['black00001']);
     const [row] = await h.db.select().from(studioJobs).where(eq(studioJobs.id, job.id));
-    expect(row?.finishNames).toEqual(['Matte Black']);
+    expect(row?.finishIds).toEqual(['black00001']);
   });
 
   it('refuses a job that is not eligible yet, and says why', async () => {
@@ -355,6 +355,95 @@ describe('review and approval', () => {
     expect(approved.status, await approved.clone().text()).toBe(200);
     const [row] = await h.db.select().from(studioModels).where(eq(studioModels.id, modelId));
     expect(row?.approvedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('private files', () => {
+  const other = `/api/sites/second-brand/studio`;
+
+  it('shows a checked photo to staff, privately, and never as a page', async () => {
+    const { id: captureId } = await json<Capture>(await createCapture());
+    const { id: fileId } = await json<{ id: string }>(await uploadPhoto(captureId, 'front'));
+    const path = `/captures/${captureId}/files/${fileId}/content`;
+
+    const response = await h.request('GET', `${base}${path}`, { cookie: viewer });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('image/webp');
+    expect(response.headers.get('Content-Security-Policy')).toBe(
+      "default-src 'none'; frame-ancestors 'none'",
+    );
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(response.headers.get('Content-Disposition')).toBeNull();
+
+    // Another website's address, or a file of another capture, finds nothing.
+    expect((await h.request('GET', `${other}${path}`, { cookie: owner })).status).toBe(404);
+    const { id: otherCapture } = await json<Capture>(await createCapture());
+    expect(
+      (
+        await h.request('GET', `${base}/captures/${otherCapture}/files/${fileId}/content`, {
+          cookie: owner,
+        })
+      ).status,
+    ).toBe(404);
+  });
+
+  it('serves an uploaded GLB to the dashboard viewer, and refuses a malformed id cleanly', async () => {
+    const { id: captureId } = await json<Capture>(await createCapture());
+    const { id: fileId } = await json<{ id: string }>(await uploadModel(captureId));
+    const response = await h.request(
+      'GET',
+      `${base}/captures/${captureId}/files/${fileId}/content`,
+      { cookie: owner },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('model/gltf-binary');
+
+    for (const method of ['GET', 'DELETE'] as const) {
+      const suffix = method === 'GET' ? '/content' : '';
+      const malformed = await h.request(
+        method,
+        `${base}/captures/${captureId}/files/not-a-uuid${suffix}`,
+        { cookie: owner },
+      );
+      expect(malformed.status).toBe(400);
+    }
+  });
+
+  it('serves a processed model’s files by name, only the four the runner writes', async () => {
+    const { id: captureId } = await json<Capture>(await createCapture());
+    await uploadModel(captureId);
+    const job = await json<Job>(
+      await h.request('POST', `${base}/captures/${captureId}/jobs`, {
+        cookie: owner,
+        body: { providerId: 'model-import', method: 'artist' },
+      }),
+    );
+    const key = `${h.sites.a}/models/test/poster-front.webp`;
+    await h.studio.put(key, fakeWebp(1024, 1024), 'image/webp');
+    const [model] = await h.db
+      .insert(studioModels)
+      .values({
+        siteId: h.sites.a,
+        captureId,
+        jobId: job.id,
+        label: 'artist-modelled',
+        files: { posterFront: key },
+        measurements: {},
+        validatorReport: {},
+      })
+      .returning();
+    const files = `${base}/models/${model!.id}/files`;
+
+    const poster = await h.request('GET', `${files}/posterFront`, { cookie: viewer });
+    expect(poster.status).toBe(200);
+    expect(poster.headers.get('Content-Type')).toBe('image/webp');
+    expect((await h.request('GET', `${files}/desktop`, { cookie: viewer })).status).toBe(404);
+    expect((await h.request('GET', `${files}/storageKey`, { cookie: viewer })).status).toBe(400);
+    expect(
+      (await h.request('GET', `${other}/models/${model!.id}/files/posterFront`, { cookie: owner }))
+        .status,
+    ).toBe(404);
   });
 });
 

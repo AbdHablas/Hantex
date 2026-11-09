@@ -88,11 +88,11 @@ async function queueJob(
   captureId: string,
   providerId: string,
   method: string,
-  finishNames: string[] = [],
+  finishIds: string[] = [],
 ) {
   const [job] = await ownerDb
     .insert(studioJobs)
-    .values({ siteId, captureId, providerId, method, finishNames })
+    .values({ siteId, captureId, providerId, method, finishIds })
     .returning();
   return job!;
 }
@@ -109,7 +109,7 @@ describe('processOneJob', () => {
     const store = memoryStore();
     const capture = await insertCapture({ width: 1000, height: 1000, depth: 500 });
     await uploadModel(store, capture.id, await makeBoxGlb());
-    const job = await queueJob(capture.id, 'model-import', 'artist', ['Matte Black']);
+    const job = await queueJob(capture.id, 'model-import', 'artist', ['black00001']);
 
     await expect(processOneJob(runnerDb, store)).resolves.toBe(true);
 

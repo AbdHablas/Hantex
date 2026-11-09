@@ -1353,8 +1353,11 @@ then the general product catalogue (Phase 3c, D-045).
   tell reliably which way a product should face.
 - **Posters:** rendered in headless Chromium with `<model-viewer>` (the website's viewer), as
   WebP. The page has no network, and Chromium's sandbox stays on unless the runner runs as root.
-- **Database changes:** migrations 0014 (the Studio's tables), 0015 (a job's finish names) and
-  0016 (each upload's declared format, which the runner needs to read the file).
+- **Finishes:** each finish becomes a material variant named by its catalogue finish id, not its
+  name: names change and come in two languages, ids don't, so the website can later switch
+  finish by id and show the name in the visitor's language.
+- **Database changes:** migrations 0014 (the Studio's tables), 0015 and 0017 (a job's finish
+  ids) and 0016 (each upload's declared format, which the runner needs to read the file).
 - **Owner actions, when the Studio is deployed:** create the `hantex-studio` bucket, add the
   `HANTEX_STUDIO_RUNNER_PASSWORD` secret (`bash scripts/first-deploy-secrets.sh`, or
   `--studio-runner` if the other secrets already exist), run the database deployment, create

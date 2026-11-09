@@ -456,8 +456,9 @@ it doesn't do yet:
    movement, about 0.05 mm on a switch plate; a model that can't reach its budget within that
    stays over it and is reported). Textures over budget are resized, keeping PNG or JPEG. Not
    yet: KTX2 or WebP texture compression and Meshopt geometry compression.
-4. **Finishes:** each finish becomes a named material variant. Only the names come from the
-   dashboard, so every variant uses the model's own material until per-finish values are set.
+4. **Finishes:** each finish becomes a material variant named by its catalogue finish id (names
+   change; ids don't). Only the ids come from the dashboard, so every variant uses the model's
+   own material until per-finish values are set.
 5. **Validate:** the Khronos validator checks both versions; triangles, sizes, texture sizes,
    bounding box and primitives without a material are recorded.
 6. **Posters:** front and three-quarter renders in `<model-viewer>`, transparent, as WebP at

@@ -29,7 +29,8 @@ import { renderPosters } from './poster';
 export interface PipelineInput {
   bytes: Uint8Array;
   format: 'glb' | 'gltf' | 'obj' | 'usdz' | 'fbx';
-  finishNames: string[];
+  /** Catalogue finish ids, one material variant each. */
+  finishIds: string[];
   dimensionsMm: Size3 | null;
 }
 
@@ -68,15 +69,15 @@ async function readDocument(input: PipelineInput): Promise<Document> {
 }
 
 /**
- * Every finish becomes a named `KHR_materials_variants` variant, so the website's viewer can
- * switch finish without downloading another model. Stage 1 gets only the finish names, not
- * per-finish material values (colour, gloss), so every variant maps to the primitive's one
- * material until those values are set in the Studio.
+ * Every finish becomes a `KHR_materials_variants` variant named by its catalogue finish id, so
+ * the website's viewer can switch finish without downloading another model, and a renamed
+ * finish still matches. Stage 1 gets only the ids, not per-finish material values (colour,
+ * gloss), so every variant maps to the primitive's one material until those values are set.
  */
-function addFinishVariants(doc: Document, finishNames: string[]): void {
-  if (finishNames.length === 0) return;
+function addFinishVariants(doc: Document, finishIds: string[]): void {
+  if (finishIds.length === 0) return;
   const ext = doc.createExtension(KHRMaterialsVariants);
-  const variants = finishNames.map((name) => ext.createVariant(name));
+  const variants = finishIds.map((id) => ext.createVariant(id));
   for (const mesh of doc.getRoot().listMeshes()) {
     for (const prim of mesh.listPrimitives()) {
       const material = prim.getMaterial();
@@ -132,7 +133,7 @@ function boundingBoxMm(doc: Document): Size3 | null {
 /** One website version, built from its own fresh read of the upload. */
 async function buildVersion(input: PipelineInput, budget: ModelBudget) {
   const doc = await readDocument(input);
-  addFinishVariants(doc, input.finishNames);
+  addFinishVariants(doc, input.finishIds);
   await doc.transform(weld());
   const triangles = countTriangles(doc);
   if (triangles > budget.maxTriangles) {

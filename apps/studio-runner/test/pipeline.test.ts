@@ -1,3 +1,5 @@
+import { NodeIO } from '@gltf-transform/core';
+import { KHRMaterialsVariants } from '@gltf-transform/extensions';
 import { DESKTOP_BUDGET, MOBILE_BUDGET, technicalGate } from '@hantex/studio';
 import { describe, expect, it } from 'vitest';
 import { runPipeline, UnsupportedFormatError } from '../src/pipeline';
@@ -12,7 +14,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeBoxGlb(),
       format: 'glb',
-      finishNames: ['Matte Black', 'Glossy White'],
+      finishIds: ['black00001', 'white00001'],
       dimensionsMm: { width: 1000, height: 1000, depth: 500 },
     });
 
@@ -23,6 +25,19 @@ describe('runPipeline', () => {
     expect(output.withinScale).toBe(true);
     expect(technicalGate({ label: 'artist-modelled', ...output })).toEqual([]);
 
+    // Both versions carry one material variant per finish, named by the finish's id.
+    for (const version of [output.desktop, output.mobile]) {
+      const doc = await new NodeIO().registerExtensions([KHRMaterialsVariants]).readBinary(version);
+      const variants = doc
+        .getRoot()
+        .listExtensionsUsed()
+        .find((ext): ext is KHRMaterialsVariants => ext instanceof KHRMaterialsVariants);
+      expect(variants?.listVariants().map((v) => v.getName())).toEqual([
+        'black00001',
+        'white00001',
+      ]);
+    }
+
     expect(isWebp(output.posterFront)).toBe(true);
     expect(isWebp(output.posterThreeQuarter)).toBe(true);
   }, 60_000);
@@ -31,7 +46,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeDenseTexturedGlb(),
       format: 'glb',
-      finishNames: [],
+      finishIds: [],
       dimensionsMm: { width: 100, height: 100, depth: 100 },
     });
 
@@ -52,7 +67,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeBoxGlb({ centimetres: true }),
       format: 'glb',
-      finishNames: [],
+      finishIds: [],
       dimensionsMm: { width: 1000, height: 1000, depth: 500 },
     });
     expect(output.measurements.boundingBoxMm?.width).toBeCloseTo(1000, 3);
@@ -63,7 +78,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeBoxGlb(),
       format: 'glb',
-      finishNames: [],
+      finishIds: [],
       dimensionsMm: { width: 2000, height: 1000, depth: 500 },
     });
     expect(output.withinScale).toBe(false);
@@ -76,7 +91,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeBoxGlb(),
       format: 'glb',
-      finishNames: [],
+      finishIds: [],
       dimensionsMm: null,
     });
     expect(output.withinScale).toBeNull();
@@ -89,7 +104,7 @@ describe('runPipeline', () => {
     const output = await runPipeline({
       bytes: await makeBoxGlb({ material: false }),
       format: 'glb',
-      finishNames: ['Matte Black'],
+      finishIds: ['black00001'],
       dimensionsMm: { width: 1000, height: 1000, depth: 500 },
     });
     expect(output.measurements.primitivesWithoutMaterial).toBe(1);
@@ -103,7 +118,7 @@ describe('runPipeline', () => {
       runPipeline({
         bytes: await makeBoxGlb(),
         format: 'obj',
-        finishNames: [],
+        finishIds: [],
         dimensionsMm: null,
       }),
     ).rejects.toThrow(UnsupportedFormatError);

@@ -100,7 +100,7 @@ export async function processOneJob(db: Database, store: StudioStore): Promise<b
     const output = await runPipeline({
       bytes,
       format: modelFile.format as PipelineInput['format'],
-      finishNames: (job.finishNames as string[] | null) ?? [],
+      finishIds: (job.finishIds as string[] | null) ?? [],
       dimensionsMm:
         capture.widthMm !== null && capture.heightMm !== null && capture.depthMm !== null
           ? { width: capture.widthMm, height: capture.heightMm, depth: capture.depthMm }

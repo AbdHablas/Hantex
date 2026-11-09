@@ -18,6 +18,7 @@ import {
   technicalGate,
   type ResultLabel,
 } from '@hantex/studio';
+import { itemId } from '@hantex/sections';
 import { and, desc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -54,6 +55,35 @@ import { requirePermission } from '../middleware/session';
 
 const auditActor = (v: AppEnv['Variables']) => ({ userId: v.access.userId, label: v.access.email });
 const idParam = validate('param', z.object({ id: z.uuid() }));
+const fileParam = validate('param', z.object({ id: z.uuid(), fileId: z.uuid() }));
+
+/** A processed model's files, as the runner stores them (apps/studio-runner/src/process-job.ts). */
+const MODEL_FILES = {
+  desktop: 'model/gltf-binary',
+  mobile: 'model/gltf-binary',
+  posterFront: 'image/webp',
+  posterThreeQuarter: 'image/webp',
+} as const;
+
+/**
+ * Private Studio files for signed-in staff: a checked WebP photo or poster and a GLB the
+ * dashboard's viewer reads are served as themselves, any other upload (glTF JSON, OBJ, USDZ,
+ * FBX, STEP, IGES) only as a download. The security middleware adds what every API response
+ * carries: never cached, never sniffed, and a policy under which nothing in it can run.
+ */
+function studioFile(
+  stored: { body: ReadableStream | ArrayBuffer; size: number },
+  contentType: string,
+  download: string | null,
+) {
+  return new Response(stored.body, {
+    headers: {
+      'Content-Type': contentType,
+      'Content-Length': String(stored.size),
+      ...(download ? { 'Content-Disposition': `attachment; filename="${download}"` } : {}),
+    },
+  });
+}
 const CAPTURE_VIEWS = ['front', 'left', 'right', 'rear', 'top', 'detail'] as const;
 
 const captureBody = z.strictObject({
@@ -95,7 +125,7 @@ const asJob = (row: typeof studioJobs.$inferSelect) => ({
   captureId: row.captureId,
   providerId: row.providerId,
   method: row.method,
-  finishNames: row.finishNames,
+  finishIds: row.finishIds,
   status: row.status,
   detail: row.detail,
   estimatedCostCents: row.estimatedCostCents,
@@ -463,11 +493,11 @@ export const studioRoutes = new Hono<AppEnv>()
   .delete(
     '/captures/:id/files/:fileId',
     requirePermission('studio.capture'),
-    idParam,
+    fileParam,
     async (c) => {
       const v = c.var;
-      const capture = await requireCapture(v.db, v.site.id, c.req.valid('param').id);
-      const fileId = c.req.param('fileId');
+      const { id, fileId } = c.req.valid('param');
+      const capture = await requireCapture(v.db, v.site.id, id);
       const [row] = await v.db
         .delete(studioCaptureFiles)
         .where(and(eq(studioCaptureFiles.id, fileId), eq(studioCaptureFiles.captureId, capture.id)))
@@ -475,6 +505,29 @@ export const studioRoutes = new Hono<AppEnv>()
       if (!row) throw notFound();
       await v.deps.studio(c.env).delete([row.storageKey]);
       return c.json({ ok: true });
+    },
+  )
+
+  .get(
+    '/captures/:id/files/:fileId/content',
+    requirePermission('studio.view'),
+    fileParam,
+    async (c) => {
+      const v = c.var;
+      const { id, fileId } = c.req.valid('param');
+      const capture = await requireCapture(v.db, v.site.id, id);
+      const [row] = await v.db
+        .select()
+        .from(studioCaptureFiles)
+        .where(
+          and(eq(studioCaptureFiles.id, fileId), eq(studioCaptureFiles.captureId, capture.id)),
+        );
+      if (!row) throw notFound();
+      const stored = await v.deps.studio(c.env).get(row.storageKey);
+      if (!stored) throw notFound();
+      if (row.format === 'webp') return studioFile(stored, 'image/webp', null);
+      if (row.format === 'glb') return studioFile(stored, 'model/gltf-binary', null);
+      return studioFile(stored, 'application/octet-stream', `${row.id}.${row.format}`);
     },
   )
 
@@ -489,7 +542,8 @@ export const studioRoutes = new Hono<AppEnv>()
       z.strictObject({
         providerId: z.string(),
         method: z.enum(METHODS),
-        finishNames: z.array(z.string().trim().max(60)).max(60).default([]),
+        // Catalogue finish ids: each names a material variant in the model (D-056).
+        finishIds: z.array(itemId).max(60).default([]),
       }),
     ),
     async (c) => {
@@ -522,7 +576,7 @@ export const studioRoutes = new Hono<AppEnv>()
           captureId: capture.id,
           providerId: provider.id,
           method: body.method,
-          finishNames: body.finishNames,
+          finishIds: body.finishIds,
           estimatedCostCents,
           createdBy: v.access.userId,
         })
@@ -605,6 +659,33 @@ export const studioRoutes = new Hono<AppEnv>()
       })),
     });
   })
+
+  .get(
+    '/models/:id/files/:file',
+    requirePermission('studio.view'),
+    validate(
+      'param',
+      z.object({
+        id: z.uuid(),
+        file: z.enum(Object.keys(MODEL_FILES) as [keyof typeof MODEL_FILES]),
+      }),
+    ),
+    async (c) => {
+      const v = c.var;
+      const { id, file } = c.req.valid('param');
+      const [row] = await v.db
+        .select({ files: studioModels.files })
+        .from(studioModels)
+        .where(and(eq(studioModels.id, id), eq(studioModels.siteId, v.site.id)));
+      const key = (row?.files as Partial<Record<keyof typeof MODEL_FILES, string>> | undefined)?.[
+        file
+      ];
+      if (!key) throw notFound();
+      const stored = await v.deps.studio(c.env).get(key);
+      if (!stored) throw notFound();
+      return studioFile(stored, MODEL_FILES[file], null);
+    },
+  )
 
   .post(
     '/models/:id/review',

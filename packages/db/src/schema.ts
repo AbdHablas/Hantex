@@ -787,8 +787,11 @@ export const studioJobs = pgTable(
     providerId: text('provider_id').notNull(),
     /** The method the person declared for this job (fixes the result's label). */
     method: text('method').notNull(),
-    /** The finishes to add as material variants; the runner never reads the catalogue itself. */
-    finishNames: jsonb('finish_names').notNull().default([]),
+    /**
+     * The catalogue finishes to add as material variants, by id (each variant is named by its
+     * finish's id, so a renamed finish still matches); the runner never reads the catalogue.
+     */
+    finishIds: jsonb('finish_ids').notNull().default([]),
     /** queued → running → done or failed. */
     status: text('status').notNull().default('queued'),
     estimatedCostCents: integer('estimated_cost_cents').notNull().default(0),

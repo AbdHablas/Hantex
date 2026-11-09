@@ -92,8 +92,8 @@ export interface JobInput {
   /** The uploaded files' storage keys the provider reads from. */
   fileKeys: string[];
   dimensionsMm: CaptureSummary['dimensionsMm'];
-  /** The finishes the resulting model should carry as material variants. */
-  finishNames: string[];
+  /** The catalogue finishes the model should carry as material variants, by id. */
+  finishIds: string[];
 }
 
 export interface ExternalRef {
