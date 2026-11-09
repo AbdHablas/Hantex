@@ -345,8 +345,9 @@ const en = {
       cad: 'The manufacturer’s CAD files',
       generative: 'Generative AI',
     } as Record<string, string>,
-    finishes: 'Finishes to include',
-    finishesHelp: 'Each becomes a finish the website’s 3D viewer can switch to.',
+    finishes: 'Finish shown',
+    finishesHelp:
+      'The finish the uploaded model shows. Each finish is its own model: make one for each finish the website should show in 3D.',
     noFinishes: 'None of this product’s variants has a finish.',
     start: 'Start',
     needModel: 'Upload a finished model first.',
@@ -376,6 +377,7 @@ const en = {
     } as Record<string, string>,
     approved: 'Approved',
     madeOn: 'Made {date}',
+    finishOf: 'Finish: {name}',
     posterFront: 'Front poster of the model',
     posterThreeQuarter: 'Three-quarter poster of the model',
     preview: 'The model in 3D: drag to turn it, pinch or scroll to zoom',
@@ -423,17 +425,18 @@ const en = {
     reviews: 'Reviews',
     approve: 'Approve',
     approveConfirm:
-      'Approve this model for the product? It still goes live only when the website is published.',
+      'Approve this model? Once the website is published, it shows on its product page in place of any model of the same finish.',
     website: {
       assigned: 'On the product page once published',
       live: 'On the product page',
+      unshown: 'Not shown: its product is hidden or no longer has this finish',
     } as Record<string, string>,
     takeOff: 'Take off the product page',
     takeOffConfirm:
       'Take this model off its product page? It goes once the website is published, and you can put it back later.',
     putBack: 'Put back on the product page',
     putBackConfirm:
-      'Put this model back on its product page? It replaces the model shown there once the website is published.',
+      'Put this model back on its product page? Once the website is published, it replaces any model of the same finish.',
   },
 
   announce: {
@@ -1447,6 +1450,8 @@ const en = {
     'provider-not-implemented': 'That way of making a model isn’t built yet.',
     'method-mismatch': 'That method doesn’t match this way of making a model.',
     'unknown-provider': 'That way of making a model doesn’t exist.',
+    'unknown-finish': 'Choose one of this product’s finishes.',
+    'finish-required': 'Choose the finish the model shows.',
     'capture-in-use': 'A job has already worked on this capture, so it can’t be deleted.',
     'studio-quota': 'This website has used all its 3D Studio storage. Delete old captures first.',
     'technical-gate':
@@ -1900,8 +1905,9 @@ const ar: Messages = {
       cad: 'ملفات CAD من الشركة المصنّعة',
       generative: 'الذكاء الاصطناعي التوليدي',
     },
-    finishes: 'التشطيبات المضمّنة',
-    finishesHelp: 'يصبح كل منها تشطيبًا يستطيع عارض الموقع ثلاثي الأبعاد التبديل إليه.',
+    finishes: 'التشطيب المعروض',
+    finishesHelp:
+      'التشطيب الذي يُظهره النموذج المرفوع. لكل تشطيب نموذجه الخاص: أنشئ نموذجًا لكل تشطيب تريد أن يعرضه الموقع بثلاثية الأبعاد.',
     noFinishes: 'لا يملك أي من متغيرات هذا المنتج تشطيبًا.',
     start: 'بدء',
     needModel: 'ارفع نموذجًا جاهزًا أولًا.',
@@ -1931,6 +1937,7 @@ const ar: Messages = {
     },
     approved: 'معتمد',
     madeOn: 'أُنشئ {date}',
+    finishOf: 'التشطيب: {name}',
     posterFront: 'صورة العرض الأمامية للنموذج',
     posterThreeQuarter: 'صورة العرض الجانبية للنموذج',
     preview: 'النموذج بالأبعاد الثلاثة: اسحب لتدويره، وقرّب بإصبعين أو بعجلة الفأرة',
@@ -1976,17 +1983,19 @@ const ar: Messages = {
     saveReview: 'حفظ المراجعة',
     reviews: 'المراجعات',
     approve: 'اعتماد',
-    approveConfirm: 'اعتماد هذا النموذج للمنتج؟ لن يظهر على الموقع إلا عند نشره.',
+    approveConfirm:
+      'اعتماد هذا النموذج؟ بعد نشر الموقع يظهر في صفحة منتجه بدل أي نموذج للتشطيب نفسه.',
     website: {
       assigned: 'في صفحة المنتج بعد النشر',
       live: 'في صفحة المنتج',
+      unshown: 'غير معروض: المنتج مخفي أو لم يعد له هذا التشطيب',
     },
     takeOff: 'إزالته من صفحة المنتج',
     takeOffConfirm:
       'إزالة هذا النموذج من صفحة منتجه؟ يُزال عند نشر الموقع، ويمكنك إعادته إليها لاحقًا.',
     putBack: 'إعادته إلى صفحة المنتج',
     putBackConfirm:
-      'إعادة هذا النموذج إلى صفحة منتجه؟ يحلّ محلّ النموذج المعروض فيها عند نشر الموقع.',
+      'إعادة هذا النموذج إلى صفحة منتجه؟ بعد نشر الموقع يحلّ محلّ أي نموذج للتشطيب نفسه.',
   },
 
   announce: {
@@ -2970,6 +2979,8 @@ const ar: Messages = {
     'provider-not-implemented': 'هذه الطريقة في إنشاء النموذج غير متاحة بعد.',
     'method-mismatch': 'هذه الطريقة لا تناسب أسلوب إنشاء النموذج هذا.',
     'unknown-provider': 'أسلوب إنشاء النموذج هذا غير موجود.',
+    'unknown-finish': 'اختر أحد تشطيبات هذا المنتج.',
+    'finish-required': 'اختر التشطيب الذي يُظهره النموذج.',
     'capture-in-use': 'عملت مهمة على هذا الالتقاط بالفعل، فلا يمكن حذفه.',
     'studio-quota':
       'استهلك هذا الموقع كل مساحة استوديو ثلاثي الأبعاد. احذف الالتقاطات القديمة أولًا.',

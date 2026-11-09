@@ -308,9 +308,14 @@ export function StudioCapturePage() {
             <h2 id="studio-models" className="text-lg font-semibold">
               {t.models}
             </h2>
-            {models.map((model) => (
-              <ModelCard key={model.id} model={model} capture={capture} />
-            ))}
+            {models.map((model) => {
+              // A model shows the one finish its job named (D-058).
+              const finishIds = detail.data.jobs.find((j) => j.id === model.jobId)?.finishIds;
+              const finishId = finishIds?.length === 1 ? (finishIds[0] ?? null) : null;
+              return (
+                <ModelCard key={model.id} model={model} capture={capture} finishId={finishId} />
+              );
+            })}
           </section>
         )}
       </div>
@@ -560,8 +565,10 @@ function StartJob({ detail }: { detail: CaptureDetail }) {
         .filter((id): id is string => typeof id === 'string' && finishNames.has(id)),
     ),
   ];
-  const [chosen, setChosen] = useState<Set<string> | null>(null);
-  const finishIds = chosen ?? new Set(productFinishes);
+  // Each finish is its own model (D-058): the job names the one the uploaded model shows.
+  const [chosen, setChosen] = useState<string | null>(null);
+  const finishId =
+    chosen && productFinishes.includes(chosen) ? chosen : (productFinishes[0] ?? null);
   const hasModel = detail.files.some((f) => f.kind === 'model');
   const start = useMutation({
     mutationFn: () =>
@@ -570,7 +577,7 @@ function StartJob({ detail }: { detail: CaptureDetail }) {
         body: {
           providerId: 'model-import',
           method: possible.includes(method) ? method : possible[0],
-          finishIds: [...finishIds],
+          finishIds: finishId ? [finishId] : [],
         },
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.capture(detail.capture.id) }),
@@ -605,15 +612,11 @@ function StartJob({ detail }: { detail: CaptureDetail }) {
                 {productFinishes.map((id) => (
                   <label key={id} className="flex items-center gap-2 text-sm">
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name={`finish-${detail.capture.id}`}
                       className="size-4 accent-accent"
-                      checked={finishIds.has(id)}
-                      onChange={(e) => {
-                        const next = new Set(finishIds);
-                        if (e.target.checked) next.add(id);
-                        else next.delete(id);
-                        setChosen(next);
-                      }}
+                      checked={finishId === id}
+                      onChange={() => setChosen(id)}
                     />
                     {finishNames.get(id)}
                   </label>
@@ -728,13 +731,25 @@ function useIssueText() {
   };
 }
 
-function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapture }) {
+function ModelCard({
+  model,
+  capture,
+  finishId,
+}: {
+  model: StudioModel;
+  capture: StudioCapture;
+  finishId: string | null;
+}) {
   const { can } = useCurrentSite();
   const { m, date, format, locale } = useI18n();
   const t = m.studio;
   const keys = useStudioKeys();
   const queryClient = useQueryClient();
   const issueText = useIssueText();
+  const bilingual = useBilingual();
+  const { catalogue } = useProductNames();
+  const finish = catalogue.data?.structure.finishes.find((f) => f.id === finishId);
+  const finishName = finish ? bilingual(finish.name) : '';
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const reviews = useQuery({
     queryKey: [...keys.capture(capture.id), 'model', model.id],
@@ -784,7 +799,12 @@ function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapt
   return (
     <Card
       title={t.labels[model.label] ?? model.label}
-      description={format(t.madeOn, { date: date(model.createdAt, true) })}
+      description={[
+        format(t.madeOn, { date: date(model.createdAt, true) }),
+        finishName ? format(t.finishOf, { name: finishName }) : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')}
       icon={<Images />}
       actions={
         <div className="flex flex-wrap gap-1.5">
@@ -793,7 +813,15 @@ function ModelCard({ model, capture }: { model: StudioModel; capture: StudioCapt
           </Badge>
           {model.approvedAt && <Badge tone="success">{t.approved}</Badge>}
           {model.website !== 'none' && (
-            <Badge tone={model.website === 'live' ? 'success' : 'accent'}>
+            <Badge
+              tone={
+                model.website === 'live'
+                  ? 'success'
+                  : model.website === 'unshown'
+                    ? 'warning'
+                    : 'accent'
+              }
+            >
               {t.website[model.website]}
             </Badge>
           )}

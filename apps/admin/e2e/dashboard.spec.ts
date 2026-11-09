@@ -740,6 +740,8 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   // The page checks back every five seconds while a job is waiting or running.
   await expect(jobs.getByText('Done')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('Passes every technical check.')).toBeVisible();
+  // Each finish is its own model (D-058): the card names the one this model shows.
+  await expect(page.getByText(/· Finish: White$/)).toBeVisible();
   // The posters are real renders, served from the Studio's private bucket.
   const poster = page.getByRole('img', { name: 'Front poster of the model' });
   await poster.scrollIntoViewIfNeeded();

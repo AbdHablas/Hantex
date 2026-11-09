@@ -234,9 +234,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - enquiry forms.
 - [x] 3D on product pages (D-029, D-057) — *done: the Owner's approval puts a model on its
       product's page and Publish changes takes it live; poster first, the viewer on demand,
-      "view on your wall" for true-scale models; model files public only while shown. Still to
-      come: switching finishes, once models carry a material per finish; trying "view on your
-      wall" on real phones*
+      "view on your wall" for true-scale models; model files public only while shown; switching
+      finishes, one model per finish (D-058). Still to come: trying "view on your wall" on real
+      phones; recolouring models made with separate finish parts, once such models exist*
 - [ ] 3D Product Studio, stage 2:
   - automated photo reconstruction (photogrammetry);
   - optional AI providers, only if the owner approves them (D-030).

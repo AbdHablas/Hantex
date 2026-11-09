@@ -76,6 +76,13 @@ async function visibleProduct(slug: string): Promise<string> {
           material: 'plastic',
           image: null,
         },
+        {
+          id: 'black00001',
+          name: both('Black'),
+          swatch: '#111111',
+          material: 'plastic',
+          image: null,
+        },
       ],
       series: [],
     },
@@ -126,8 +133,29 @@ async function setVisible(productId: string, visible: boolean, imageId?: string)
 }
 const slugOf = (id: string) => id.slice(0, 6).toUpperCase();
 
-/** A model the processing runner made for the product, reviewed and approved by the Owner. */
-async function approvedModel(productId: string): Promise<string> {
+/** Gives the product one variant in each of these finishes. */
+async function setFinishes(productId: string, finishIds: string[]) {
+  const { product } = await json<{ product: Product }>(
+    await h.request('GET', `${base}/catalogue/products/${productId}`, { cookie: owner }),
+  );
+  const saved = await h.request('PUT', `${base}/catalogue/products/${productId}`, {
+    cookie: owner,
+    body: {
+      ...product,
+      variants: finishIds.map((finishId) => ({
+        id: `v${finishId.slice(0, 9)}`,
+        sku: `HX-${slugOf(productId)}-${finishId.slice(0, 5).toUpperCase()}`,
+        finishId,
+        name: both(''),
+        images: [],
+      })),
+    },
+  });
+  expect(saved.status, await saved.clone().text()).toBe(200);
+}
+
+/** A model of one finish the runner made for the product, reviewed and approved by the Owner. */
+async function approvedModel(productId: string, finishId = 'white00001'): Promise<string> {
   const [capture] = await h.db
     .insert(studioCaptures)
     .values({ siteId, productId, widthMm: 86, heightMm: 86, depthMm: 12 })
@@ -140,6 +168,7 @@ async function approvedModel(productId: string): Promise<string> {
       providerId: 'model-import',
       method: 'artist',
       status: 'done',
+      finishIds: [finishId],
     })
     .returning();
   const modelId = randomUUID();
@@ -234,12 +263,17 @@ describe('3D models on product pages', () => {
     expect(publicFiles(modelId)).toEqual(PUBLIC_FILES);
 
     await setVisible(productId, false);
+    // Still assigned, but a hidden product's page shows nothing: the Studio says so.
+    expect(await websiteOf(modelId)).toBe('unshown');
     await publish();
     expect(publicFiles(modelId)).toEqual([]);
+    expect(await websiteOf(modelId)).toBe('unshown');
 
     await setVisible(productId, true);
+    expect(await websiteOf(modelId)).toBe('assigned');
     await publish();
     expect(publicFiles(modelId)).toEqual(PUBLIC_FILES);
+    expect(await websiteOf(modelId)).toBe('live');
   });
 
   it('replaces a product’s model with the newly approved one, takes it off the page, and puts one back', async () => {
@@ -279,6 +313,40 @@ describe('3D models on product pages', () => {
     expect(await websiteOf(first)).toBe('live');
     expect(publicFiles(first)).toEqual(PUBLIC_FILES);
     expect(publicFiles(second)).toEqual([]);
+  });
+
+  it('shows one model for each finish; a newer one replaces only its own finish', async () => {
+    const productId = await visibleProduct('two-finishes');
+    await setFinishes(productId, ['white00001', 'black00001']);
+    const white = await approvedModel(productId, 'white00001');
+    const black = await approvedModel(productId, 'black00001');
+    await publish();
+    expect([await websiteOf(white), await websiteOf(black)]).toEqual(['live', 'live']);
+    expect(publicFiles(white)).toEqual(PUBLIC_FILES);
+    expect(publicFiles(black)).toEqual(PUBLIC_FILES);
+
+    // A newer White model replaces the White one only.
+    const newerWhite = await approvedModel(productId, 'white00001');
+    expect([await websiteOf(white), await websiteOf(black)]).toEqual(['none', 'live']);
+    await publish();
+    expect(publicFiles(white)).toEqual([]);
+    expect(publicFiles(newerWhite)).toEqual(PUBLIC_FILES);
+    expect(publicFiles(black)).toEqual(PUBLIC_FILES);
+
+    // Taking Black off leaves White; dropping the Black variant keeps its model off the page.
+    await h.request('DELETE', `${base}/studio/models/${black}/website`, { cookie: owner });
+    await publish();
+    expect(publicFiles(black)).toEqual([]);
+    expect(await websiteOf(newerWhite)).toBe('live');
+    const back = await h.request('PUT', `${base}/studio/models/${black}/website`, {
+      cookie: owner,
+    });
+    expect((await json<{ website: string }>(back)).website).toBe('assigned');
+    await setFinishes(productId, ['white00001']);
+    await publish();
+    expect(publicFiles(black)).toEqual([]);
+    expect(await websiteOf(black)).toBe('unshown');
+    expect(publicFiles(newerWhite)).toEqual(PUBLIC_FILES);
   });
 
   it('makes none of a model’s files public while one of them is missing', async () => {
@@ -340,23 +408,24 @@ describe('3D models on product pages', () => {
         ...passingResult,
       })
       .returning();
+    const unapproved = {
+      products: {
+        [productId]: [
+          { id: model!.id, label: 'artist-modelled', trueScale: true, finishId: 'white00001' },
+        ],
+      },
+    };
     await h.db
       .insert(documentDrafts)
       .values({
         siteId,
         kind: 'models',
         key: '',
-        data: {
-          products: { [productId]: { id: model!.id, label: 'artist-modelled', trueScale: true } },
-        },
+        data: unapproved,
       })
       .onConflictDoUpdate({
         target: [documentDrafts.siteId, documentDrafts.kind, documentDrafts.key],
-        set: {
-          data: {
-            products: { [productId]: { id: model!.id, label: 'artist-modelled', trueScale: true } },
-          },
-        },
+        set: { data: unapproved },
       });
     const refused = await h.request('POST', `${base}/changes/publish`, { cookie: owner, body: {} });
     expect(refused.status).toBe(409);

@@ -27,6 +27,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import type { AppEnv } from '../context';
 import { writeAudit } from '../lib/audit';
+import { draftCatalogue } from '../lib/catalogue-content';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors';
 import { readWebp } from '../lib/webp';
 import {
@@ -47,10 +48,10 @@ import {
 import { validate } from '../lib/validate';
 import {
   assignModel,
-  draftModels,
-  liveModels,
+  modelsOnPages,
   unassignModel,
   websiteStatus,
+  type WebsiteStatus,
 } from '../lib/website-models';
 import { requirePermission } from '../middleware/session';
 
@@ -153,10 +154,7 @@ const technicalIssuesOf = (row: typeof studioModels.$inferSelect) =>
     withinScale: row.withinScale,
   });
 
-const asModel = (
-  row: typeof studioModels.$inferSelect,
-  website: 'none' | 'assigned' | 'live' = 'none',
-) => ({
+const asModel = (row: typeof studioModels.$inferSelect, website: WebsiteStatus = 'none') => ({
   id: row.id,
   captureId: row.captureId,
   jobId: row.jobId,
@@ -168,7 +166,8 @@ const asModel = (
   technicalIssues: technicalIssuesOf(row),
   reviewStatus: row.reviewStatus,
   approvedAt: row.approvedAt,
-  /** On the product's page: not at all, once Publish changes runs, or now (D-057). */
+  /** On the product's page: not at all, once Publish changes runs, now, or assigned but not
+   * shown (product hidden, or without the model's finish) (D-057, D-058). */
   website,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -185,21 +184,25 @@ async function productOf(db: Database, captureId: string) {
 }
 
 async function websiteOf(db: Database, siteId: string, model: typeof studioModels.$inferSelect) {
-  const [draft, live, productId] = await Promise.all([
-    draftModels(db, siteId),
-    liveModels(db, siteId),
-    productOf(db, model.captureId),
-  ]);
-  return websiteStatus(draft, live, productId, model.id);
+  return websiteStatus(await modelsOnPages(db, siteId), model.id);
 }
 
-/** What a product's page shows of a model: its label, and whether it is true to size (D-057). */
-function placementOf(row: typeof studioModels.$inferSelect) {
+/**
+ * What a product's page shows of a model: its label, whether it is true to size (D-057), and the
+ * finish it shows, which its job named (D-058; none for a product without finishes).
+ */
+async function placementOf(db: Database, row: typeof studioModels.$inferSelect) {
+  const [job] = await db
+    .select({ finishIds: studioJobs.finishIds })
+    .from(studioJobs)
+    .where(eq(studioJobs.id, row.jobId));
+  const finishIds = (job?.finishIds as string[] | undefined) ?? [];
   const label = row.label as ResultLabel;
   return {
     id: row.id,
     label,
     trueScale: TRUE_SCALE_LABELS.includes(label) && row.withinScale === true,
+    finishId: finishIds.length === 1 ? finishIds[0]! : null,
   };
 }
 
@@ -375,15 +378,12 @@ export const studioRoutes = new Hono<AppEnv>()
         .orderBy(desc(studioModels.createdAt)),
       captureSummary(v.db, capture.id),
     ]);
-    const [draft, live] = await Promise.all([
-      draftModels(v.db, v.site.id),
-      liveModels(v.db, v.site.id),
-    ]);
+    const pages = await modelsOnPages(v.db, v.site.id);
     return c.json({
       capture: asCapture(capture),
       files: files.map(asFile),
       jobs: jobs.map(asJob),
-      models: models.map((m) => asModel(m, websiteStatus(draft, live, capture.productId, m.id))),
+      models: models.map((m) => asModel(m, websiteStatus(pages, m.id))),
       eligibility: data ? eligibility(data.summary) : [],
       canCheckTrueScale: data ? canCheckTrueScale(data.summary) : false,
     });
@@ -589,8 +589,9 @@ export const studioRoutes = new Hono<AppEnv>()
       z.strictObject({
         providerId: z.string(),
         method: z.enum(METHODS),
-        // Catalogue finish ids: each names a material variant in the model (D-056).
-        finishIds: z.array(itemId).max(60).default([]),
+        // The one catalogue finish the uploaded model shows (D-058): each finish is its own
+        // model. The runner names the model's material variant after it (D-056).
+        finishIds: z.array(itemId).max(1).default([]),
       }),
     ),
     async (c) => {
@@ -601,6 +602,13 @@ export const studioRoutes = new Hono<AppEnv>()
       if (!provider) throw badRequest('unknown-provider');
       if (!provider.implemented) throw conflict('provider-not-implemented');
       if (!provider.methods.includes(body.method)) throw badRequest('method-mismatch');
+
+      // One of the product's finishes, if it has any; none if it has none.
+      const product = (await draftCatalogue(v.db, v.site.id)).products.get(capture.productId);
+      const finishes = new Set(product?.variants.flatMap((x) => (x.finishId ? [x.finishId] : [])));
+      const [finishId] = body.finishIds;
+      if (finishId !== undefined && !finishes.has(finishId)) throw badRequest('unknown-finish');
+      if (finishId === undefined && finishes.size > 0) throw badRequest('finish-required');
 
       const data = await captureSummary(v.db, capture.id);
       const allowed = data ? eligibility(data.summary).find((e) => e.method === body.method) : null;
@@ -813,7 +821,7 @@ export const studioRoutes = new Hono<AppEnv>()
       .returning();
     // Approval assigns the model to its product's page; it goes live with Publish changes (D-057).
     const productId = await productOf(v.db, model.captureId);
-    await assignModel(v.db, v.site.id, productId, placementOf(model), v.access.userId);
+    await assignModel(v.db, v.site.id, productId, await placementOf(v.db, model), v.access.userId);
     await writeAudit(
       v.db,
       auditActor(v),
@@ -844,7 +852,7 @@ export const studioRoutes = new Hono<AppEnv>()
     const issues = technicalIssuesOf(model);
     if (issues.length > 0) throw conflict('technical-gate', { issues });
     const productId = await productOf(v.db, model.captureId);
-    await assignModel(v.db, v.site.id, productId, placementOf(model), v.access.userId);
+    await assignModel(v.db, v.site.id, productId, await placementOf(v.db, model), v.access.userId);
     await writeAudit(
       v.db,
       auditActor(v),

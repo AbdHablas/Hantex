@@ -68,10 +68,26 @@ const structured = origin
     ]
   : [];
 const hasSpecs = Object.keys(product.values).length > 0 || product.variants.some((v) => v.sku);
-// Its approved 3D model (D-057): the poster first, the viewer only when wanted (scripts/model.ts).
-const model = product.model;
-const modelBase = model ? `/models/${model.id}` : '';
-const fill = (text: string) => text.replace('{name}', name);
+// Its approved 3D models, one per finish (D-057, D-058): the poster first, the viewer only when
+// wanted, and a choice of finish when there are several (scripts/model.ts).
+const models = product.models.map((m) => {
+  const finish = m.finishId ? showcase.finishes.find((f) => f.id === m.finishId) : undefined;
+  const finishLabel = finish ? pick(ctx, finish.name) : '';
+  // Functions, so a "$" in a name is kept as typed.
+  const fill = (text: string) =>
+    text.replace('{name}', () => name).replace('{finish}', () => finishLabel);
+  return {
+    id: m.id,
+    base: `/models/${m.id}`,
+    finish,
+    finishLabel,
+    alt: fill(finishLabel ? t.model.altFinish : t.model.alt),
+    posterAlt: fill(finishLabel ? t.model.posterFinish : t.model.poster),
+    ar: m.trueScale ? t.model.ar : undefined,
+    caption: `${t.model.label[m.label] ?? ''}${m.trueScale ? ` · ${t.model.trueScale}` : ''}`,
+  };
+});
+const model = models[0];
 ---
 
 <SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor} structured={structured}>
@@ -82,16 +98,17 @@ const fill = (text: string) => text.replace('{name}', name);
         {
           model && (
             <figure
+              id="product-model"
               class="bx-figure cx-model"
-              data-model={modelBase}
-              data-alt={fill(t.model.alt)}
-              data-ar={model.trueScale ? t.model.ar : undefined}
+              data-model={model.base}
+              data-alt={model.alt}
+              data-ar={model.ar}
             >
               <div class="cx-model-stage">
                 <img
                   class="cx-model-poster"
-                  src={`${modelBase}/poster-front.webp`}
-                  alt={fill(t.model.poster)}
+                  src={`${model.base}/poster-front.webp`}
+                  alt={model.posterAlt}
                   width="1024"
                   height="1024"
                   decoding="async"
@@ -100,11 +117,36 @@ const fill = (text: string) => text.replace('{name}', name);
                   {t.model.open}
                 </button>
               </div>
-              <figcaption>
-                {t.model.label[model.label]}
-                {model.trueScale && ` · ${t.model.trueScale}`}
-              </figcaption>
+              <figcaption>{model.caption}</figcaption>
             </figure>
+          )
+        }
+        {
+          models.length > 1 && (
+            <fieldset class="cx-model-finishes" data-model-finishes="product-model" hidden>
+              <legend class="cx-label">{t.model.finish}</legend>
+              {models.map((m, i) => (
+                <label class="cx-model-finish">
+                  <input
+                    type="radio"
+                    name="model-finish"
+                    value={m.id}
+                    checked={i === 0}
+                    data-model-base={m.base}
+                    data-alt={m.alt}
+                    data-poster-alt={m.posterAlt}
+                    data-ar={m.ar}
+                    data-caption={m.caption}
+                  />
+                  {m.finish && (
+                    <svg class="bx-swatch" viewBox="0 0 16 16" aria-hidden="true">
+                      <circle cx="8" cy="8" r="7.25" fill={m.finish.swatch} />
+                    </svg>
+                  )}
+                  {m.finishLabel}
+                </label>
+              ))}
+            </fieldset>
           )
         }
         {

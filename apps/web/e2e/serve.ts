@@ -396,8 +396,10 @@ lockup.colours = lockup.colours.map((c) =>
 // An uploaded font (D-033) for the headings' Latin text: Cairo's Latin files from the built-in
 // library, stored as the dashboard would store them.
 const FONT_ID = '3c2b1a09-8f7e-4d6c-9b5a-4f3e2d1c0b9a';
-// An approved 3D model (D-057) on the one-gang switch's page, checked true to scale.
+// Approved 3D models on the one-gang switch's page, one per finish (D-057, D-058): the white one
+// made by an artist and checked true to scale, the black one measured from photos, not checked.
 const MODEL_ID = '5e4d3c2b-1a09-4f8e-9d7c-6b5a4f3e2d1c';
+const BLACK_MODEL_ID = '6f5e4d3c-2b1a-4c9d-8e7f-0a1b2c3d4e5f';
 const FONT_WEIGHTS = [400, 700];
 await db.insert(fonts).values({
   id: FONT_ID,
@@ -421,7 +423,14 @@ await db.insert(documentVersions).values([
     siteId: liveId,
     kind: 'models',
     version: 1,
-    data: { products: { prdone: { id: MODEL_ID, label: 'artist-modelled', trueScale: true } } },
+    data: {
+      products: {
+        prdone: [
+          { id: MODEL_ID, label: 'artist-modelled', trueScale: true, finishId: 'fnwhite' },
+          { id: BLACK_MODEL_ID, label: 'measured', trueScale: false, finishId: 'fnblack' },
+        ],
+      },
+    },
   },
   ...Object.entries(products).map(([id, data]) => ({
     siteId: liveId,
@@ -547,15 +556,18 @@ for (const weight of FONT_WEIGHTS) {
     { stdio: 'inherit', env: { ...env, WRANGLER_SEND_METRICS: 'false' } },
   );
 }
-// The model's published files: a real GLB (an 86 × 86 × 12 mm plate) and its posters.
+// The models' published files: a real GLB (an 86 × 86 × 12 mm plate) and its posters.
 const glb = join(dirname(webp), 'model.glb');
 await writeFile(glb, await makeBoxGlb({ sizeMm: { width: 86, height: 86, depth: 12 } }));
-for (const [name, source, type] of [
-  ['desktop.glb', glb, 'model/gltf-binary'],
-  ['mobile.glb', glb, 'model/gltf-binary'],
-  ['poster-front.webp', webp, 'image/webp'],
-  ['poster-three-quarter.webp', webp, 'image/webp'],
-] as const) {
+for (const [id, name, source, type] of [MODEL_ID, BLACK_MODEL_ID].flatMap(
+  (id) =>
+    [
+      [id, 'desktop.glb', glb, 'model/gltf-binary'],
+      [id, 'mobile.glb', glb, 'model/gltf-binary'],
+      [id, 'poster-front.webp', webp, 'image/webp'],
+      [id, 'poster-three-quarter.webp', webp, 'image/webp'],
+    ] as const,
+)) {
   execFileSync(
     'pnpm',
     [
@@ -564,7 +576,7 @@ for (const [name, source, type] of [
       'r2',
       'object',
       'put',
-      `hantex-media-public/sites/e2e-live/models/${MODEL_ID}/${name}`,
+      `hantex-media-public/sites/e2e-live/models/${id}/${name}`,
       '--file',
       source,
       '--content-type',

@@ -459,7 +459,8 @@ it doesn't do yet:
    yet: KTX2 or WebP texture compression and Meshopt geometry compression.
 4. **Finishes:** each finish becomes a material variant named by its catalogue finish id (names
    change; ids don't). Only the ids come from the dashboard, so every variant uses the model's
-   own material until per-finish values are set.
+   own material until per-finish values are set. Since D-058 a job names one finish, so a model
+   has one variant, which records the finish it shows.
 5. **Validate:** the Khronos validator checks both versions; triangles, sizes, texture sizes,
    bounding box and primitives without a material are recorded.
 6. **Posters:** front and three-quarter renders in `<model-viewer>`, transparent, as WebP at
@@ -516,8 +517,12 @@ above:
   on a touch screen, or with data saver on, it waits for a tap, and phone-sized screens get the
   phone version. After a tap, keyboard focus moves to the model, where the arrow keys turn it.
   Without JavaScript the poster shows with no button.
-- **No finish switching yet:** stage 1 models carry one variant per finish, but every variant
-  uses the model's one material (D-056), so there is nothing to switch between yet.
+- **Finishes (D-058):** each finish is its own model, photographed or modelled in that
+  finish, never recoloured from another finish's photos. A job names the one finish its model
+  shows; approval replaces only that finish's model. With two or more, *Finish in 3D* under the
+  model switches between them: poster, caption, "view on your wall" and the loaded model.
+  Recolouring through material variants, as planned for CAD above, is left for models made with
+  separate finish parts.
 - **AR through Scene Viewer and Quick Look only, not WebXR,** offered for true-scale models,
   on a wall at fixed size. Not yet tried on a real phone.
 - **Hosting:** each site's own Worker serves the files at `/models/<model id>/<file>` from the
@@ -545,7 +550,7 @@ All tables below include the site:
 - `studio_spend` (cost ledger).
 
 Approved models link to products through each site's published *3D models* document
-(D-057); links to variants come once models carry a material per finish.
+(D-057): one model for each finish of the product (D-058).
 
 ### Permissions (per site, added to the roles matrix when built)
 
@@ -691,8 +696,9 @@ Unreleased product photos must never pass through it.
   - budget controls;
   - publishing to a site.
 - **Stage 2 (Phase 4):**
-  - the website viewer with posters and AR — *done (D-057)*; finish variants once models
-    carry a material per finish;
+  - the website viewer with posters and AR — *done (D-057)*; switching finishes — *done
+    (D-058), one model per finish*; recolouring models made with separate finish parts, once
+    such models exist;
   - Apple-style scroll sections;
   - automated photogrammetry on suitable hardware;
   - AI providers, only if approved;

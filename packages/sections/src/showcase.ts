@@ -18,7 +18,12 @@ import {
   type DocumentRef,
   type Product,
 } from './catalogue';
-import { DEFAULT_PRODUCT_MODELS, productModelSchema, type ProductModels } from './models';
+import {
+  DEFAULT_PRODUCT_MODELS,
+  modelsShown,
+  productModelSchema,
+  type ProductModels,
+} from './models';
 import { bilingual, itemId, slugSchema, type Bilingual, type Link } from './primitives';
 import type { ContentSection, SectionOf } from './registry';
 
@@ -75,8 +80,8 @@ const showcaseProductSchema = z.strictObject({
   documents: documentList,
   /** Only values that fit their attribute. */
   values: z.record(itemId, attributeValueSchema),
-  /** Its published 3D model (D-057), if it has one. */
-  model: productModelSchema.nullable(),
+  /** Its published 3D models, one per finish, in finish order (D-057, D-058). */
+  models: z.array(productModelSchema).max(60),
 });
 export type ShowcaseProduct = z.infer<typeof showcaseProductSchema>;
 
@@ -200,7 +205,7 @@ export function showcaseOf(
       })),
       documents: publicDocuments(product.documents, today),
       values,
-      model: models.products[id] ?? null,
+      models: modelsShown(models.products[id] ?? [], finishIds),
     });
   }
   return {

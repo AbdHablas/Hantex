@@ -11,6 +11,8 @@ import pg from 'pg';
  * published in the test database and served by its own site Worker (e2e/serve.ts).
  */
 const LIVE = `http://localhost:${process.env['E2E_LIVE_PORT'] ?? '8790'}`;
+/** The black finish's 3D model on the one-gang switch's page (e2e/serve.ts). */
+const BLACK = '6f5e4d3c-2b1a-4c9d-8e7f-0a1b2c3d4e5f';
 const SOON = `http://localhost:${process.env['E2E_PORT'] ?? '8789'}`;
 
 // Cloudflare's analytics beacon is answered locally, so the tests never reach the internet.
@@ -215,7 +217,7 @@ test('a product page shows only what the catalogue holds (D-048)', async ({ page
   );
 });
 
-test('a product page shows its 3D model: poster first, then the viewer, with "view on your wall" for a true-scale model (D-057)', async ({
+test('a product page shows its 3D models: poster first, then the viewer, a model per finish, and "view on your wall" for a true-scale one (D-057, D-058)', async ({
   page,
   request,
 }) => {
@@ -233,7 +235,7 @@ test('a product page shows its 3D model: poster first, then the viewer, with "vi
   const viewer = figure.locator('model-viewer');
   await expect(viewer).toHaveAttribute('src', /\/models\/[0-9a-f-]{36}\/desktop\.glb$/);
   expect((await model).status()).toBe(200);
-  await expect(viewer).toHaveAttribute('alt', '3D model of Test one-gang switch');
+  await expect(viewer).toHaveAttribute('alt', '3D model of Test one-gang switch, Test white');
   await expect(viewer).toHaveAttribute('ar-placement', 'wall');
   await expect(viewer).toHaveAttribute('ar-scale', 'fixed');
   await expect(viewer.locator('[slot="ar-button"]')).toHaveText('View on your wall');
@@ -242,6 +244,22 @@ test('a product page shows its 3D model: poster first, then the viewer, with "vi
   const glb = await request.get(`${LIVE}${src}`);
   expect(glb.headers()['content-type']).toBe('model/gltf-binary');
   expect(glb.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
+
+  // Each finish is its own model (D-058): choosing Black shows Black's, with its own caption.
+  // It isn't checked true to size, so it offers no "view on your wall".
+  const finishes = page.getByRole('group', { name: 'Finish in 3D' });
+  await expect(finishes.getByRole('radio', { name: 'Test white' })).toBeChecked();
+  await finishes.getByRole('radio', { name: 'Test black' }).check();
+  await expect(viewer).toHaveAttribute('src', new RegExp(`/models/${BLACK}/desktop\\.glb$`));
+  await expect(viewer).toHaveAttribute('alt', '3D model of Test one-gang switch, Test black');
+  await expect(figure.locator('figcaption')).toHaveText('3D model measured from photos');
+  await expect(viewer.locator('[slot="ar-button"]')).toHaveCount(0);
+  await expect(viewer).not.toHaveAttribute('ar', '');
+  await finishes.getByRole('radio', { name: 'Test white' }).check();
+  await expect(viewer.locator('[slot="ar-button"]')).toHaveText('View on your wall');
+  await expect(figure.locator('figcaption')).toHaveText(
+    '3D model made by a 3D artist · true to size',
+  );
   // The viewer's textures and stylesheet are allowed; nothing else was refused.
   expect(refused).toEqual([]);
 
@@ -249,17 +267,22 @@ test('a product page shows its 3D model: poster first, then the viewer, with "vi
   await page.goto(`${LIVE}/en/product/two-gang/`);
   await expect(page.locator('figure.cx-model')).toHaveCount(0);
 
-  // A phone waits for a tap, then loads the lighter phone version.
+  // A phone waits for a tap, then loads the lighter phone version of the finish chosen.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${LIVE}/en/product/one-gang/`);
   await expect(
-    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch' }),
+    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch, Test white' }),
   ).toBeVisible();
   await page.waitForTimeout(500);
   await expect(page.locator('model-viewer')).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Test black' }).check();
+  const blackPoster = page.getByRole('img', {
+    name: 'Picture of the 3D model of Test one-gang switch, Test black',
+  });
+  await expect(blackPoster).toHaveAttribute('src', `/models/${BLACK}/poster-front.webp`);
   await page.getByRole('button', { name: 'View in 3D' }).click();
   const tapped = page.locator('model-viewer');
-  await expect(tapped).toHaveAttribute('src', /\/mobile\.glb$/);
+  await expect(tapped).toHaveAttribute('src', `/models/${BLACK}/mobile.glb`);
   // Keyboard focus moves into the viewer, and on to the model itself once it shows.
   await expect(tapped).toBeFocused();
   await expect
@@ -280,16 +303,17 @@ test('a product page shows its 3D model: poster first, then the viewer, with "vi
   await expect.poll(turn).not.toBe(before);
 });
 
-test('a product page without JavaScript shows the model’s picture, and no button that does nothing (D-057)', async ({
+test('a product page without JavaScript shows the model’s picture, and no controls that do nothing (D-057)', async ({
   browser,
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(`${LIVE}/en/product/one-gang/`);
   await expect(
-    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch' }),
+    page.getByRole('img', { name: 'Picture of the 3D model of Test one-gang switch, Test white' }),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'View in 3D' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Finish in 3D' })).toHaveCount(0);
   await context.close();
 });
 

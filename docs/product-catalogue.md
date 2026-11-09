@@ -32,7 +32,7 @@ dashboard. Until something is entered, the website shows nothing for it.
 | Series | A design line: products that share one design and one set of finishes. Each series has its own showcase page. |
 | Product | One functional item, such as a particular switch or socket type. It has one primary category, optional extra categories and an optional series. |
 | Variant | One version of a product, usually in a particular finish. It has its own code (SKU), photos and 3D model. |
-| Finish | A colour or material, defined once and reused: name in each language, swatch, material type, and 3D material settings that are checked against photos. |
+| Finish | A colour or material, defined once and reused: name in each language, swatch and material type. Each finish shown in 3D has its own model, photographed or modelled in that finish (D-058). |
 | Attributes | Typed fields defined in the dashboard for each category: text, number with unit, choice, or yes/no. Grouped (electrical, dimensions, materials, compliance), optionally filterable and shown in the specification table. |
 | Documents | Datasheets, installation guides and certificates (PDF), attached to a product or a series. |
 | Media | Photos by view (front, side, rear, detail, in use) and 3D models from the Studio. The same photo set serves the product gallery and the 3D capture. |

@@ -71,6 +71,64 @@ async function uploadModel(captureId: string, cookie = owner) {
   return h.request('POST', `${base}/captures/${captureId}/files`, { cookie, body: form });
 }
 
+/** A catalogue product with one variant in each of the given finishes. */
+async function productWithFinishes(slug: string, finishIds: string[]): Promise<string> {
+  const site = `/api/sites/${SITE}/catalogue`;
+  const both = (en: string) => ({ ar: `ع ${en}`, en });
+  const structure = await h.request('PUT', `${site}/structure`, {
+    cookie: owner,
+    body: {
+      categories: [
+        {
+          id: 'switches01',
+          name: both('Switches'),
+          slug: 'switches',
+          parentId: null,
+          main: true,
+          description: both(''),
+          image: null,
+          attributeIds: [],
+        },
+      ],
+      groups: [],
+      attributes: [],
+      finishes: finishIds.map((id) => ({
+        id,
+        name: both(id),
+        swatch: '#ffffff',
+        material: 'plastic',
+        image: null,
+      })),
+      series: [],
+    },
+  });
+  expect(structure.status, await structure.clone().text()).toBe(200);
+  const { id } = await json<{ id: string }>(
+    await h.request('POST', `${site}/products`, {
+      cookie: owner,
+      body: { name: both(slug), slug, categoryId: 'switches01' },
+    }),
+  );
+  const { product } = await json<{ product: Record<string, unknown> }>(
+    await h.request('GET', `${site}/products/${id}`, { cookie: owner }),
+  );
+  const saved = await h.request('PUT', `${site}/products/${id}`, {
+    cookie: owner,
+    body: {
+      ...product,
+      variants: finishIds.map((finishId, i) => ({
+        id: `variant00${i}`,
+        sku: `HX-${slug}-${i}`,
+        finishId,
+        name: both(''),
+        images: [],
+      })),
+    },
+  });
+  expect(saved.status, await saved.clone().text()).toBe(200);
+  return id;
+}
+
 beforeAll(async () => {
   h = await createHarness();
   owner = await h.staff('st-owner', [{ roleId: 'owner', site: null }]);
@@ -198,8 +256,9 @@ describe('captures and capture checks', () => {
 });
 
 describe('jobs', () => {
-  it('keeps what the processing runner needs: the upload’s format and the job’s finishes', async () => {
-    const { id: captureId } = await json<Capture>(await createCapture());
+  it('keeps what the processing runner needs: the upload’s format and the one finish shown', async () => {
+    const productId = await productWithFinishes('job-finishes', ['white00001', 'black00001']);
+    const { id: captureId } = await json<Capture>(await createCapture(productId));
     const uploaded = await json<{ id: string; format: string }>(await uploadModel(captureId));
     expect(uploaded.format).toBe('glb');
     const [file] = await h.db
@@ -208,12 +267,20 @@ describe('jobs', () => {
       .where(eq(studioCaptureFiles.id, uploaded.id));
     expect(file?.format).toBe('glb');
 
-    const job = await json<{ id: string; finishIds: string[] }>(
-      await h.request('POST', `${base}/captures/${captureId}/jobs`, {
+    // Each finish is its own model (D-058): a job names exactly one of the product's finishes.
+    const start = (finishIds: string[]) =>
+      h.request('POST', `${base}/captures/${captureId}/jobs`, {
         cookie: owner,
-        body: { providerId: 'model-import', method: 'artist', finishIds: ['black00001'] },
-      }),
-    );
+        body: { providerId: 'model-import', method: 'artist', finishIds },
+      });
+    const none = await start([]);
+    expect(none.status).toBe(400);
+    expect(await json(none)).toMatchObject({ error: 'finish-required' });
+    expect((await start(['white00001', 'black00001'])).status).toBe(400);
+    const unknown = await start(['gone000001']);
+    expect(unknown.status).toBe(400);
+    expect(await json(unknown)).toMatchObject({ error: 'unknown-finish' });
+    const job = await json<{ id: string; finishIds: string[] }>(await start(['black00001']));
     expect(job.finishIds).toEqual(['black00001']);
     const [row] = await h.db.select().from(studioJobs).where(eq(studioJobs.id, job.id));
     expect(row?.finishIds).toEqual(['black00001']);

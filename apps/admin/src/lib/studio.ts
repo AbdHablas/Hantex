@@ -72,7 +72,8 @@ export interface StudioModel {
   reviewStatus: ReviewStatus;
   approvedAt: string | null;
   /** On its product's page: not at all, once Publish changes runs, or now (D-057). */
-  website: 'none' | 'assigned' | 'live';
+  /** On its product's page: not, once published, now, or assigned but not shown (D-057, D-058). */
+  website: 'none' | 'assigned' | 'live' | 'unshown';
   createdAt: string;
 }
 

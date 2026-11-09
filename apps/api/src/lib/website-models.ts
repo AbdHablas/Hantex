@@ -8,15 +8,16 @@ import {
   type ProductModels,
 } from '@hantex/sections';
 import { and, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
-import { publishedCatalogue } from './catalogue-content';
+import { draftCatalogue, publishedCatalogue, type CatalogueContent } from './catalogue-content';
 import { currentDraft, latestPublished, saveDraft } from './documents';
 import { conflict } from './errors';
 import { copyFile, publicModelKey, type MediaStore } from './media-store';
 
 /**
- * 3D models on product pages (D-057). The Owner's approval in the 3D Studio assigns a model to
- * its product in the website's "models" document; Publish changes takes it live, and then its
- * files are copied from the Studio's private bucket to the public one, like images and PDFs.
+ * 3D models on product pages (D-057, D-058). The Owner's approval in the 3D Studio assigns a model
+ * to its product, for the finish it shows, in the website's "models" document; Publish changes
+ * takes it live, and then its files are copied from the Studio's private bucket to the public
+ * one, like images and PDFs.
  */
 
 /** The Studio's file names (apps/studio-runner) and the names the website serves them under. */
@@ -54,6 +55,7 @@ async function changeDraft(
   });
 }
 
+/** Puts a model on its product's page for its finish, in place of that finish's model there. */
 export function assignModel(
   db: Database,
   siteId: string,
@@ -61,9 +63,12 @@ export function assignModel(
   model: ProductModel,
   userId: string,
 ) {
-  return changeDraft(db, siteId, userId, (models) => ({
-    products: { ...models.products, [productId]: model },
-  }));
+  return changeDraft(db, siteId, userId, (models) => {
+    const others = (models.products[productId] ?? []).filter(
+      (m) => m.finishId !== model.finishId && m.id !== model.id,
+    );
+    return { products: { ...models.products, [productId]: [...others, model] } };
+  });
 }
 
 /** Takes a model off its product's page (once published); does nothing if another replaced it. */
@@ -75,9 +80,12 @@ export function unassignModel(
   userId: string,
 ) {
   return changeDraft(db, siteId, userId, (models) => {
-    if (models.products[productId]?.id !== modelId) return null;
+    const current = models.products[productId] ?? [];
+    if (!current.some((m) => m.id === modelId)) return null;
     const products = { ...models.products };
-    delete products[productId];
+    const left = current.filter((m) => m.id !== modelId);
+    if (left.length > 0) products[productId] = left;
+    else delete products[productId];
     return { products };
   });
 }
@@ -88,7 +96,7 @@ export async function requireApprovedModels(
   siteId: string,
   models: ProductModels,
 ) {
-  const ids = [...new Set(Object.values(models.products).map((m) => m.id))];
+  const ids = [...new Set(Object.values(models.products).flatMap((list) => list.map((m) => m.id)))];
   if (ids.length === 0) return;
   const approved = await db
     .select({ id: studioModels.id })
@@ -103,17 +111,39 @@ export async function requireApprovedModels(
   if (approved.length !== ids.length) throw conflict('model-not-approved');
 }
 
-/** Where a model stands on the website: not assigned, assigned (waiting to publish), or live. */
-export function websiteStatus(
-  draft: ProductModels,
-  live: ProductModels,
-  productId: string,
-  modelId: string,
-): 'none' | 'assigned' | 'live' {
-  if (live.products[productId]?.id === modelId && draft.products[productId]?.id === modelId) {
-    return 'live';
-  }
-  return draft.products[productId]?.id === modelId ? 'assigned' : 'none';
+/**
+ * The models product pages show: on the live site, and once Publish changes runs (the drafts,
+ * falling back to what is published); and every model the draft assigns to a product.
+ */
+export async function modelsOnPages(db: Database, siteId: string) {
+  const [live, next, liveDoc, draftDoc] = await Promise.all([
+    publishedCatalogue(db, siteId),
+    draftCatalogue(db, siteId),
+    liveModels(db, siteId),
+    draftModels(db, siteId),
+  ]);
+  const shown = (content: CatalogueContent, models: ProductModels) =>
+    new Set(
+      showcaseOf(content.catalogue, content.products, models).products.flatMap((p) =>
+        p.models.map((m) => m.id),
+      ),
+    );
+  return {
+    live: shown(live, liveDoc),
+    next: shown(next, draftDoc),
+    assigned: new Set(Object.values(draftDoc.products).flatMap((list) => list.map((m) => m.id))),
+  };
+}
+export type ModelsOnPages = Awaited<ReturnType<typeof modelsOnPages>>;
+export type WebsiteStatus = 'none' | 'assigned' | 'live' | 'unshown';
+
+/**
+ * Where a model stands on the website: not on its product's page; on it once published; on it
+ * now; or assigned but not shown, because its product is hidden or lacks the model's finish.
+ */
+export function websiteStatus(pages: ModelsOnPages, modelId: string): WebsiteStatus {
+  if (pages.next.has(modelId)) return pages.live.has(modelId) ? 'live' : 'assigned';
+  return pages.assigned.has(modelId) ? 'unshown' : 'none';
 }
 
 /**
@@ -128,8 +158,8 @@ export async function syncModelFiles(
 ): Promise<{ published: number; withdrawn: number }> {
   const live = await publishedCatalogue(db, site.id);
   const shown = new Set(
-    showcaseOf(live.catalogue, live.products, await liveModels(db, site.id)).products.flatMap(
-      (p) => (p.model ? [p.model.id] : []),
+    showcaseOf(live.catalogue, live.products, await liveModels(db, site.id)).products.flatMap((p) =>
+      p.models.map((m) => m.id),
     ),
   );
 

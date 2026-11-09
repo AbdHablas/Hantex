@@ -66,6 +66,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-055 | Security review and Strix scan | Proposed (Strix cost needs the owner's approval) | Review done and two issues fixed; Strix workflow ready, manual only, paid AI model — see `docs/security-review-2026-11.md` |
 | D-056 | 3D Product Studio, stage 1 | Confirmed (owner: "go ahead", 2026-11-09) | Finished GLB and glTF models through a private runner on the owner's computer (optimise, validate, posters); review and the Owner's approval in the dashboard — see `docs/3d-product-studio.md` |
 | D-057 | 3D models on product pages | Confirmed (owner: "go ahead", 2026-11-09) | Approved models go live with Publish changes, poster first; "View on your wall" only for true-scale models; model files public only while shown |
+| D-058 | Finishes in the 3D viewer | Confirmed (owner's choice: "Capture every finish", 2026-11-09) | Each finish is photographed or modelled as its own model; the product page switches between them; no finish is recoloured from another's photos |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1428,7 +1429,7 @@ then the general product catalogue (Phase 3c, D-045).
 - **Finishes:** not switchable yet. Stage 1 models carry one variant per finish, but every
   variant still uses the model's one material (the runner receives finish ids, not colours or
   gloss; D-056), so a switcher would change nothing. It comes once models carry a material per
-  finish.
+  finish. *Settled by D-058: each finish is its own model.*
 - **Viewer:** `@google/model-viewer` 4.4.0, as in the dashboard and the runner: a separate
   286 KB download (gzip, measured from the build; 1 MB uncompressed), fetched only when a model
   is about to show. Each product page itself gets a loader under 1 KB.
@@ -1461,3 +1462,51 @@ then the general product catalogue (Phase 3c, D-045).
 - **Cost:** none. A live model takes at most 4.5 MB in R2's free 10 GB (3 MB for computers,
   1.5 MB for phones, D-056), plus its posters; serving it uses the free Workers and R2
   allowances.
+
+## D-058 — Finishes in the 3D viewer: one model per finish
+
+- **Status:** Confirmed — 2026-11-09 (the owner chose "Capture every finish" over recolouring
+  one capture, or both), and built the same day.
+- **Why:** a photo-captured model shows only the finish it was photographed in. Recolouring it
+  from another finish's colour settings would show colours and markings nobody checked, against
+  D-029's "nothing invented". So each finish is photographed (or modelled) and processed as its
+  own model, and the viewer switches between them, at the cost of one capture per finish.
+  Recolouring stays possible later for models made with separate finish parts (by an artist, or
+  from CAD), where a finish is a material rather than a photo.
+- **In the 3D Studio:** a job names the one finish its model shows, chosen from the product's
+  finishes (those of its variants). The API refuses a finish the product doesn't have, and a job
+  without a finish when the product has some. A product without finishes gets one model without
+  a finish. Each model card says which finish it shows.
+- **Approval and publishing:** approval puts the model on its product's page for its finish, in
+  place of that finish's model only; taking a model off and putting it back work per model. The
+  *3D models* document now holds a list for each product, at most one model per finish, checked
+  when it is published.
+- **What a product page shows:** one model for each finish the product has, in the order of its
+  variants. A model of a finish the product no longer has isn't shown, and its files are taken
+  back. A model made without a finish shows only while none of the product's finishes has one.
+- **Product page:** with two or more models, *Finish in 3D* appears under the model: a chip for
+  each finish, with its swatch and name, over a real radio button for keyboards and screen
+  readers. Choosing one swaps the poster, the caption and the "view on your wall" offer (each
+  model has its own label and true-scale check), and the viewer's model if it is open; on a
+  phone, the finish chosen is the one a tap loads. Without JavaScript the choice is hidden, like
+  *View in 3D*. Descriptions name the finish ("3D model of …, White").
+- **Dashboard statuses:** "Not shown" joins the website statuses, for a model assigned to its
+  product but missing from the page because the product is hidden or no longer has its finish.
+  This also corrects D-057, which showed "On the product page" for a hidden product's model.
+- **The runner:** unchanged. A job's one finish becomes the model's one material variant, which
+  records the finish it shows.
+- **Tested:**
+  - Shared rules: one model per finish, finish order, the no-finish rule, removed finishes and
+    hidden products.
+  - API: a job takes exactly one of the product's finishes; models of two finishes go live
+    together; a newer model replaces only its own finish; taking one off leaves the other; a
+    removed finish's model leaves the page with its files; "Not shown" for a hidden product and
+    a removed finish.
+  - Site browser test: on a computer, choosing Black loads Black's model, caption and no "view
+    on your wall", and White brings them back; on a phone, the poster changes before the tap and
+    the tap loads the chosen finish; without JavaScript there is no choice. Screenshots checked
+    in English and right-to-left Arabic.
+  - Dashboard journey: one finish is chosen for the job, and the model card names it.
+- **No database change:** a job's existing finish list now holds one finish. The *3D models*
+  document's shape changed before anything was deployed, so no stored data needs converting.
+- **Cost:** none in software; one capture or model per finish in work.

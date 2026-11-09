@@ -101,6 +101,9 @@ export const TEXT = {
       open: 'عرض بالأبعاد الثلاثة',
       alt: 'نموذج ثلاثي الأبعاد لـ {name}',
       poster: 'صورة النموذج ثلاثي الأبعاد لـ {name}',
+      altFinish: 'نموذج ثلاثي الأبعاد لـ {name}، {finish}',
+      posterFinish: 'صورة النموذج ثلاثي الأبعاد لـ {name}، {finish}',
+      finish: 'التشطيب بالأبعاد الثلاثة',
       ar: 'اعرضه على جدارك',
       trueScale: 'بمقاسه الحقيقي',
       label: {
@@ -272,6 +275,9 @@ export const TEXT = {
       open: 'View in 3D',
       alt: '3D model of {name}',
       poster: 'Picture of the 3D model of {name}',
+      altFinish: '3D model of {name}, {finish}',
+      posterFinish: 'Picture of the 3D model of {name}, {finish}',
+      finish: 'Finish in 3D',
       ar: 'View on your wall',
       trueScale: 'true to size',
       label: {
