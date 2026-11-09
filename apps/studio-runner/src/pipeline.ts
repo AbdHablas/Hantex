@@ -1,4 +1,4 @@
-import { getBounds, NodeIO, type Document } from '@gltf-transform/core';
+import { getBounds, NodeIO, type Document, type GLTF } from '@gltf-transform/core';
 import { KHRMaterialsVariants } from '@gltf-transform/extensions';
 import { compressTexture, simplify, weld } from '@gltf-transform/functions';
 import {
@@ -10,7 +10,7 @@ import {
   type Size3,
   type ValidatorReportResult,
 } from '@hantex/studio';
-import { validateBytes } from 'gltf-validator';
+import { validateBytes } from './validator';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 import { renderPosters } from './poster';
@@ -62,10 +62,25 @@ const TRIANGLE_HEADROOM = 0.95;
 const io = () => new NodeIO().registerExtensions([KHRMaterialsVariants]);
 
 async function readDocument(input: PipelineInput): Promise<Document> {
-  if (input.format !== 'glb' && input.format !== 'gltf') {
-    throw new UnsupportedFormatError(input.format);
+  if (input.format === 'glb') return io().readBinary(input.bytes);
+  if (input.format !== 'gltf') throw new UnsupportedFormatError(input.format);
+  // A .gltf is JSON. One uploaded file can only work if its buffers and images are embedded
+  // as data: URIs; one that points at separate files (a .bin, textures) can't be resolved.
+  let json: GLTF.IGLTF;
+  try {
+    json = JSON.parse(new TextDecoder().decode(input.bytes)) as GLTF.IGLTF;
+  } catch {
+    throw new Error("The glTF file isn't valid JSON.");
   }
-  return io().readBinary(input.bytes);
+  const external = [...(json.buffers ?? []), ...(json.images ?? [])].some(
+    (item) => item.uri !== undefined && !item.uri.startsWith('data:'),
+  );
+  if (external) {
+    throw new Error(
+      'This glTF file refers to separate files (such as a .bin or textures); upload it as GLB.',
+    );
+  }
+  return io().readJSON({ json, resources: {} });
 }
 
 /**

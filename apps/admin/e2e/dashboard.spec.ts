@@ -7,6 +7,8 @@ import { deflateSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import pg from 'pg';
+import { makeBoxGlb } from '@hantex/studio-runner/test/fixture';
+import { runOneStudioJob } from './studio-runner';
 
 /**
  * The first Owner's whole path in a real browser, with a virtual passkey authenticator standing
@@ -701,6 +703,70 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expect(page.getByText('No enquiries here.')).toBeVisible();
   await page.getByLabel('Show').selectOption({ label: 'Replied' });
   await expect(page.getByRole('article', { name: 'Test visitor' })).toBeVisible();
+
+  // The 3D Studio (D-029, D-056): a finished model in, a reviewed and approved website model
+  // out, with the real processing runner (its pipeline, its own database user) in between.
+  await page.goto('/s/second-site/studio');
+  await expect(page.getByRole('heading', { name: '3D Studio', level: 1 })).toBeVisible();
+  await page.getByLabel('Product').selectOption({ label: 'One-gang switch' });
+  await page.getByLabel('Width').fill('86');
+  await page.getByLabel('Height').fill('86');
+  await page.getByLabel('Depth').fill('12');
+  await page.getByRole('button', { name: 'Create capture' }).click();
+  await expect(page.getByRole('heading', { name: 'One-gang switch', level: 1 })).toBeVisible();
+  await page.getByLabel('Upload model').setInputFiles({
+    name: 'switch.glb',
+    mimeType: 'model/gltf-binary',
+    buffer: Buffer.from(await makeBoxGlb({ sizeMm: { width: 86, height: 86, depth: 12 } })),
+  });
+  const uploads = page.getByRole('list', { name: 'Uploads' });
+  await expect(uploads.getByText('Model · GLB')).toBeVisible();
+  // Photos are encoded on the device, like the media library's, then checked again on upload.
+  await page.getByLabel('View').selectOption({ label: 'Front' });
+  await page.getByLabel('Upload photo').setInputFiles({
+    name: 'front.png',
+    mimeType: 'image/png',
+    buffer: png(2400, 1800),
+  });
+  await expect(uploads.getByRole('img', { name: 'Photo · Front' })).toBeVisible();
+  await expectAccessible(page, 'studio capture');
+
+  // The finish comes from the product's variant; the job then waits for the runner.
+  await expect(page.getByLabel('White')).toBeChecked();
+  await page.getByRole('button', { name: 'Start' }).click();
+  const jobs = page.getByRole('list', { name: 'Jobs' });
+  await expect(jobs.getByText('Waiting for the runner')).toBeVisible();
+  expect(await runOneStudioJob()).toBe(true);
+  // The page checks back every five seconds while a job is waiting or running.
+  await expect(jobs.getByText('Done')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Passes every technical check.')).toBeVisible();
+  // The posters are real renders, served from the Studio's private bucket.
+  const poster = page.getByRole('img', { name: 'Front poster of the model' });
+  await poster.scrollIntoViewIfNeeded();
+  await expect.poll(() => poster.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1024);
+  await expectAccessible(page, 'studio model');
+
+  // "Ready for approval" needs every feature on the checklist checked; then the Owner approves.
+  const saveReview = page.getByRole('button', { name: 'Save review' });
+  await expect(saveReview).toBeDisabled();
+  for (const check of [
+    'Overall shape and proportions',
+    'Buttons, rockers and switches',
+    'Socket openings and holes',
+    'Markings and logos',
+    'Finish, colour and gloss',
+    'Nothing invented, nothing missing',
+  ]) {
+    await page.getByLabel(check).check();
+  }
+  await saveReview.click();
+  await expect(page.getByText('Ready for approval', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Approve' }).click();
+  await confirm(page);
+  await expect(page.getByText('Approved', { exact: true }).first()).toBeVisible();
+  // The 3D viewer's textures (blob: addresses) and its own stylesheet (allowed by hash) pass
+  // the security policy: nothing on these pages was refused.
+  expect(cspErrors).toEqual([]);
 
   // The first website is unchanged: its pages are its own.
   await page.goto('/s/hantex-ultra/pages');

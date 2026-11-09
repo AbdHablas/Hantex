@@ -44,6 +44,12 @@ const CatalogueStructureEditor = lazy(() =>
 const FontLibrary = lazy(() =>
   import('./routes/fonts').then((module) => ({ default: module.FontLibrary })),
 );
+const StudioHome = lazy(() =>
+  import('./routes/studio').then((module) => ({ default: module.StudioHome })),
+);
+const StudioCapturePage = lazy(() =>
+  import('./routes/studio').then((module) => ({ default: module.StudioCapturePage })),
+);
 const LogoEditor = lazy(() =>
   import('./routes/logo').then((module) => ({ default: module.LogoEditor })),
 );
@@ -143,6 +149,26 @@ const router = createBrowserRouter([
               <SitePage>
                 <Suspense fallback={<Loading />}>
                   <MediaLibrary />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'studio',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <StudioHome />
+                </Suspense>
+              </SitePage>
+            ),
+          },
+          {
+            path: 'studio/:captureId',
+            element: (
+              <SitePage>
+                <Suspense fallback={<Loading />}>
+                  <StudioCapturePage />
                 </Suspense>
               </SitePage>
             ),

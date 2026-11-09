@@ -2,6 +2,11 @@
   "name": "@hantex/studio-runner",
   "private": true,
   "type": "module",
+  "exports": {
+    "./process-job": "./src/process-job.ts",
+    "./store": "./src/store.ts",
+    "./test/fixture": "./test/fixture.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "start": "tsx --env-file-if-exists=../../.local/studio-runner.env src/run.ts"

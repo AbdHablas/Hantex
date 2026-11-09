@@ -77,6 +77,10 @@ headless Chromium, and a real database reached as the runner's own least-privile
 it the user namespaces AppArmor blocks by default (CI runs
 `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` on its throwaway machine).
 
+The dashboard's browser test runs the runner too (`apps/admin/e2e/studio-runner.ts`): as its
+own database user, with storage through `wrangler r2 object … --local`, the same local bucket
+`wrangler dev` serves the dashboard from.
+
 ### The public site engine
 
 `apps/web` builds one site at a time. `pnpm --filter @hantex/web data` writes the

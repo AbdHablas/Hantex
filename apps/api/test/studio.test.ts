@@ -5,6 +5,7 @@ import {
   studioModels,
   studioProviderSettings,
 } from '@hantex/db/worker';
+import { REVIEW_CHECKS } from '@hantex/studio';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { fakeWebp } from './fixtures';
@@ -41,6 +42,8 @@ const createCapture = (productId = 'prd000001', cookie = owner) =>
   h.request('POST', `${base}/captures`, { cookie, body: { productId } });
 const detail = (id: string, cookie = owner) =>
   h.request('GET', `${base}/captures/${id}`, { cookie });
+/** A reviewer's checklist with every feature checked. */
+const everyCheck = Object.fromEntries(REVIEW_CHECKS.map((check) => [check, true]));
 const possibleFor = (d: CaptureDetail, method: string) =>
   d.eligibility.find((e) => e.method === method)?.possible ?? false;
 
@@ -335,16 +338,36 @@ describe('review and approval', () => {
 
     const second = await h.request('POST', `${base}/models/${modelId}/review`, {
       cookie: reviewer,
-      body: { checklist: { shape: true }, decision: 'ready-for-approval', notes: '' },
+      body: { checklist: everyCheck, decision: 'ready-for-approval', notes: '' },
     });
     expect(second.status).toBe(201);
+  });
+
+  it('marks a model ready only once every feature on the checklist is checked', async () => {
+    const { modelId } = await readyModel();
+    const partly = await h.request('POST', `${base}/models/${modelId}/review`, {
+      cookie: reviewer,
+      body: {
+        checklist: { ...everyCheck, openings: false },
+        decision: 'ready-for-approval',
+        notes: '',
+      },
+    });
+    expect(partly.status).toBe(400);
+    expect(await json<{ error: string }>(partly)).toMatchObject({ error: 'checklist-incomplete' });
+
+    const unknown = await h.request('POST', `${base}/models/${modelId}/review`, {
+      cookie: reviewer,
+      body: { checklist: { ...everyCheck, colour: true }, decision: 'ready-for-approval' },
+    });
+    expect(unknown.status).toBe(400);
   });
 
   it('approves a reviewed model only for someone with studio.approve (Owner, by default)', async () => {
     const { modelId } = await readyModel();
     await h.request('POST', `${base}/models/${modelId}/review`, {
       cookie: reviewer,
-      body: { checklist: { shape: true }, decision: 'ready-for-approval', notes: '' },
+      body: { checklist: everyCheck, decision: 'ready-for-approval', notes: '' },
     });
     expect(
       (await h.request('POST', `${base}/models/${modelId}/approve`, { cookie: reviewer })).status,
@@ -498,7 +521,7 @@ describe('the technical gate', () => {
 
     const ready = await h.request('POST', `${base}/models/${modelId}/review`, {
       cookie: reviewer,
-      body: { checklist: { shape: true }, decision: 'ready-for-approval', notes: '' },
+      body: { checklist: everyCheck, decision: 'ready-for-approval', notes: '' },
     });
     expect(ready.status).toBe(409);
     expect(await json<{ error: string }>(ready)).toMatchObject({ error: 'technical-gate' });

@@ -1318,10 +1318,11 @@ then the general product catalogue (Phase 3c, D-045).
 
 ## D-056 — 3D Product Studio, stage 1: how it is built
 
-- **Status:** Implemented in parts — 2026-11-09 (owner: "go ahead" with the 3D Studio, the next
-  planned item). Built so far: the shared rules (`packages/studio`), the database tables and
-  grants, the dashboard API and the processing runner (`apps/studio-runner`). Still to come in
-  stage 1: the dashboard screens and their browser tests.
+- **Status:** Implemented — 2026-11-09 (owner: "go ahead" with the 3D Studio, the next planned
+  item): the shared rules (`packages/studio`), the database tables and grants, the dashboard API,
+  the processing runner (`apps/studio-runner`) and the dashboard's 3D Studio pages. Not in stage
+  1: CAD, OBJ, USDZ and FBX conversion, photogrammetry, and showing approved models on the
+  website (Phase 4).
 - **What a job does:** stage 1 runs one provider, `model-import`: a finished GLB or glTF file,
   from a capture app or a 3D artist, carried through the processing pipeline
   (`docs/3d-product-studio.md`, "Stage 1 as built"). The person declares the method
@@ -1353,6 +1354,16 @@ then the general product catalogue (Phase 3c, D-045).
   tell reliably which way a product should face.
 - **Posters:** rendered in headless Chromium with `<model-viewer>` (the website's viewer), as
   WebP. The page has no network, and Chromium's sandbox stays on unless the runner runs as root.
+- **Review in the dashboard:** the reviewer turns the model in `<model-viewer>` beside its
+  posters, checks and measurements; "ready for approval" needs every checklist item (the API
+  refuses it otherwise). The dashboard's security policy now allows `blob:` images and
+  connections (the viewer reads a model's textures from them) and exactly one inline stylesheet,
+  the viewer's own, by its hash; the browser test fails on any refused resource. Staff see
+  Studio files through two read-only routes; anything that isn't a checked image or a GLB is
+  only offered as a download.
+- **Tested end to end:** the dashboard's browser test creates a capture, uploads a model and a
+  photo, starts a job, runs the real runner on it (its pipeline and database user, against the
+  same local bucket `wrangler dev` serves), then reviews and approves the result.
 - **Finishes:** each finish becomes a material variant named by its catalogue finish id, not its
   name: names change and come in two languages, ids don't, so the website can later switch
   finish by id and show the name in the visitor's language.

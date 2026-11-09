@@ -49,6 +49,7 @@ describe('dashboard navigation', () => {
       'products',
       'catalogue',
       'media',
+      'studio',
       'appearance',
       'logo',
       'subscribers',
@@ -89,6 +90,9 @@ describe('dashboard navigation', () => {
     expect(viewer).not.toContain('audit');
     const sales = buildNavigation(m, person('sales', false), siteFor('sales'));
     for (const section of sales) expect(section.items.length).toBeGreaterThan(0);
+    // The 3D Studio is for content roles; Sales has none of its permissions.
+    expect(ids(person('sales', false))).not.toContain('studio');
+    expect(ids(person('viewer', false))).toContain('studio');
     // Per-site staff never see the all-websites pages that need platform permissions.
     expect(ids(person('administrator', false))).not.toContain('people');
     expect(ids(person('administrator', true))).toContain('people');

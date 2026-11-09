@@ -88,3 +88,17 @@ export function technicalGate(model: ModelResult): TechnicalIssue[] {
   if (missing > 0) issues.push({ check: 'materials', missing });
   return issues;
 }
+
+/**
+ * The reviewer's feature checklist (D-029 §6, "Human review"). A model is marked ready for
+ * approval only with every item checked; the API refuses it otherwise.
+ */
+export const REVIEW_CHECKS = [
+  'shape',
+  'buttons',
+  'openings',
+  'markings',
+  'finish',
+  'nothingInvented',
+] as const;
+export type ReviewCheck = (typeof REVIEW_CHECKS)[number];

@@ -1,5 +1,6 @@
 import type { Permission } from '@hantex/shared';
 import {
+  Box,
   Building2,
   CaseSensitive,
   FileStack,
@@ -147,6 +148,14 @@ export function buildNavigation(m: Messages, me: Me, site: MySite | undefined): 
             icon: <Images />,
             keywords: ['images', 'photos', 'upload', 'صور', 'وسائط'],
             rule: { site: 'media.view' },
+          },
+          {
+            id: 'studio',
+            label: n.studio,
+            to: `${base}/studio`,
+            icon: <Box />,
+            keywords: ['3d', 'model', 'capture', 'glb', 'ثلاثي الأبعاد', 'نموذج', 'التقاط'],
+            rule: { site: 'studio.view' },
           },
           {
             id: 'appearance',

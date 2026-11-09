@@ -41,6 +41,11 @@ export default async function globalSetup() {
   build.username = 'hantex_build';
   build.password = passwords.hantex_build;
   env['E2E_BUILD_DATABASE_URL'] = build.toString();
+  // The 3D Studio runner's own least-privilege user, so the tests can process a queued job.
+  const runner = new URL(url);
+  runner.username = 'hantex_studio_runner';
+  runner.password = passwords.hantex_studio_runner;
+  env['E2E_RUNNER_DATABASE_URL'] = runner.toString();
   const { link } = await createOwnerSetupInvitation(db, {
     email: 'owner@example.test',
     appOrigin: env['E2E_ORIGIN'] ?? 'http://localhost:8788',

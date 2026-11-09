@@ -3,7 +3,7 @@ import { KHRMaterialsVariants } from '@gltf-transform/extensions';
 import { DESKTOP_BUDGET, MOBILE_BUDGET, technicalGate } from '@hantex/studio';
 import { describe, expect, it } from 'vitest';
 import { runPipeline, UnsupportedFormatError } from '../src/pipeline';
-import { isWebp, makeBoxGlb, makeDenseTexturedGlb } from './fixture';
+import { isWebp, makeBoxGlb, makeBoxGltf, makeDenseTexturedGlb } from './fixture';
 
 /**
  * The real pipeline on real GLB files: glTF-Transform, meshoptimizer, sharp, the Khronos
@@ -111,6 +111,26 @@ describe('runPipeline', () => {
     expect(technicalGate({ label: 'artist-modelled', ...output })).toEqual([
       { check: 'materials', missing: 1 },
     ]);
+  }, 60_000);
+
+  it('reads a self-contained glTF (JSON) file, and explains one that needs separate files', async () => {
+    const output = await runPipeline({
+      bytes: await makeBoxGltf({ embedded: true }),
+      format: 'gltf',
+      finishIds: [],
+      dimensionsMm: { width: 1000, height: 1000, depth: 500 },
+    });
+    expect(output.validatorReport.desktop.numErrors).toBe(0);
+    expect(output.withinScale).toBe(true);
+
+    await expect(
+      runPipeline({
+        bytes: await makeBoxGltf({ embedded: false }),
+        format: 'gltf',
+        finishIds: [],
+        dimensionsMm: null,
+      }),
+    ).rejects.toThrow(/refers to separate files/);
   }, 60_000);
 
   it('refuses a format it cannot read yet, rather than guessing', async () => {

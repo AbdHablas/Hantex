@@ -14,6 +14,7 @@ import {
   eligibility,
   providerById,
   PROVIDERS,
+  REVIEW_CHECKS,
   studioCaptureFileKey,
   technicalGate,
   type ResultLabel,
@@ -694,7 +695,7 @@ export const studioRoutes = new Hono<AppEnv>()
     validate(
       'json',
       z.strictObject({
-        checklist: z.record(z.string(), z.boolean()),
+        checklist: z.partialRecord(z.enum(REVIEW_CHECKS), z.boolean()),
         decision: z.enum(['ready-for-approval', 'needs-better-photos', 'needs-manual-correction']),
         notes: z.string().trim().max(2000).default(''),
       }),
@@ -709,10 +710,14 @@ export const studioRoutes = new Hono<AppEnv>()
         );
       if (!model) throw notFound();
       const body = c.req.valid('json');
-      // A model failing the technical gate needs manual correction, whatever the reviewer saw.
-      const issues = technicalIssuesOf(model);
-      if (body.decision === 'ready-for-approval' && issues.length > 0) {
-        throw conflict('technical-gate', { issues });
+      if (body.decision === 'ready-for-approval') {
+        // A model failing the technical gate needs manual correction, whatever the reviewer saw.
+        const issues = technicalIssuesOf(model);
+        if (issues.length > 0) throw conflict('technical-gate', { issues });
+        // And "ready" means every feature was checked, not just some.
+        if (!REVIEW_CHECKS.every((check) => body.checklist[check] === true)) {
+          throw badRequest('checklist-incomplete');
+        }
       }
       const [review] = await v.db
         .insert(studioReviews)

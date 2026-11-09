@@ -447,7 +447,8 @@ These steps run on the processing runner, never in the dashboard Worker:
 **Stage 1 as built (D-056).** What `apps/studio-runner` does today, step by step, and what
 it doesn't do yet:
 
-1. **Convert:** reads GLB and glTF only. OBJ, USDZ, FBX and STEP uploads are accepted but
+1. **Convert:** reads GLB, and glTF with its buffers and textures embedded (a single uploaded
+   `.gltf` can't bring separate files along). OBJ, USDZ, FBX and STEP uploads are accepted but
    not converted: such a job fails with that reason. CAD conversion (`cad-step`) isn't built.
 2. **Normalise:** measures the model's world-space size (node transforms included) and checks
    it against the entered dimensions, ±2 %. It doesn't turn or move the model: orientation
@@ -471,7 +472,15 @@ it doesn't do yet:
 The **technical gate** (`packages/studio/src/technical-gate.ts`) is enforced by the dashboard
 API: a model with validator errors, over a budget, without a material, or (for Exact,
 Measured and Artist-modelled) without a passing dimension check can't be marked ready for
-approval or approved. The **visual gate** and the dashboard screens are still to come.
+approval or approved. "Ready for approval" also needs every item on the reviewer's checklist.
+
+**In the dashboard** (3D Studio, under Content & design): create a capture for a catalogue
+product with its real size, upload the finished model and the photos (encoded to WebP on the
+device), and start a job, with the product's finishes chosen from its variants. Each model
+then shows its two posters, a turnable 3D preview in `<model-viewer>`, the technical checks
+and measurements beside the entered size, the review checklist, and approval for the Owner.
+Still to come: the automatic outline-match score of the visual gate (stage 2), and publishing
+approved models to the website with the 3D viewer on product pages (Phase 4).
 
 ### Viewer and delivery on the website
 

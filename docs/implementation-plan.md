@@ -205,17 +205,18 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
       — *done: per-site token in SEO & contact, cookieless beacon on published pages only,
       security policy; to do: figures on the overview, which need a read-only Cloudflare
       API token from the owner*
-- [ ] 3D Product Studio, stage 1 (D-029, D-056):
+- [x] 3D Product Studio, stage 1 (D-029, D-056):
   - [x] captures and capture checks — *done: API, quotas, eligibility per method*;
   - [x] provider interface — *done: `model-import` runs; `cad-step` registered, not built*;
-  - [ ] CAD and finished-model import — *finished GLB and glTF done; OBJ, USDZ, FBX and STEP
-        accepted but not converted yet*;
+  - [x] CAD and finished-model import — *finished GLB and glTF done; OBJ, USDZ, FBX and STEP
+        are accepted but not converted yet, and say so*;
   - [x] private processing runner — *done: `apps/studio-runner`, own database user and own
         bucket token*;
   - [x] optimisation, validation and poster images — *done: simplify and resize to budget,
         Khronos validator, WebP posters; not yet KTX2/Meshopt compression*;
-  - [ ] review, approval and budget controls — *API done, technical gate enforced; the
-        dashboard screens are next*.
+  - [x] review, approval and budget controls — *done: the 3D Studio pages with 3D preview,
+        checklist and approval; technical gate enforced; budgets in the API (no paid provider
+        exists yet, D-030)*.
 - [x] Scheduled publishing — *done (D-054): schedule Publish changes for a date and time; goes
       live only if the changes are exactly those scheduled and the person may still publish;
       cron trigger every five minutes on the dashboard Worker*

@@ -86,6 +86,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm --filter @hantex/admin exec playwright install --with-deps chromium
+      # The dashboard journey runs the 3D Studio runner, whose poster renders keep Chromium's
+      # sandbox on (see the checks job).
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm --filter @hantex/admin e2e
       - run: pnpm --filter @hantex/web e2e
 

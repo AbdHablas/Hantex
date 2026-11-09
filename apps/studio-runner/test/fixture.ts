@@ -1,25 +1,31 @@
-import { Document, NodeIO } from '@gltf-transform/core';
+import { Document, Format, NodeIO } from '@gltf-transform/core';
 import sharp from 'sharp';
 
 /**
- * Real GLB files for the pipeline's tests, built with glTF-Transform itself. glTF units are
- * metres, so the box is 1 × 1 × 0.5 m = 1000 × 1000 × 500 mm.
+ * Real GLB files for the tests, built with glTF-Transform itself. glTF units are metres; the
+ * box is 1000 × 1000 × 500 mm unless given another size.
  */
 export async function makeBoxGlb(
-  options: { centimetres?: boolean; material?: boolean } = {},
+  options: {
+    centimetres?: boolean;
+    material?: boolean;
+    sizeMm?: { width: number; height: number; depth: number };
+  } = {},
 ): Promise<Uint8Array> {
   const unit = options.centimetres ? 100 : 1;
+  const size = options.sizeMm ?? { width: 1000, height: 1000, depth: 500 };
+  const [x, y, z] = [size.width / 1000, size.height / 1000, size.depth / 1000];
   const doc = new Document();
   const buffer = doc.createBuffer();
   const corners = [
     [0, 0, 0],
-    [1, 0, 0],
-    [1, 1, 0],
-    [0, 1, 0],
-    [0, 0, 0.5],
-    [1, 0, 0.5],
-    [1, 1, 0.5],
-    [0, 1, 0.5],
+    [x, 0, 0],
+    [x, y, 0],
+    [0, y, 0],
+    [0, 0, z],
+    [x, 0, z],
+    [x, y, z],
+    [0, y, z],
   ];
   const positions = new Float32Array(corners.flat().map((v) => v * unit));
   // The 12 triangles of the box's six faces.
@@ -104,4 +110,16 @@ export async function makeDenseTexturedGlb(): Promise<Uint8Array> {
 export function isWebp(bytes: Uint8Array): boolean {
   const text = (start: number, end: number) => String.fromCharCode(...bytes.slice(start, end));
   return text(0, 4) === 'RIFF' && text(8, 12) === 'WEBP';
+}
+
+/** The box as a .gltf (JSON) file, its buffer embedded as a data: URI, or left as a separate file. */
+export async function makeBoxGltf(options: { embedded: boolean }): Promise<Uint8Array> {
+  const io = new NodeIO();
+  const doc = await io.readBinary(await makeBoxGlb());
+  doc.getRoot().listBuffers()[0]!.setURI('box.bin');
+  const { json, resources } = await io.writeJSON(doc, { format: Format.GLTF });
+  if (options.embedded) {
+    json.buffers![0]!.uri = `data:application/octet-stream;base64,${Buffer.from(resources['box.bin']!).toString('base64')}`;
+  }
+  return new TextEncoder().encode(JSON.stringify(json));
 }

@@ -12,9 +12,17 @@ palette are all built from it, so they always agree.
   Overview
   CONTENT & DESIGN
     Coming Soon page
+    Pages
+    Menus, header & footer
+    Products
+    Catalogue setup    (categories, attributes, finishes, series)
+    Media
+    3D Studio          (captures, models, review and approval)
     Appearance
+    Logo
   AUDIENCE
     Sign-ups
+    Enquiries
   WEBSITE SETTINGS
     General            (details, domains, mode, archive)
     SEO & contact      (search engines, contact, social links, privacy note)
@@ -23,6 +31,7 @@ palette are all built from it, so they always agree.
 ──────────────────────
 ADMINISTRATION · All websites
   Websites
+  Fonts
   People               (all staff)
   Roles & permissions
   Audit log            (every website)
