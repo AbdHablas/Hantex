@@ -514,6 +514,12 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await seriesDialog.getByRole('group', { name: 'Name' }).getByLabel('Arabic').fill('كلاسيك');
   await expect(seriesDialog.getByLabel('Address')).toHaveValue('classic');
   await seriesDialog.getByLabel('White').check();
+  // A feature of the design line (D-060): shown on its page, and on its products without
+  // features of their own.
+  await seriesDialog.getByRole('button', { name: 'Add feature' }).click();
+  const lineTitle = seriesDialog.getByRole('group', { name: 'Title', exact: true });
+  await lineTitle.getByLabel('English').fill('One design');
+  await lineTitle.getByLabel('Arabic').fill('تصميم واحد');
   await expectAccessible(page, 'series dialog');
   await seriesDialog.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Save draft' }).click();

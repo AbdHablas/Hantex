@@ -8,6 +8,7 @@ import { newItemId, slugify } from '../../lib/builder';
 import { sameData, type CatalogueStructure } from '../../lib/catalogue';
 import { useBilingual, useI18n } from '../../lib/i18n';
 import { DocumentsField } from './DocumentsField';
+import { FeaturesField } from './FeaturesField';
 import { Checkbox, ItemDialog, RowActions, empty, move } from './parts';
 
 /**
@@ -146,6 +147,15 @@ function SeriesDialog({
               onChange={(documents) => setItem({ ...item, documents })}
             />
           </fieldset>
+          <fieldset className="grid gap-2">
+            <legend className="mb-1 text-sm font-medium">{t.features}</legend>
+            <p className="text-xs text-muted">{t.seriesFeaturesHelp}</p>
+            <FeaturesField
+              features={item.features}
+              editable={editable}
+              onChange={(features) => setItem({ ...item, features })}
+            />
+          </fieldset>
         </>
       )}
     </ItemDialog>
@@ -197,6 +207,7 @@ export function SeriesCard({
                 image: null,
                 finishIds: [],
                 documents: [],
+                features: [],
               })
             }
           >

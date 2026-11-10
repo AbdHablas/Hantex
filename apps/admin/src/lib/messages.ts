@@ -1278,7 +1278,9 @@ const en = {
     removeVariant: 'Remove {name}',
     features: 'Features',
     featuresHelp:
-      'Up to six points about this product, in your own words. Its page shows them in this order; where the product has a 3D model, the model turns to each feature’s view as the visitor scrolls.',
+      'Up to six points about this product, in your own words. Its page shows them in this order; where the product has a 3D model, the model turns to each feature’s view as the visitor scrolls. Leave empty to show its series’ features instead.',
+    seriesFeaturesHelp:
+      'Up to six points about this design line, in your own words. Shown on the series’ page, and on each of its products that has no features of its own.',
     addFeature: 'Add feature',
     noFeatures: 'No features yet.',
     featureN: 'Feature {n}',
@@ -1288,7 +1290,7 @@ const en = {
     featureTextHelp: 'Optional. One or two sentences.',
     featureView: 'View of the 3D model',
     featureViewHelp:
-      'The side of the model shown beside this feature. Used only when the product has a 3D model on its page.',
+      'The side of the model shown beside this feature. Used only on a product page that has a 3D model.',
     featureViews: {
       front: 'Front',
       angle: 'From an angle',
@@ -2832,7 +2834,9 @@ const ar: Messages = {
     removeVariant: 'إزالة {name}',
     features: 'المزايا',
     featuresHelp:
-      'حتى ست نقاط عن هذا المنتج بكلماتك. تعرضها صفحته بهذا الترتيب، وإن كان للمنتج نموذج ثلاثي الأبعاد استدار النموذج إلى زاوية كل ميزة أثناء تمرير الزائر للصفحة.',
+      'حتى ست نقاط عن هذا المنتج بكلماتك. تعرضها صفحته بهذا الترتيب، وإن كان للمنتج نموذج ثلاثي الأبعاد استدار النموذج إلى زاوية كل ميزة أثناء تمرير الزائر للصفحة. اتركها فارغة لتُعرض مزايا سلسلته بدلًا منها.',
+    seriesFeaturesHelp:
+      'حتى ست نقاط عن هذه السلسلة بكلماتك. تُعرض في صفحة السلسلة، وفي كل منتج من منتجاتها ليست له مزايا خاصة به.',
     addFeature: 'إضافة ميزة',
     noFeatures: 'لا توجد مزايا بعد.',
     featureN: 'الميزة {n}',
@@ -2842,7 +2846,7 @@ const ar: Messages = {
     featureTextHelp: 'اختياري. جملة أو جملتان.',
     featureView: 'زاوية النموذج ثلاثي الأبعاد',
     featureViewHelp:
-      'الجهة التي يظهر بها النموذج بجانب هذه الميزة. تُستخدم فقط إذا كان للمنتج نموذج ثلاثي الأبعاد في صفحته.',
+      'الجهة التي يظهر بها النموذج بجانب هذه الميزة. تُستخدم فقط في صفحة منتج لها نموذج ثلاثي الأبعاد.',
     featureViews: {
       front: 'الأمام',
       angle: 'بزاوية مائلة',

@@ -84,7 +84,7 @@ const showcaseProductSchema = z.strictObject({
   values: z.record(itemId, attributeValueSchema),
   /** Its published 3D models, one per finish, in finish order (D-057, D-058). */
   models: z.array(productModelSchema).max(60),
-  /** Its features, in the team's order (D-059). */
+  /** Its features in the team's order (D-059), or its series' when it has none (D-060). */
   features: z.array(featureSchema).max(MAX_FEATURES),
 });
 export type ShowcaseProduct = z.infer<typeof showcaseProductSchema>;
@@ -114,6 +114,8 @@ export const showcaseSchema = z.strictObject({
         image: imageRef,
         finishIds: z.array(itemId).max(60),
         documents: documentList,
+        /** What sets the design line apart (D-060). */
+        features: z.array(featureSchema).max(MAX_FEATURES),
       }),
     )
     .max(200),
@@ -172,6 +174,7 @@ export function showcaseOf(
 ): Showcase {
   const attributes = new Map(catalogue.attributes.map((a) => [a.id, a]));
   const finishes = new Set(catalogue.finishes.map((f) => f.id));
+  const seriesFeatures = new Map(catalogue.series.map((s) => [s.id, s.features]));
   const seen = new Set<string>();
   const list: ShowcaseProduct[] = [];
   for (const id of catalogue.products) {
@@ -210,7 +213,11 @@ export function showcaseOf(
       documents: publicDocuments(product.documents, today),
       values,
       models: modelsShown(models.products[id] ?? [], finishIds),
-      features: product.features,
+      // Its own features, or its series' when it has none (D-060).
+      features:
+        product.features.length > 0
+          ? product.features
+          : (seriesFeatures.get(product.seriesId ?? '') ?? []),
     });
   }
   return {
@@ -226,7 +233,7 @@ export function showcaseOf(
       }),
     ),
     series: catalogue.series.map(
-      ({ id, name, slug, description, image, finishIds, documents }) => ({
+      ({ id, name, slug, description, image, finishIds, documents, features }) => ({
         id,
         name,
         slug,
@@ -234,6 +241,7 @@ export function showcaseOf(
         documents: publicDocuments(documents, today),
         description,
         image,
+        features,
       }),
     ),
     finishes: catalogue.finishes.map(({ id, name, swatch }) => ({ id, name, swatch })),
@@ -513,8 +521,8 @@ export function showcaseForSections(
       for (const id of sectionCatalogueRefs(section).products) keep.add(id);
     }
   }
-  // Sections draw no descriptions, gallery photos or documents of products: left out to keep the
-  // signed form small.
+  // Sections draw no descriptions, gallery photos, documents, 3D models or features of products:
+  // left out to keep the signed form small.
   const products = showcase.products
     .filter((p) => keep.has(p.id))
     .map((p) => ({
@@ -523,6 +531,8 @@ export function showcaseForSections(
       images: [],
       variants: p.variants.map((v) => ({ ...v, images: [] })),
       documents: [],
+      models: [],
+      features: [],
     }));
   const used = new Set(products.flatMap((p) => Object.keys(p.values)));
   const finishes = new Set(
@@ -535,6 +545,7 @@ export function showcaseForSections(
       ...x,
       description: descriptions ? x.description : blank,
       documents: [],
+      features: [],
     })),
     finishes: showcase.finishes.filter((f) => finishes.has(f.id)),
     groups: showcase.groups,

@@ -413,6 +413,12 @@ test('a product’s features pass beside its 3D model, which turns to each one�
   const plain = page.getByRole('region', { name: 'Features' });
   await expect(plain.getByRole('listitem')).toHaveText(['Test plain featureTest plain text.']);
   await expect(plain.locator('[data-features-stage]')).toHaveCount(0);
+
+  // A series lists its own features on its page (D-060).
+  await page.goto(`${LIVE}/en/series/alpha/`);
+  await expect(page.getByRole('region', { name: 'Features' }).getByRole('listitem')).toHaveText([
+    'Test series featureTest series text.',
+  ]);
 });
 
 test('a product’s features stay still with reduced motion, and on a phone until the visitor opens 3D (D-059)', async ({

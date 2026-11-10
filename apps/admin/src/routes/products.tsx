@@ -1,19 +1,14 @@
 import {
-  MAX_FEATURES,
   productAttributes,
   slugSchema,
   type Attribute,
   type AttributeValue,
   type Catalogue,
-  type Feature,
   type Product,
   type Variant,
 } from '@hantex/sections';
-import { MODEL_VIEW_NAMES } from '@hantex/studio';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowDown,
-  ArrowUp,
   Copy,
   EyeOff,
   FileSpreadsheet,
@@ -29,7 +24,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { DocumentsField } from '../components/catalogue/DocumentsField';
-import { move } from '../components/catalogue/parts';
+import { FeaturesField } from '../components/catalogue/FeaturesField';
 import { SheetDialog } from '../components/catalogue/SheetDialog';
 import { BilingualField } from '../components/document';
 import { ImageField } from '../components/builder/ImageField';
@@ -638,90 +633,6 @@ function VariantCard({
   );
 }
 
-/** One of a product's features (D-059): its title and text, and the 3D model's view beside it. */
-function FeatureCard({
-  feature,
-  index,
-  last,
-  editable,
-  onChange,
-  onMove,
-  onRemove,
-}: {
-  feature: Feature;
-  index: number;
-  last: boolean;
-  editable: boolean;
-  onChange: (feature: Feature) => void;
-  onMove: (step: -1 | 1) => void;
-  onRemove: () => void;
-}) {
-  const { m, format } = useI18n();
-  const bi = useBilingual();
-  const t = m.catalogue;
-  const title = bi(feature.title) || format(t.featureN, { n: index + 1 });
-  return (
-    <section aria-label={title} className="grid gap-4 rounded-xl border border-border p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium">{title}</h3>
-        {editable && (
-          <div className="flex shrink-0 items-center gap-0.5">
-            <IconButton
-              label={format(t.moveUp, { name: title })}
-              disabled={index === 0}
-              onClick={() => onMove(-1)}
-            >
-              <ArrowUp className="size-4" aria-hidden />
-            </IconButton>
-            <IconButton
-              label={format(t.moveDown, { name: title })}
-              disabled={last}
-              onClick={() => onMove(1)}
-            >
-              <ArrowDown className="size-4" aria-hidden />
-            </IconButton>
-            <IconButton label={format(t.removeFeature, { name: title })} onClick={onRemove}>
-              <Trash2 className="size-4" aria-hidden />
-            </IconButton>
-          </div>
-        )}
-      </div>
-      <BilingualField
-        label={t.featureTitle}
-        value={feature.title}
-        max={80}
-        disabled={!editable}
-        onChange={(next) => onChange({ ...feature, title: next })}
-      />
-      <BilingualField
-        label={t.featureText}
-        help={t.featureTextHelp}
-        value={feature.text}
-        max={400}
-        multiline
-        disabled={!editable}
-        onChange={(text) => onChange({ ...feature, text })}
-      />
-      <Field label={t.featureView} help={t.featureViewHelp}>
-        {(props) => (
-          <Select
-            {...props}
-            disabled={!editable}
-            value={feature.view}
-            onChange={(e) => onChange({ ...feature, view: e.target.value as Feature['view'] })}
-          >
-            {MODEL_VIEW_NAMES.map((view) => (
-              <option key={view} value={view}>
-                {t.featureViews[view]}
-              </option>
-            ))}
-          </Select>
-        )}
-      </Field>
-    </section>
-  );
-}
-
 function ProductHistory({ id, editable }: { id: string; editable: boolean }) {
   const { m, format, date } = useI18n();
   const t = m.catalogue;
@@ -1097,59 +1008,13 @@ function ProductForm({ productId }: { productId: string }) {
           </div>
         </Card>
 
-        <Card
-          title={t.features}
-          description={t.featuresHelp}
-          actions={
-            editable &&
-            product.features.length < MAX_FEATURES && (
-              <Button
-                size="sm"
-                onClick={() =>
-                  update({
-                    ...product,
-                    features: [
-                      ...product.features,
-                      { id: newItemId(), title: empty(), text: empty(), view: 'angle' },
-                    ],
-                  })
-                }
-              >
-                <Plus aria-hidden />
-                {t.addFeature}
-              </Button>
-            )
-          }
-        >
-          <div className="grid gap-4 px-5 pb-5">
-            {product.features.length === 0 ? (
-              <p className="text-sm text-muted">{t.noFeatures}</p>
-            ) : (
-              product.features.map((feature, index) => (
-                <FeatureCard
-                  key={feature.id}
-                  feature={feature}
-                  index={index}
-                  last={index === product.features.length - 1}
-                  editable={editable}
-                  onChange={(next) =>
-                    update({
-                      ...product,
-                      features: product.features.map((x) => (x.id === feature.id ? next : x)),
-                    })
-                  }
-                  onMove={(step) =>
-                    update({ ...product, features: move(product.features, feature.id, step) })
-                  }
-                  onRemove={() =>
-                    update({
-                      ...product,
-                      features: product.features.filter((x) => x.id !== feature.id),
-                    })
-                  }
-                />
-              ))
-            )}
+        <Card title={t.features} description={t.featuresHelp}>
+          <div className="px-5 pb-5">
+            <FeaturesField
+              features={product.features}
+              editable={editable}
+              onChange={(features) => update({ ...product, features })}
+            />
           </div>
         </Card>
 

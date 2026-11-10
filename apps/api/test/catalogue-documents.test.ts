@@ -43,6 +43,7 @@ const SERIES: Series = {
   image: null,
   finishIds: ['white00001'],
   documents: [],
+  features: [],
 };
 const STRUCTURE: Structure = {
   categories: [
@@ -208,6 +209,40 @@ describe('series and documents', () => {
     });
     expect(removed.status).toBe(409);
     expect(await removed.json()).toMatchObject({ error: 'series-in-use' });
+  });
+
+  it('saves a series’ features, and lists a missing title before publishing (D-060)', async () => {
+    const feature = (title: { ar: string; en: string }) => ({
+      id: 'feature001',
+      title,
+      text: both(''),
+      view: 'front' as const,
+    });
+    const save = (features: unknown[]) =>
+      h.request('PUT', `${base}/structure`, {
+        cookie: owner,
+        body: { ...STRUCTURE, series: [{ ...SERIES, features }] },
+      });
+    const issues = async () =>
+      (
+        await json<{ catalogueIssues: { code: string; target: string; detail?: string }[] }>(
+          await h.request('GET', `/api/sites/${SITE}/changes`, { cookie: owner }),
+        )
+      ).catalogueIssues.filter((issue) => issue.target === `series:${SERIES.id}`);
+
+    const untitled = await save([feature({ ar: '', en: 'One design' })]);
+    expect(untitled.status, await untitled.clone().text()).toBe(200);
+    expect(await issues()).toEqual([
+      { code: 'missing-name', target: `series:${SERIES.id}`, detail: 'feature001' },
+    ]);
+    expect((await save([{ ...feature(both('One design')), view: 'underneath' }])).status).toBe(400);
+    expect((await save([feature(both('One design'))])).status).toBe(200);
+    expect(await issues()).toEqual([]);
+    const read = await json<{ structure: { series: Series[] } }>(
+      await h.request('GET', `${base}`, { cookie: owner }),
+    );
+    expect(read.structure.series[0]?.features).toEqual([feature(both('One design'))]);
+    expect((await save([])).status).toBe(200);
   });
 
   it('ignores verification sent with a save; only the verify action sets it', async () => {

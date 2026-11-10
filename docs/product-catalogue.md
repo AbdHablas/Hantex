@@ -36,7 +36,7 @@ dashboard. Until something is entered, the website shows nothing for it.
 | Finish | A colour or material, defined once and reused: name in each language, swatch and material type. Each finish shown in 3D has its own model, photographed or modelled in that finish (D-058). |
 | Attributes | Typed fields defined in the dashboard for each category: text, number with unit, choice, or yes/no. Grouped (electrical, dimensions, materials, compliance), optionally filterable and shown in the specification table. |
 | Documents | Datasheets, installation guides and certificates (PDF), attached to a product or a series. |
-| Features | Up to six points about a product in the team's own words: a title, an optional text, and the view of the 3D model shown beside it (D-059). |
+| Features | Up to six points about a product or a series in the team's own words: a title, an optional text, and the view of the 3D model shown beside it (D-059). A product without its own shows its series' (D-060). |
 | Media | Photos by view (front, side, rear, detail, in use) and 3D models from the Studio. The same photo set serves the product gallery and the 3D capture. |
 
 **Starting categories for Hantex Ultra** are the five the owner named:

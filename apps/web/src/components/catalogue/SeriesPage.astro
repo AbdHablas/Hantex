@@ -13,7 +13,7 @@ import { breadcrumbLd, catalogueUrl, itemListLd } from '../../structured';
 
 /**
  * A series' showcase page (D-048): its name, description and picture, the finishes it comes in,
- * its visible products, and its downloads and checked certificates.
+ * its features (D-060), its visible products, and its downloads and checked certificates.
  */
 interface Props {
   ctx: RenderContext;
@@ -30,6 +30,11 @@ const description = paragraphs(pick(ctx, series.description));
 const picture = pictureOf(ctx, series.image);
 const finishes = series.finishIds.flatMap((id) => showcase.finishes.find((f) => f.id === id) ?? []);
 const products = showcase.products.filter((p) => p.seriesId === series.id);
+// What sets the design line apart, in the team's own words (D-060).
+const features = series.features.flatMap((f) => {
+  const title = pick(ctx, f.title);
+  return title ? [{ title, text: pick(ctx, f.text) }] : [];
+});
 const home = ctx.content.index.home;
 const structured = origin
   ? [
@@ -79,6 +84,21 @@ const hrefFor = (l: Locale) => withSlash(localizedPath(cataloguePath('series', s
       </div>
       {picture && <Picture picture={{ ...picture, alt: '' }} sizes="(min-width: 64rem) 30rem, 100vw" class="cx-intro-img" />}
     </header>
+    {
+      features.length > 0 && (
+        <section class="cx-block cx-features" aria-labelledby="features">
+          <h2 class="bx-title" id="features">{t.features}</h2>
+          <ul class="cx-features-list">
+            {features.map((f) => (
+              <li class="cx-feature">
+                <h3>{f.title}</h3>
+                {f.text && <p>{f.text}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
     {
       products.length > 0 && (
         <section class="cx-block" aria-labelledby="products">

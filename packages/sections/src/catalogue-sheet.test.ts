@@ -107,6 +107,7 @@ function sample(): { catalogue: Catalogue; products: Map<string, Product> } {
         image: null,
         finishIds: [],
         documents: [],
+        features: [],
       },
     ],
     products: ['product001'],

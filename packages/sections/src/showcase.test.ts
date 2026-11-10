@@ -117,6 +117,7 @@ function fixture() {
         image: null,
         finishIds: [],
         documents: [],
+        features: [],
       },
     ],
     products: ['prdone', 'prdtwo', 'prdhidden', 'prdlamp'],
@@ -168,6 +169,29 @@ describe('showcase', () => {
     ]);
     expect(showcase.products[1]!.features).toEqual([]);
     expect(JSON.stringify(showcase)).not.toContain('verified');
+  });
+
+  it('shows a series’ features on its products that have none of their own (D-060)', () => {
+    const { catalogue, products } = fixture();
+    const line = { id: 'featline', title: T('One design'), text: T(''), view: 'front' as const };
+    catalogue.series[0]!.features = [line];
+    // "Two" joins the series without features of its own; "One" keeps its own.
+    products.set('prdtwo', { ...products.get('prdtwo')!, seriesId: 'serone' });
+    const showcase = showcaseOf(catalogue, products);
+    expect(showcase.series[0]!.features).toEqual([line]);
+    const byId = new Map(showcase.products.map((p) => [p.id, p.features.map((f) => f.id)]));
+    expect(byId.get('prdone')).toEqual(['featslim']);
+    expect(byId.get('prdtwo')).toEqual(['featline']);
+    expect(byId.get('prdlamp')).toEqual([]);
+    expect(showcaseSchema.safeParse(showcase).success).toBe(true);
+    // Previews of builder pages draw no features: they are left out.
+    const grid = newSection('products');
+    grid.settings.source = 'category';
+    grid.settings.categoryId = 'catswitch';
+    const forPreview = showcaseForSections(showcase, [grid]);
+    expect(forPreview.products.length).toBeGreaterThan(0);
+    expect(forPreview.products.every((p) => p.features.length === 0)).toBe(true);
+    expect(forPreview.series.every((x) => x.features.length === 0)).toBe(true);
   });
 
   it('passes the same schema previews re-validate it with', () => {

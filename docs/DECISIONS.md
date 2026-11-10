@@ -68,6 +68,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-057 | 3D models on product pages | Confirmed (owner: "go ahead", 2026-11-09) | Approved models go live with Publish changes, poster first; "View on your wall" only for true-scale models; model files public only while shown |
 | D-058 | Finishes in the 3D viewer | Confirmed (owner's choice: "Capture every finish", 2026-11-09) | Each finish is photographed or modelled as its own model; the product page switches between them; no finish is recoloured from another's photos |
 | D-059 | Product features beside the 3D model | Confirmed (owner: "go ahead", 2026-11-10) | Up to six features per product in the team's own words; on its page the 3D model stays in view and turns to each feature's view as the visitor scrolls; a still picture with reduced motion |
+| D-060 | Features for a series | Confirmed (owner: "go ahead", 2026-11-10) | A series has its own features, listed on its page; a product without features of its own shows its series' |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1567,7 +1568,37 @@ then the general product catalogue (Phase 3c, D-045).
     accessibility and narrow-screen checks pass. Screenshots checked on a computer, on a phone
     and in right-to-left Arabic.
   - Dashboard journey: a feature is added to a product, saved, and still there after a reload.
-- **Not built:** features on series pages; the full-width hero of the catalogue design; a
-  poster for every view.
+- **Not built:** features on series pages (added since: D-060); the full-width hero of the
+  catalogue design; a poster for every view.
 - **No database change:** features are part of the product's document. No owner action.
 - **Cost:** none.
+
+## D-060 — Features for a series
+
+- **Status:** Confirmed — 2026-11-10 (owner: "go ahead" after "features on series pages" was
+  listed as still open), and built the same day. That a series' features also show on its
+  products is the builder's choice, open to the owner's change.
+- **What the team enters:** the series dialog (Catalogue setup, *Series*) has the same
+  *Features* list as a product: up to six, each with a title, an optional text and a view of
+  the 3D model, in any order.
+- **Where they show:**
+  - on the series' page, as a list after its description;
+  - on each product of the series that has no features of its own, exactly as its own would:
+    beside its 3D model, which turns to each feature's view, or as a plain list. A product with
+    even one feature of its own shows only its own.
+- **Why products show them:** a design line's points (its plate, its mechanism) hold for every
+  product in it. Entering them once for the series, not again for each of its products, keeps
+  them the same everywhere; a product that differs gets its own list.
+- **Publishing:** a series is always public, so each of its features needs a title in every
+  language of the website before the catalogue can be published; *Publish changes* lists a
+  missing one.
+- **Previews:** draft previews of builder pages draw no features or 3D models, so both are left
+  out of what a preview is sent.
+- **Tested:** shared rules (older series read as having none; title in each language; no
+  feature twice; a product without features gets its series', one with its own keeps them,
+  one outside a series gets none; previews carry none); API (a series' features save, an
+  unknown view is refused, a missing title is listed before publishing); the site's browser
+  test reads the series page's list; the dashboard journey adds a feature in the series dialog,
+  with its accessibility check.
+- **No database change:** features are part of the catalogue's structure document. No owner
+  action. **Cost:** none.

@@ -274,6 +274,15 @@ const catalogue: Catalogue = {
       image: null,
       finishIds: ['fnwhite'],
       documents: [],
+      // The design line's own features (D-060), listed on its page.
+      features: [
+        {
+          id: 'featline',
+          title: T('Test series feature', 'ميزة السلسلة التجريبية'),
+          text: T('Test series text.', 'نص السلسلة التجريبي.'),
+          view: 'front',
+        },
+      ],
     },
   ],
   products: ['prdone', 'prdtwo', 'prdhidden'],

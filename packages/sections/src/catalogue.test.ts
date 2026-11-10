@@ -13,6 +13,7 @@ import {
   newProduct,
   productAttributes,
   productSchema,
+  seriesSchema,
   skuSchema,
   type Catalogue,
   type DocumentRef,
@@ -252,6 +253,7 @@ describe('series and documents', () => {
         image: null,
         finishIds: ['white00001', 'gone000001'],
         documents: [],
+        features: [],
       },
       {
         id: 'series0002',
@@ -261,6 +263,7 @@ describe('series and documents', () => {
         image: null,
         finishIds: [],
         documents: [],
+        features: [],
       },
     );
     s.products.get('product001')!.seriesId = 'nothere01';
@@ -386,5 +389,33 @@ describe('product features (D-059)', () => {
     expect(
       issuesFor({ ...visible, features: [feature('feat00001'), feature('feat00001')] }),
     ).toContainEqual({ code: 'duplicate-id', target: 'product:prdone', detail: 'feat00001' });
+  });
+
+  it('keeps a series’ features too, each with a title in every language (D-060)', () => {
+    const series = {
+      id: 'serone0001',
+      name: T('One'),
+      slug: 'one',
+      description: T(''),
+      image: null,
+      finishIds: [],
+      documents: [],
+    };
+    // A series saved before features existed reads as having none.
+    expect(seriesSchema.parse(series).features).toEqual([]);
+    const untitled = feature('feat00001', { title: T('', 'عنوان') });
+    const issuesFor = (features: Feature[]) =>
+      checkCatalogue({
+        catalogue: { ...DEFAULT_CATALOGUE, series: [{ ...series, features }] },
+        products: new Map(),
+        locales: ['ar', 'en'],
+      });
+    expect(issuesFor([feature('feat00001')])).toEqual([]);
+    expect(issuesFor([untitled])).toEqual([
+      { code: 'missing-name', target: 'series:serone0001', detail: 'feat00001' },
+    ]);
+    expect(issuesFor([feature('feat00001'), feature('feat00001')])).toEqual([
+      { code: 'duplicate-id', target: 'series:serone0001', detail: 'feat00001' },
+    ]);
   });
 });

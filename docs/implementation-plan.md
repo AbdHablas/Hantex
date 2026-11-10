@@ -231,7 +231,9 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
         old addresses redirect (D-050)*;
   - [x] features beside the 3D model (D-059) — *done: up to six per product, in the team's
         own words; the model stays in view and turns to each one's view; a still picture with
-        reduced motion; a plain list without a model. Still to come: the full-width hero*;
+        reduced motion; a plain list without a model. A series has features too, listed on
+        its page and shown on its products that have none of their own (D-060). Still to come:
+        the full-width hero*;
   - [x] category filters — *done (D-052): filterable attributes and finishes, in the browser*;
   - [x] search (Pagefind) — *done (D-052): a search page per language, Arabic checked*;
   - enquiry forms.
