@@ -534,7 +534,10 @@ above:
   it back. Draft previews don't show models (they show builder pages, not product pages).
 - **Size:** the viewer is a separate 286 KB download (gzip, measured from the build), fetched
   only when a model is about to show; a product page's own loader is under 1 KB.
-- **Not built yet:** Apple-style scroll sections.
+- **Apple-style scroll section (D-059):** a product's features, in the team's own words,
+  pass beside its model, which stays in view and turns to each feature's view. It uses this
+  same viewer, not three.js directly, and turns once per feature. It moves only once the
+  visitor's viewer is open, and never with reduced motion: then the poster stays.
 
 ### Data model (Phase 3)
 
@@ -699,7 +702,7 @@ Unreleased product photos must never pass through it.
   - the website viewer with posters and AR — *done (D-057)*; switching finishes — *done
     (D-058), one model per finish*; recolouring models made with separate finish parts, once
     such models exist;
-  - Apple-style scroll sections;
+  - Apple-style scroll sections — *done (D-059), on product pages*;
   - automated photogrammetry on suitable hardware;
   - AI providers, only if approved;
   - the automatic outline-match score.

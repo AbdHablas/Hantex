@@ -1,3 +1,4 @@
+import { MODEL_VIEW_NAMES } from '@hantex/studio';
 import { z } from 'zod';
 import { RESERVED_SLUGS, bilingual, emptyText, itemId, mediaIds, slugSchema } from './primitives';
 import type { Bilingual } from './primitives';
@@ -276,6 +277,20 @@ export const variantSchema = z.strictObject({
 });
 export type Variant = z.infer<typeof variantSchema>;
 
+/**
+ * A point about a product in the team's own words (D-059). Its page shows them in order; where
+ * it has a 3D model, the model turns to each feature's view as the visitor scrolls to it.
+ */
+export const featureSchema = z.strictObject({
+  id: itemId,
+  title: bilingual(80),
+  text: bilingual(400),
+  /** The side of the 3D model shown beside it. */
+  view: z.enum(MODEL_VIEW_NAMES),
+});
+export type Feature = z.infer<typeof featureSchema>;
+export const MAX_FEATURES = 6;
+
 export const productSchema = z.strictObject({
   name: bilingual(120),
   slug: slugSchema,
@@ -294,6 +309,8 @@ export const productSchema = z.strictObject({
   variants: z.array(variantSchema).max(60),
   /** Datasheets, guides and certificates (PDF). */
   documents: documentList,
+  /** What is worth knowing about it, shown beside its 3D model as the visitor scrolls (D-059). */
+  features: z.array(featureSchema).max(MAX_FEATURES).default([]),
   /** Hidden products keep their content but are not built or listed. */
   visible: z.boolean(),
 });
@@ -312,6 +329,7 @@ export function newProduct(name: Bilingual, slug: string, categoryId: string): P
     values: {},
     variants: [],
     documents: [],
+    features: [],
     // New products start hidden, so nothing half-entered goes public.
     visible: false,
   };
@@ -568,6 +586,15 @@ export function checkCatalogue(draft: CatalogueDraft): CatalogueIssue[] {
       issues.push({ code: 'missing-series', target, detail: product.seriesId });
     }
     documents(product.documents, target, product.visible);
+    const featureIds = new Set<string>();
+    for (const feature of product.features) {
+      if (featureIds.has(feature.id)) {
+        issues.push({ code: 'duplicate-id', target, detail: feature.id });
+      }
+      featureIds.add(feature.id);
+      // A feature needs its title in each language; its text is optional, like a summary.
+      if (product.visible) named(feature.title, target, feature.id);
+    }
     if (!product.visible) continue;
     named(product.name, target);
     const other = productSlugs.get(product.slug);

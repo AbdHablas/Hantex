@@ -496,6 +496,9 @@ importers:
       '@hantex/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@hantex/studio':
+        specifier: workspace:*
+        version: link:../../packages/studio
       '@hantex/theme':
         specifier: workspace:*
         version: link:../../packages/theme

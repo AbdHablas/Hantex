@@ -228,7 +228,10 @@ website chosen in the switcher, and nothing is specific to Hantex Ultra
   - home page;
   - [x] product, category and series pages from the published catalogue (D-049) — *done:
         photos, specifications, codes, downloads, checked certificates, breadcrumbs, sitemap;
-        old addresses redirect (D-050); still to come: filters, Apple-style blocks*;
+        old addresses redirect (D-050)*;
+  - [x] features beside the 3D model (D-059) — *done: up to six per product, in the team's
+        own words; the model stays in view and turns to each one's view; a still picture with
+        reduced motion; a plain list without a model. Still to come: the full-width hero*;
   - [x] category filters — *done (D-052): filterable attributes and finishes, in the browser*;
   - [x] search (Pagefind) — *done (D-052): a search page per language, Arabic checked*;
   - enquiry forms.

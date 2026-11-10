@@ -15,6 +15,7 @@
     "@google/model-viewer": "4.4.0",
     "@hantex/sections": "workspace:*",
     "@hantex/shared": "workspace:*",
+    "@hantex/studio": "workspace:*",
     "@hantex/theme": "workspace:*",
     "astro": "7.4.1",
     "pg": "8.23.1",

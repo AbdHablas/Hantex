@@ -6,6 +6,8 @@ import {
   attributeValueSchema,
   catalogueRedirectSchema,
   certificateSchema,
+  featureSchema,
+  MAX_FEATURES,
   MAX_REDIRECTS,
   finishSchema,
   isCertified,
@@ -82,6 +84,8 @@ const showcaseProductSchema = z.strictObject({
   values: z.record(itemId, attributeValueSchema),
   /** Its published 3D models, one per finish, in finish order (D-057, D-058). */
   models: z.array(productModelSchema).max(60),
+  /** Its features, in the team's order (D-059). */
+  features: z.array(featureSchema).max(MAX_FEATURES),
 });
 export type ShowcaseProduct = z.infer<typeof showcaseProductSchema>;
 
@@ -206,6 +210,7 @@ export function showcaseOf(
       documents: publicDocuments(product.documents, today),
       values,
       models: modelsShown(models.products[id] ?? [], finishIds),
+      features: product.features,
     });
   }
   return {

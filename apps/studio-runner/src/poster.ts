@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { MODEL_VIEWS } from '@hantex/studio';
 import { chromium, type Browser } from 'playwright';
 import sharp from 'sharp';
 
@@ -16,7 +17,6 @@ import sharp from 'sharp';
 
 export const POSTER_SIZE = 1024;
 const LOAD_TIMEOUT_MS = 30_000;
-const ORBITS = { front: '0deg 75deg auto', threeQuarter: '45deg 70deg auto' } as const;
 
 const require = createRequire(import.meta.url);
 let viewerScript: Promise<string> | undefined;
@@ -89,8 +89,8 @@ export async function renderPosters(
   });
   try {
     return {
-      front: await renderOne(browser, glbBase64, script, ORBITS.front),
-      threeQuarter: await renderOne(browser, glbBase64, script, ORBITS.threeQuarter),
+      front: await renderOne(browser, glbBase64, script, MODEL_VIEWS.front),
+      threeQuarter: await renderOne(browser, glbBase64, script, MODEL_VIEWS.angle),
     };
   } finally {
     await browser.close();

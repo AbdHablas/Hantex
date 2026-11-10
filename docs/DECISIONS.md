@@ -67,6 +67,7 @@ marked **Confirmed** once the project owner has approved it.
 | D-056 | 3D Product Studio, stage 1 | Confirmed (owner: "go ahead", 2026-11-09) | Finished GLB and glTF models through a private runner on the owner's computer (optimise, validate, posters); review and the Owner's approval in the dashboard — see `docs/3d-product-studio.md` |
 | D-057 | 3D models on product pages | Confirmed (owner: "go ahead", 2026-11-09) | Approved models go live with Publish changes, poster first; "View on your wall" only for true-scale models; model files public only while shown |
 | D-058 | Finishes in the 3D viewer | Confirmed (owner's choice: "Capture every finish", 2026-11-09) | Each finish is photographed or modelled as its own model; the product page switches between them; no finish is recoloured from another's photos |
+| D-059 | Product features beside the 3D model | Confirmed (owner: "go ahead", 2026-11-10) | Up to six features per product in the team's own words; on its page the 3D model stays in view and turns to each feature's view as the visitor scrolls; a still picture with reduced motion |
 
 All open decisions are settled. Next: the media library (Phase 3b, D-044),
 then the general product catalogue (Phase 3c, D-045).
@@ -1510,3 +1511,63 @@ then the general product catalogue (Phase 3c, D-045).
 - **No database change:** a job's existing finish list now holds one finish. The *3D models*
   document's shape changed before anything was deployed, so no stored data needs converting.
 - **Cost:** none in software; one capture or model per finish in work.
+
+## D-059 — Product features beside the 3D model (Apple-style scroll section)
+
+- **Status:** Confirmed — 2026-11-10 (owner: "go ahead" after the open items were listed; of
+  them, the Apple-style scroll sections were the one that could be built now), and built the
+  same day. The design details below are the builder's choices, open to the owner's changes.
+- **What the team enters:** in the product editor, a *Features* card: up to six features, each
+  with a title, an optional text and a view of the 3D model (front, from an angle, left side,
+  right side, from above, back), in any order. Nothing is pre-filled or generated. Features are
+  part of the product: saved as its draft, kept in its versions, live with *Publish changes*.
+  A visible product can't be published while a feature lacks its title in one of the website's
+  languages.
+- **What a visitor sees:** a *Features* section on the product's page, after its photos and
+  summary.
+  - With a 3D model on the page, the model stays in view (beside the features on a computer,
+    above them on a phone) while the features pass. As each one reaches the reading line (the
+    middle of the screen; lower on a phone, under the model), the model turns to that feature's
+    view, by the shorter way round, and a coloured line marks the feature. It shows the finish
+    chosen under *Finish in 3D*.
+  - Without a 3D model, the features are a plain list.
+- **When it moves:** only once the visitor's own 3D viewer is open: by itself on a computer,
+  after *View in 3D* on a phone or with data saver on. So the section never downloads 3D the
+  visitor didn't already get. Until then, with reduced motion, and without JavaScript, the model
+  is a still picture: the poster nearest the first feature's view.
+- **Accessibility:** the model beside the features is decoration. It takes no input and is
+  hidden from screen readers; the model people can turn and describe is in the gallery above.
+  The features themselves are an ordinary heading and list. The current feature is marked by a
+  line, never by dimming the others, so every text keeps its contrast.
+- **One block, not two:** the catalogue design listed "scroll-linked feature sections" and
+  "highlights" separately. They are this one list: with a 3D model it scrolls beside it,
+  without one it is the highlights list.
+- **Differences from the 3D design:**
+  - It planned three.js used directly. The section uses the same `<model-viewer>` as the
+    gallery, the dashboard and the runner instead: one viewer and one download, and it already
+    turns smoothly between camera angles.
+  - The model turns once for each feature, not continuously with the scroll position: simpler,
+    and calmer for people sensitive to motion.
+  - Still pictures exist for two views only (the model's front and angled posters), so with
+    reduced motion one picture stays for all features. A poster per view would need the runner
+    to render more.
+- **Shared angles:** the six views are defined once (`MODEL_VIEWS` in `packages/studio`) and
+  used by the runner's posters and the websites, so a poster and the live model line up.
+- **Tested:**
+  - Shared rules: at most six; older products read as having none; a title in each of the
+    website's languages for a visible product; no feature twice; features reach the site's data
+    for visible products only.
+  - API: features save with the product; an unknown view or a seventh feature is refused;
+    publishing is refused for a missing title, with the reason, and passes once it is filled.
+  - Site browser tests, with a real model: each view shows the side it names, read from the
+    model itself (front, right, back, left; from above by its tilt); the current feature is
+    marked; the model stays in view; it follows the chosen finish; a product without a model
+    shows a plain list; with reduced motion the picture stays; a phone loads no 3D until *View
+    in 3D*, then turns; without JavaScript there is a picture and a list. The page's
+    accessibility and narrow-screen checks pass. Screenshots checked on a computer, on a phone
+    and in right-to-left Arabic.
+  - Dashboard journey: a feature is added to a product, saved, and still there after a reload.
+- **Not built:** features on series pages; the full-width hero of the catalogue design; a
+  poster for every view.
+- **No database change:** features are part of the product's document. No owner action.
+- **Cost:** none.

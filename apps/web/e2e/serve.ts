@@ -310,6 +310,39 @@ const products: Record<string, Product> = {
       'First test paragraph.\n\nSecond test paragraph.',
       'الفقرة التجريبية الأولى.\n\nالفقرة التجريبية الثانية.',
     ),
+    // Features (D-059): beside the 3D model, each turns it to a view.
+    features: [
+      {
+        id: 'featfront',
+        title: T('Test front feature', 'ميزة الأمام التجريبية'),
+        text: T('Test text about the front.', 'نص تجريبي عن الأمام.'),
+        view: 'front',
+      },
+      {
+        id: 'featright',
+        title: T('Test right-side feature', 'ميزة الجانب الأيمن التجريبية'),
+        text: T('', ''),
+        view: 'right',
+      },
+      {
+        id: 'feattop',
+        title: T('Test top feature', 'ميزة الأعلى التجريبية'),
+        text: T('Test text about the top.', 'نص تجريبي عن الأعلى.'),
+        view: 'top',
+      },
+      {
+        id: 'featback',
+        title: T('Test back feature', 'ميزة الخلف التجريبية'),
+        text: T('', ''),
+        view: 'back',
+      },
+      {
+        id: 'featleft',
+        title: T('Test left-side feature', 'ميزة الجانب الأيسر التجريبية'),
+        text: T('', ''),
+        view: 'left',
+      },
+    ],
     documents: [
       {
         id: 'docdata01',
@@ -344,6 +377,15 @@ const products: Record<string, Product> = {
   }),
   prdtwo: product(T('Test two-gang switch', 'مفتاح تجريبي مزدوج'), 'two-gang', {
     values: { attgangs: { number: 2 }, attusb: { yes: true } },
+    // No 3D model: its feature shows as a plain list.
+    features: [
+      {
+        id: 'featplain',
+        title: T('Test plain feature', 'ميزة تجريبية بسيطة'),
+        text: T('Test plain text.', 'نص تجريبي بسيط.'),
+        view: 'angle',
+      },
+    ],
   }),
   prdhidden: product(T('Hidden test product', 'منتج مخفي'), 'hidden', { visible: false }),
 };

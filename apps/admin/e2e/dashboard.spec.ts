@@ -555,6 +555,13 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await page.getByLabel('Product code').fill('HX-1001');
   await page.getByLabel('Finish', { exact: true }).selectOption({ label: 'White' });
   await page.getByLabel('Series', { exact: true }).selectOption({ label: 'Classic' });
+  // A feature (D-059): a point in the team's own words, and the view of the 3D model beside it.
+  await page.getByRole('button', { name: 'Add feature' }).click();
+  const featureTitle = page.getByRole('group', { name: 'Title', exact: true });
+  await featureTitle.getByLabel('English').fill('Slim plate');
+  await featureTitle.getByLabel('Arabic').fill('لوحة نحيفة');
+  await page.getByLabel('View of the 3D model').selectOption({ label: 'Right side' });
+  await expect(page.getByRole('region', { name: 'Slim plate' })).toBeVisible();
   await page.getByRole('button', { name: 'Attach document' }).click();
   const documentDialog = page.getByRole('dialog', { name: 'Document' });
   await documentDialog.getByLabel('File', { exact: true }).selectOption({
@@ -571,6 +578,12 @@ test('the first Owner sets up a passkey, publishes the Coming Soon page and sign
   await expectAccessible(page, 'product editor');
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByText('Draft saved. It goes live with Publish changes.')).toBeVisible();
+  // The feature was saved with the product.
+  await page.reload();
+  await expect(page.getByLabel('View of the 3D model')).toHaveValue('right');
+  await expect(
+    page.getByRole('group', { name: 'Title', exact: true }).getByLabel('Arabic'),
+  ).toHaveValue('لوحة نحيفة');
   await expect(page.getByText('Not verified: not shown as a certification')).toBeVisible();
   await page.getByRole('button', { name: 'Mark verified' }).click();
   await confirm(page);

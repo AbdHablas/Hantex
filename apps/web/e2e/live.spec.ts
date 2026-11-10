@@ -281,7 +281,7 @@ test('a product page shows its 3D models: poster first, then the viewer, a model
   });
   await expect(blackPoster).toHaveAttribute('src', `/models/${BLACK}/poster-front.webp`);
   await page.getByRole('button', { name: 'View in 3D' }).click();
-  const tapped = page.locator('model-viewer');
+  const tapped = page.locator('figure.cx-model model-viewer');
   await expect(tapped).toHaveAttribute('src', `/models/${BLACK}/mobile.glb`);
   // Keyboard focus moves into the viewer, and on to the model itself once it shows.
   await expect(tapped).toBeFocused();
@@ -314,7 +314,145 @@ test('a product page without JavaScript shows the model’s picture, and no cont
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'View in 3D' })).toHaveCount(0);
   await expect(page.getByRole('group', { name: 'Finish in 3D' })).toHaveCount(0);
+  // Its features are a picture and a list.
+  const features = page.getByRole('region', { name: 'Features' });
+  await expect(features.getByRole('listitem')).toHaveCount(5);
+  await expect(features.locator('[data-features-stage] img')).toHaveAttribute(
+    'src',
+    /\/poster-front\.webp$/,
+  );
   await context.close();
+});
+
+test('a product’s features pass beside its 3D model, which turns to each one’s view (D-059)', async ({
+  page,
+}) => {
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  const section = page.getByRole('region', { name: 'Features' });
+  const items = section.getByRole('listitem');
+  await expect(items).toHaveText([
+    /^Test front featureTest text about the front\.$/,
+    'Test right-side feature',
+    /^Test top feature/,
+    'Test back feature',
+    'Test left-side feature',
+  ]);
+  // On a computer the gallery's viewer opens by itself, and the model beside the features comes
+  // alive with it. It is decoration: no input, and hidden from assistive technology.
+  const stage = section.locator('[data-features-stage]');
+  const viewer = stage.locator('model-viewer');
+  await expect(viewer).toHaveAttribute('src', /\/desktop\.glb$/);
+  await expect(viewer).toHaveAttribute('camera-orbit', '0deg 75deg auto');
+  await expect(stage).toHaveAttribute('aria-hidden', 'true');
+  await expect(stage).toHaveAttribute('inert', '');
+  await expect(viewer).not.toHaveAttribute('camera-controls', '');
+  await expect
+    .poll(() => viewer.evaluate((v) => (v as unknown as { loaded: boolean }).loaded))
+    .toBe(true);
+
+  // The side of the model facing the visitor, read from the model itself at the stage's centre.
+  const facing = () =>
+    viewer.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const hit = (
+        element as unknown as {
+          positionAndNormalFromPoint(
+            x: number,
+            y: number,
+          ): { normal: { x: number; y: number; z: number } } | null;
+        }
+      ).positionAndNormalFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      if (!hit) return 'nothing';
+      const { x, y, z } = hit.normal;
+      const [axis, value] = (
+        [
+          ['x', x],
+          ['y', y],
+          ['z', z],
+        ] as const
+      ).reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a));
+      return `${axis}${value > 0 ? '+' : '-'}`;
+    });
+  /** Scrolls a feature to the reading line: this far down the screen. */
+  const read = (index: number, line = 0.5) =>
+    items.nth(index).evaluate((item, at) => {
+      const box = item.getBoundingClientRect();
+      window.scrollBy(0, box.top + box.height / 2 - window.innerHeight * at);
+    }, line);
+  const tilt = () =>
+    viewer.evaluate(
+      (v) => (v as unknown as { getCameraOrbit(): { phi: number } }).getCameraOrbit().phi,
+    );
+
+  // Each feature, read in turn, turns the model to the side its view names: the front (+z),
+  // the right-hand side as seen from the front (+x), from above, the back (-z), the left (-x).
+  await read(0);
+  await expect(items.nth(0)).toHaveAttribute('data-active', '');
+  await expect.poll(facing).toBe('z+');
+  await read(1);
+  await expect(items.nth(1)).toHaveAttribute('data-active', '');
+  await expect(items.nth(0)).not.toHaveAttribute('data-active', '');
+  await expect(viewer).toHaveAttribute('camera-orbit', '90deg 75deg auto');
+  await expect.poll(facing).toBe('x+');
+  await read(2);
+  await expect(viewer).toHaveAttribute('camera-orbit', '0deg 15deg auto');
+  await expect.poll(async () => Math.round(((await tilt()) * 180) / Math.PI)).toBe(15);
+  await read(3);
+  await expect.poll(facing).toBe('z-');
+  await read(4);
+  await expect.poll(facing).toBe('x-');
+  // The model stayed in view all the way down.
+  await expect(stage).toBeInViewport();
+
+  // It follows the finish chosen in the gallery.
+  await page.getByRole('radio', { name: 'Test black' }).check();
+  await expect(viewer).toHaveAttribute('src', `/models/${BLACK}/desktop.glb`);
+
+  // A product without a 3D model shows its features as a plain list.
+  await page.goto(`${LIVE}/en/product/two-gang/`);
+  const plain = page.getByRole('region', { name: 'Features' });
+  await expect(plain.getByRole('listitem')).toHaveText(['Test plain featureTest plain text.']);
+  await expect(plain.locator('[data-features-stage]')).toHaveCount(0);
+});
+
+test('a product’s features stay still with reduced motion, and on a phone until the visitor opens 3D (D-059)', async ({
+  browser,
+  page,
+}) => {
+  // Reduced motion: the gallery's viewer still opens (it only moves when the visitor moves it),
+  // but the model beside the features stays a picture, the poster nearest the first view.
+  const context = await browser.newContext({ reducedMotion: 'reduce' });
+  const still = await context.newPage();
+  await still.goto(`${LIVE}/en/product/one-gang/`);
+  await expect(still.locator('figure.cx-model model-viewer')).toHaveAttribute(
+    'src',
+    /desktop\.glb$/,
+  );
+  const stillStage = still.locator('[data-features-stage]');
+  await expect(stillStage.locator('img')).toHaveAttribute('src', /\/poster-front\.webp$/);
+  await expect(stillStage.locator('model-viewer')).toHaveCount(0);
+  await expect(still.locator('.cx-features')).not.toHaveClass(/is-live/);
+  await context.close();
+
+  // A phone loads no 3D until the visitor asks for it; then the features' model comes alive
+  // too, and turns as each feature reaches the reading line under it.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${LIVE}/en/product/one-gang/`);
+  const stage = page.locator('[data-features-stage]');
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage.locator('img')).toBeVisible();
+  await expect(page.locator('model-viewer')).toHaveCount(0);
+  await page.getByRole('button', { name: 'View in 3D' }).click();
+  const viewer = stage.locator('model-viewer');
+  await expect(viewer).toHaveAttribute('src', /\/mobile\.glb$/);
+  const second = page.getByRole('region', { name: 'Features' }).getByRole('listitem').nth(1);
+  await second.evaluate((item) => {
+    const box = item.getBoundingClientRect();
+    window.scrollBy(0, box.top + box.height / 2 - window.innerHeight * 0.7);
+  });
+  await expect(second).toHaveAttribute('data-active', '');
+  await expect(viewer).toHaveAttribute('camera-orbit', '90deg 75deg auto');
+  await expect(stage).toBeInViewport();
 });
 
 test('a product enquiry reaches the server and is refused without a passed security check (D-051)', async ({

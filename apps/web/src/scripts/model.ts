@@ -7,12 +7,18 @@
  * offered only for models checked true to scale.
  */
 
+import { productFeatures } from './features';
+
 const PHONE = '(max-width: 48rem)';
+/** A model's file for this screen: phones get the lighter version. */
+const file = (base: string) => `${base}/${matchMedia(PHONE).matches ? 'mobile' : 'desktop'}.glb`;
+/** The model beside the product's features, if the page has them (D-059). */
+const features = productFeatures(file);
 
 /** Points the viewer at the figure's current model: its files, description and AR offer. */
 function show(figure: HTMLElement, viewer: HTMLElement) {
   const base = figure.dataset['model'] ?? '';
-  viewer.setAttribute('src', `${base}/${matchMedia(PHONE).matches ? 'mobile' : 'desktop'}.glb`);
+  viewer.setAttribute('src', file(base));
   viewer.setAttribute('poster', `${base}/poster-front.webp`);
   viewer.setAttribute('alt', figure.dataset['alt'] ?? '');
   viewer.querySelector('[slot="ar-button"]')?.remove();
@@ -49,6 +55,8 @@ async function open(figure: HTMLElement, focus: boolean) {
   // Read now, not before the download: a finish chosen meanwhile is the one shown.
   show(figure, viewer);
   figure.querySelector('.cx-model-stage')?.replaceChildren(viewer);
+  // The viewer's code is here now, so the model beside the features can come alive too.
+  features?.live();
   // The tapped button is gone, so keyboard focus moves into the viewer: onto its loading poster,
   // which the viewer hands on to the model (arrow keys turn it) once it shows. Both are the
   // viewer's own parts; the browser test notices if an upgrade renames them.
@@ -71,6 +79,7 @@ function choose(figure: HTMLElement, choice: HTMLInputElement) {
   if (text) text.textContent = caption ?? '';
   const viewer = figure.querySelector<HTMLElement>('model-viewer');
   if (viewer) show(figure, viewer);
+  features?.show(modelBase ?? '');
 }
 
 for (const figure of document.querySelectorAll<HTMLElement>('figure[data-model]')) {

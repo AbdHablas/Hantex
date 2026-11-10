@@ -16,6 +16,7 @@ import {
   skuSchema,
   type Catalogue,
   type DocumentRef,
+  type Feature,
   type Product,
 } from './index';
 
@@ -325,5 +326,65 @@ describe('starter attribute templates', () => {
       expect(twice.added).toEqual([]);
       expect(twice.groups).toHaveLength(structure.groups.length);
     }
+  });
+});
+
+describe('product features (D-059)', () => {
+  const T = (en: string, ar = en) => ({ en, ar });
+  const feature = (id: string, extra: Partial<Feature> = {}): Feature => ({
+    id,
+    title: T('Slim plate', 'لوحة نحيفة'),
+    text: T('', ''),
+    view: 'angle',
+    ...extra,
+  });
+  const base = newProduct(T('One'), 'one', 'catswitch');
+
+  it('keeps up to six, each with a view of the 3D model, and none for older products', () => {
+    const { features: _, ...older } = base;
+    expect(productSchema.parse(older).features).toEqual([]);
+    const six = Array.from({ length: 6 }, (__, i) => feature(`feat0000${i}`));
+    expect(productSchema.safeParse({ ...base, features: six }).success).toBe(true);
+    expect(
+      productSchema.safeParse({ ...base, features: [...six, feature('feat00006')] }).success,
+    ).toBe(false);
+    const sideways = { ...feature('feat00001'), view: 'underneath' };
+    expect(productSchema.safeParse({ ...base, features: [sideways] }).success).toBe(false);
+  });
+
+  it('needs a title in each of the website’s languages before a visible product is published', () => {
+    const catalogue: Catalogue = {
+      ...DEFAULT_CATALOGUE,
+      categories: [
+        {
+          id: 'catswitch',
+          name: T('Switches'),
+          slug: 'switches',
+          parentId: null,
+          main: true,
+          description: T(''),
+          image: null,
+          attributeIds: [],
+        },
+      ],
+      products: ['prdone'],
+    };
+    const issuesFor = (product: Product, locales: ('ar' | 'en')[] = ['ar', 'en']) =>
+      checkCatalogue({ catalogue, products: new Map([['prdone', product]]), locales });
+    const untitled = feature('feat00001', { title: T('Slim plate', '') });
+    const visible = { ...base, visible: true };
+    expect(issuesFor({ ...visible, features: [untitled] })).toContainEqual({
+      code: 'missing-name',
+      target: 'product:prdone',
+      detail: 'feat00001',
+    });
+    // English alone is enough on an English-only website, and a hidden product can wait.
+    expect(issuesFor({ ...visible, features: [untitled] }, ['en'])).toEqual([]);
+    expect(issuesFor({ ...base, features: [untitled] })).toEqual([]);
+    // Text is optional; the same feature twice is not.
+    expect(issuesFor({ ...visible, features: [feature('feat00001')] })).toEqual([]);
+    expect(
+      issuesFor({ ...visible, features: [feature('feat00001'), feature('feat00001')] }),
+    ).toContainEqual({ code: 'duplicate-id', target: 'product:prdone', detail: 'feat00001' });
   });
 });

@@ -136,6 +136,7 @@ function fixture() {
           { id: 'varone', sku: 'S-1', finishId: 'fnwhite', name: T(''), images: [] },
           { id: 'vartwo', sku: 'S-1B', finishId: 'fnwhite', name: T(''), images: [] },
         ],
+        features: [{ id: 'featslim', title: T('Slim'), text: T(''), view: 'right' }],
       }),
     ],
     [
@@ -162,6 +163,10 @@ describe('showcase', () => {
     expect(showcase.products.map((p) => p.id)).toEqual(['prdone', 'prdtwo', 'prdlamp']);
     expect(showcase.products[1]!.values).not.toHaveProperty('attcolour');
     expect(showcase.products[0]!.finishIds).toEqual(['fnwhite']);
+    expect(showcase.products[0]!.features.map((f) => [f.id, f.view])).toEqual([
+      ['featslim', 'right'],
+    ]);
+    expect(showcase.products[1]!.features).toEqual([]);
     expect(JSON.stringify(showcase)).not.toContain('verified');
   });
 

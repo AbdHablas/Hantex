@@ -293,6 +293,38 @@ describe('products', () => {
     expect(fixed.status, await fixed.clone().text()).toBe(200);
   });
 
+  it('saves a product’s features, and publishes them only with a title in each language (D-059)', async () => {
+    const p = await product(id);
+    const features: Product['features'] = [
+      {
+        id: 'feature001',
+        title: both('Slim plate'),
+        text: both('Close to the wall.'),
+        view: 'right',
+      },
+      { id: 'feature002', title: { ar: '', en: 'Soft click' }, text: both(''), view: 'front' },
+    ];
+    const saved = await saveProduct(id, { ...p, features });
+    expect(saved.status, await saved.clone().text()).toBe(200);
+    expect((await product(id)).features).toEqual(features);
+    // Only the named views of the 3D model, and at most six features.
+    const sideways = [{ ...features[0]!, view: 'underneath' }] as unknown as Product['features'];
+    expect((await saveProduct(id, { ...p, features: sideways })).status).toBe(400);
+    const seven = Array.from({ length: 7 }, (_, i) => ({ ...features[0]!, id: `feature10${i}` }));
+    expect((await saveProduct(id, { ...p, features: seven })).status).toBe(400);
+
+    const refused = await publish(manager);
+    expect(refused.status).toBe(409);
+    const body = await json<{ details: { issues: unknown[] } }>(refused);
+    expect(body.details.issues).toEqual([
+      { code: 'missing-name', target: `product:${id}`, detail: 'feature002' },
+    ]);
+    const titled = [features[0]!, { ...features[1]!, title: both('Soft click') }];
+    await saveProduct(id, { ...p, features: titled });
+    const published = await publish(manager);
+    expect(published.status, await published.clone().text()).toBe(200);
+  });
+
   it('keeps images products use out of reach of deletion', async () => {
     const image = (await product(id)).images[0]!.mediaId;
     const response = await h.request('DELETE', `/api/sites/${SITE}/media/${image}`, {

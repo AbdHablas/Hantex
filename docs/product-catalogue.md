@@ -10,7 +10,8 @@ attached as documents with certificate verification, drafts, versions and checks
 publishing, and CSV/Excel import and export. Pages made with the website builder can show the
 catalogue through product sections and link to products, categories and series (D-048), and
 every live website builds a page for each visible product, each category and each series
-(D-049), with filters and search (D-052), enquiries (D-051) and approved 3D models (D-057).
+(D-049), with filters and search (D-052), enquiries (D-051), approved 3D models (D-057) and
+the product's features beside its model (D-059).
 
 ## Business context
 
@@ -35,6 +36,7 @@ dashboard. Until something is entered, the website shows nothing for it.
 | Finish | A colour or material, defined once and reused: name in each language, swatch and material type. Each finish shown in 3D has its own model, photographed or modelled in that finish (D-058). |
 | Attributes | Typed fields defined in the dashboard for each category: text, number with unit, choice, or yes/no. Grouped (electrical, dimensions, materials, compliance), optionally filterable and shown in the specification table. |
 | Documents | Datasheets, installation guides and certificates (PDF), attached to a product or a series. |
+| Features | Up to six points about a product in the team's own words: a title, an optional text, and the view of the 3D model shown beside it (D-059). |
 | Media | Photos by view (front, side, rear, detail, in use) and 3D models from the Studio. The same photo set serves the product gallery and the 3D capture. |
 
 **Starting categories for Hantex Ultra** are the five the owner named:
@@ -87,9 +89,10 @@ team.
 
 - Pages are built from blocks managed in the dashboard:
   - a full-width hero showing the 3D model or a photo;
-  - scroll-linked feature sections;
-  - finish selector;
-  - highlights;
+  - features that pass beside the 3D model, which turns to each one's view — *done (D-059);
+    this one list is both the "scroll-linked feature sections" and the "highlights" first
+    planned*;
+  - finish selector — *done for the 3D model (D-058)*;
   - specification table generated from the attributes;
   - downloads;
   - related products from the same series;

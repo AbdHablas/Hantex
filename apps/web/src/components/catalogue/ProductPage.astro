@@ -2,6 +2,7 @@
 import type { ImageRef, ShowcaseProduct } from '@hantex/sections';
 import { categoryTrail, cataloguePath, localizedPath, paragraphs } from '@hantex/sections';
 import type { Locale } from '@hantex/shared';
+import { MODEL_VIEWS } from '@hantex/studio';
 import { catalogueHref, pick, pictureOf, shareOf, withSlash, type RenderContext } from '../../builder';
 import { TEXT } from '../../i18n';
 import { SITE } from '../../site-data';
@@ -88,6 +89,14 @@ const models = product.models.map((m) => {
   };
 });
 const model = models[0];
+// Its features, in the team's own words (D-059). Beside a 3D model, the model turns to each
+// feature's view as the visitor scrolls (scripts/features.ts); until then, and with reduced
+// motion, the page shows the poster nearest the first view.
+const features = product.features.flatMap((f) => {
+  const title = pick(ctx, f.title);
+  return title ? [{ title, text: pick(ctx, f.text), orbit: MODEL_VIEWS[f.view], view: f.view }] : [];
+});
+const stagePoster = features[0]?.view === 'front' ? 'poster-front.webp' : 'poster-three-quarter.webp';
 ---
 
 <SiteLayout ctx={ctx} title={`${name} — ${siteName}`} description={summary} noindex={ctx.preview} share={share} hrefFor={hrefFor} structured={structured}>
@@ -190,6 +199,30 @@ const model = models[0];
         }
       </div>
     </div>
+    {
+      features.length > 0 && (
+        <section class:list={['cx-block', 'cx-features', model && 'has-stage']} aria-labelledby="features">
+          <h2 class="bx-title" id="features">{t.features}</h2>
+          <div class="cx-features-body">
+            {model && (
+              <div class="cx-features-stage" data-features-stage data-model={model.base} aria-hidden="true" inert>
+                <div class="cx-features-frame">
+                  <img src={`${model.base}/${stagePoster}`} alt="" width="1024" height="1024" loading="lazy" decoding="async" />
+                </div>
+              </div>
+            )}
+            <ul class="cx-features-list">
+              {features.map((f) => (
+                <li class="cx-feature" data-orbit={f.orbit}>
+                  <h3>{f.title}</h3>
+                  {f.text && <p>{f.text}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
     {description.length > 0 && <div class="cx-text">{description.map((p) => <p>{p}</p>)}</div>}
     {
       hasSpecs && (
